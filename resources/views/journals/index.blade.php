@@ -23,8 +23,32 @@
     </div>
 
     {{-- Filters --}}
-    <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4 mb-6">
-        <form method="GET" action="{{ route('journals.index') }}" class="flex flex-wrap items-end gap-4">
+    <div x-data="{ filtersOpen: false }" class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 mb-6 overflow-hidden transition-all duration-300">
+        {{-- Collapsed Header --}}
+        <div class="px-4 py-3 bg-slate-50/50 dark:bg-slate-900/50 flex items-center justify-between cursor-pointer group" @click="filtersOpen = !filtersOpen">
+            <div class="flex items-center gap-4 text-sm">
+                <div class="flex items-center gap-1 text-slate-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
+                    <span class="font-medium">Filters</span>
+                </div>
+                <div class="hidden md:flex items-center gap-2 text-xs text-slate-400">
+                    @if(request('date_from')) <span>From: {{ request('date_from') }}</span> @endif
+                    @if(request('date_to')) <span>To: {{ request('date_to') }}</span> @endif
+                    @if(request('flow_type') && request('flow_type') !== 'all') 
+                        <span class="px-1.5 py-0.5 bg-slate-200 dark:bg-slate-700 rounded capitalize">{{ request('flow_type') }}</span> 
+                    @endif
+                    @if(count($selectedAccounts) < count($accountCodes))
+                        <span class="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded">{{ count($selectedAccounts) }} Accounts</span>
+                    @endif
+                </div>
+            </div>
+            <button class="p-1 rounded hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                <svg class="w-5 h-5 transition-transform duration-300" :class="filtersOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+        </div>
+
+        <div x-show="filtersOpen" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="p-4 border-t border-slate-200 dark:border-slate-700">
+            <form method="GET" action="{{ route('journals.index') }}" class="flex flex-wrap items-end gap-4">
             <input type="hidden" name="filter_applied" value="1">
             
             {{-- Search --}}
@@ -101,12 +125,12 @@
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
             <div class="overflow-x-auto">
             <table class="w-full text-sm">
-                <thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-10">
+                <thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30">
                     <tr>
-                        <th class="px-3 py-3 w-10 text-center border-b border-slate-200 dark:border-slate-700">
+                        <th class="px-3 py-3 w-10 text-center border-b border-slate-200 dark:border-slate-700 sticky left-0 bg-slate-50 dark:bg-slate-900 z-40">
                             <input type="checkbox" id="selectAllCheckbox" title="Select All" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer mt-0.5 dark:bg-slate-800 dark:border-slate-600">
                         </th>
-                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
+                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400 sticky left-10 bg-slate-50 dark:bg-slate-900 z-40">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'move_name', 'dir' => request('sort') === 'move_name' && request('dir') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center hover:text-emerald-600 transition-colors">
                                 Name
                                 @if(request('sort', 'date') === 'move_name')
@@ -158,11 +182,11 @@
                         @foreach($entry->lines as $idx => $line)
                         <tr class="{{ $idx === 0 ? 'border-t-2 border-slate-300 dark:border-slate-600' : 'border-t border-slate-100 dark:border-slate-800' }} hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
                             @if($idx === 0)
-                            <td class="px-3 py-2 text-center align-top" rowspan="{{ $entry->lines->count() }}">
+                            <td class="px-3 py-2 text-center align-top sticky left-0 bg-white dark:bg-slate-800 z-10" rowspan="{{ $entry->lines->count() }}">
                                 <input type="checkbox" name="selected_ids[]" value="{{ $entry->id }}" class="entry-checkbox rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer mt-1 dark:bg-slate-800 dark:border-slate-600 p-0">
                             </td>
                             {{-- Entry-level columns only on first line --}}
-                            <td class="px-3 py-2 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap align-top" rowspan="{{ $entry->lines->count() }}">
+                            <td class="px-3 py-2 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap align-top sticky left-10 bg-white dark:bg-slate-800 z-10" rowspan="{{ $entry->lines->count() }}">
                                 <div class="flex items-center gap-2">
                                     <a href="{{ route('journals.show', $entry) }}" class="hover:underline">{{ $entry->move_name }}</a>
                                     <a href="{{ route('journals.print', $entry) }}" target="_blank" title="Print PDF" class="text-slate-400 hover:text-indigo-600 transition-colors">
@@ -216,8 +240,21 @@
     </div>
     </form>
 
-    {{-- Results count --}}
-    <p class="text-xs text-slate-500 mt-3">Showing {{ $entries->firstItem() ?? 0 }}-{{ $entries->lastItem() ?? 0 }} of {{ $entries->total() }} entries</p>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mt-3">
+        <p class="text-xs text-slate-500">Showing {{ $entries->firstItem() ?? 0 }}-{{ $entries->lastItem() ?? 0 }} of {{ $entries->total() }} entries</p>
+        
+        <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-500">Show:</span>
+            <div class="flex bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 p-0.5 shadow-sm">
+                @foreach([10, 25, 50, 100] as $count)
+                <a href="{{ request()->fullUrlWithQuery(['per_page' => $count]) }}" 
+                   class="px-2 py-1 text-[10px] font-bold rounded-md transition-colors {{ $perPage == $count ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700' }}">
+                    {{ $count }}
+                </a>
+                @endforeach
+            </div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -258,6 +295,32 @@
             
             updateSelection();
         }
+
+        // Keyboard Shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Find search input
+            const searchInput = document.querySelector('input[name="search"]');
+            
+            // Ctrl+F / Cmd+F to focus search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+                if (searchInput) {
+                    e.preventDefault();
+                    // Scroll to top and focus
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    searchInput.focus();
+                }
+            }
+
+            // Escape to clear or blur
+            if (e.key === 'Escape') {
+                if (document.activeElement === searchInput) {
+                    searchInput.blur();
+                } else if (window.location.search) {
+                    // If filters are applied, clear them
+                    window.location.href = "{{ route('journals.index') }}";
+                }
+            }
+        });
     });
 </script>
 @endsection

@@ -110,6 +110,9 @@
             font-size: 11px;
             white-space: nowrap; /* Prevent numbers wrapping here */
         }
+        .lines-table tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
         .text-right { text-align: right; }
     </style>
 </head>
@@ -139,10 +142,6 @@
                 <td style="width: 50%; padding-right: 20px;">
                     <table style="width: 100%; table-layout: auto;">
                         <tr>
-                            <td class="info-label">Area</td>
-                            <td></td>
-                        </tr>
-                        <tr>
                             <td class="info-label">Reference</td>
                             <td>{{ $entry->ref }}</td>
                         </tr>
@@ -152,7 +151,7 @@
                     <table style="width: 100%; table-layout: auto;">
                         <tr>
                             <td class="info-label" style="width: 130px;">Accounting Date</td>
-                            <td>{{ \Carbon\Carbon::parse($entry->date)->format('d/m/Y') }}</td>
+                            <td>{{ \Carbon\Carbon::parse($entry->date)->translatedFormat('d F Y') }}</td>
                         </tr>
                         <tr>
                             <td class="info-label" style="width: 130px;">Journal</td>

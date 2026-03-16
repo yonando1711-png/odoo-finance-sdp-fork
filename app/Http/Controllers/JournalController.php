@@ -102,7 +102,10 @@ class JournalController extends Controller
             $query->orderBy('move_name', 'desc');
         }
 
-        $entries = $query->paginate(25)->withQueryString();
+        $perPage = request('per_page', 25);
+        if (!in_array($perPage, [10, 25, 50, 100])) $perPage = 25;
+
+        $entries = $query->paginate($perPage)->withQueryString();
 
         $journalNames = JournalEntry::select('journal_name')
             ->distinct()
@@ -117,7 +120,7 @@ class JournalController extends Controller
             'total_credit' => JournalLine::whereIn('journal_entry_id', (clone $query)->select('id'))->sum('credit'),
         ];
 
-        return view('journals.index', compact('entries', 'accountCodes', 'journalNames', 'stats', 'flowType', 'selectedAccounts', 'sort', 'dir'));
+        return view('journals.index', compact('entries', 'accountCodes', 'journalNames', 'stats', 'flowType', 'selectedAccounts', 'sort', 'dir', 'perPage'));
     }
 
     /**
@@ -126,7 +129,33 @@ class JournalController extends Controller
     public function show(JournalEntry $entry)
     {
         $entry->load('lines');
-        return view('journals.show', compact('entry'));
+        
+        // Navigation based on default sort (date desc, id desc)
+        // Previous = Newer
+        $prev = JournalEntry::where(function($q) use ($entry) {
+                $q->where('date', '>', $entry->date)
+                  ->orWhere(function($q2) use ($entry) {
+                      $q2->where('date', '=', $entry->date)
+                         ->where('id', '>', $entry->id);
+                  });
+            })
+            ->orderBy('date', 'asc')
+            ->orderBy('id', 'asc')
+            ->first();
+
+        // Next = Older
+        $next = JournalEntry::where(function($q) use ($entry) {
+                $q->where('date', '<', $entry->date)
+                  ->orWhere(function($q2) use ($entry) {
+                      $q2->where('date', '=', $entry->date)
+                         ->where('id', '<', $entry->id);
+                  });
+            })
+            ->orderBy('date', 'desc')
+            ->orderBy('id', 'desc')
+            ->first();
+
+        return view('journals.show', compact('entry', 'prev', 'next'));
     }
 
     /**

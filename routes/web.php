@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\JournalController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\SettingController;
 
 // ──────────────────────────────────────────────
 // Guest Routes
@@ -23,8 +25,8 @@ Route::middleware('auth')->group(function () {
     // Logout
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Redirect root to Import
-    Route::redirect('/', '/import');
+    // Dashboard / Landing
+    Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
     // Import Data Routes
     Route::get('/import', [ImportController::class, 'index'])->name('import');
@@ -41,6 +43,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/journals/export-selected-pdf', [JournalController::class, 'printSelectedPdf'])->name('journals.print-selected');
     Route::get('/journals/{entry}', [JournalController::class, 'show'])->name('journals.show');
     Route::get('/journals/{entry}/pdf', [JournalController::class, 'printPdf'])->name('journals.print');
+
+    // Settings
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
 
     // ──────────────────────────────────────────
     // Admin Routes (requires admin role)

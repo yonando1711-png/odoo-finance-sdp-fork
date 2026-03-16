@@ -123,14 +123,14 @@
     <form id="bulkPrintForm" method="POST" action="{{ route('journals.print-selected') }}" target="_blank">
         @csrf
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto overflow-y-auto max-h-[75vh]">
             <table class="w-full text-sm">
-                <thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30">
+                <thead class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700">
                     <tr>
-                        <th class="px-3 py-3 w-10 text-center border-b border-slate-200 dark:border-slate-700 sticky left-0 bg-slate-50 dark:bg-slate-900 z-40">
+                        <th class="px-3 py-3 w-10 text-center border-b border-slate-200 dark:border-slate-700 sticky top-0 left-0 bg-slate-50 dark:bg-slate-900 z-50">
                             <input type="checkbox" id="selectAllCheckbox" title="Select All" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4 cursor-pointer mt-0.5 dark:bg-slate-800 dark:border-slate-600">
                         </th>
-                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400 sticky left-10 bg-slate-50 dark:bg-slate-900 z-40">
+                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400 sticky top-0 left-10 bg-slate-50 dark:bg-slate-900 z-50">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'move_name', 'dir' => request('sort') === 'move_name' && request('dir') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center hover:text-emerald-600 transition-colors">
                                 Name
                                 @if(request('sort', 'date') === 'move_name')
@@ -138,7 +138,7 @@
                                 @endif
                             </a>
                         </th>
-                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
+                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400 sticky top-0 bg-slate-50 dark:bg-slate-900 z-40">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'date', 'dir' => request('sort', 'date') === 'date' && request('dir', 'desc') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center hover:text-emerald-600 transition-colors">
                                 Date
                                 @if(request('sort', 'date') === 'date')
@@ -146,7 +146,7 @@
                                 @endif
                             </a>
                         </th>
-                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
+                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400 sticky top-0 bg-slate-50 dark:bg-slate-900 z-40">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'partner_name', 'dir' => request('sort') === 'partner_name' && request('dir') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center hover:text-emerald-600 transition-colors">
                                 Partner
                                 @if(request('sort') === 'partner_name')
@@ -154,7 +154,7 @@
                                 @endif
                             </a>
                         </th>
-                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400">
+                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400 sticky top-0 bg-slate-50 dark:bg-slate-900 z-40">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'ref', 'dir' => request('sort') === 'ref' && request('dir') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center hover:text-emerald-600 transition-colors">
                                 Ref
                                 @if(request('sort') === 'ref')
@@ -162,7 +162,7 @@
                                 @endif
                             </a>
                         </th>
-                        <th class="px-3 py-3 text-right font-medium text-slate-600 dark:text-slate-400">
+                        <th class="px-3 py-3 text-right font-medium text-slate-600 dark:text-slate-400 sticky top-0 bg-slate-50 dark:bg-slate-900 z-40">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'amount_total_signed', 'dir' => request('sort') === 'amount_total_signed' && request('dir') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center justify-end hover:text-emerald-600 transition-colors">
                                 Amount Total
                                 @if(request('sort') === 'amount_total_signed')
@@ -170,11 +170,11 @@
                                 @endif
                             </a>
                         </th>
-                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400">Account</th>
-                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400">Line Description</th>
-                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400">Line Ref</th>
-                        <th class="px-3 py-3 text-right font-medium text-slate-600 dark:text-slate-400">Debit</th>
-                        <th class="px-3 py-3 text-right font-medium text-slate-600 dark:text-slate-400">Credit</th>
+                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400 sticky top-0 bg-slate-50 dark:bg-slate-900 z-40">Account</th>
+                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400 sticky top-0 bg-slate-50 dark:bg-slate-900 z-40">Line Description</th>
+                        <th class="px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400 sticky top-0 bg-slate-50 dark:bg-slate-900 z-40">Line Ref</th>
+                        <th class="px-3 py-3 text-right font-medium text-slate-600 dark:text-slate-400 sticky top-0 bg-slate-50 dark:bg-slate-900 z-40">Debit</th>
+                        <th class="px-3 py-3 text-right font-medium text-slate-600 dark:text-slate-400 sticky top-0 bg-slate-50 dark:bg-slate-900 z-40">Credit</th>
                     </tr>
                 </thead>
                 <tbody>

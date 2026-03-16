@@ -53,11 +53,6 @@ RUN touch database/database.sqlite \
     && chown www-data:www-data database/database.sqlite \
     && chmod 664 database/database.sqlite
 
-# Optimize Laravel
-RUN php artisan config:cache \
-    && php artisan route:cache \
-    && php artisan view:cache
-
 # Copy and setup entrypoint
 COPY docker/entrypoint.sh /usr/local/bin/docker-entrypoint
 RUN chmod +x /usr/local/bin/docker-entrypoint

@@ -1,6 +1,5 @@
 services:
   app:
-    image: cash-bank:latest
     build:
       context: .
       dockerfile: Dockerfile

@@ -4,10 +4,9 @@
     <script>
         // Check for saved theme preference or default to dark
         if (localStorage.getItem('theme') === 'light') {
-            document.getElementById('html-root').classList.remove('dark');
+            document.documentElement.classList.remove('dark');
         } else {
-            document.getElementById('html-root').classList.add('dark');
-            localStorage.setItem('theme', 'dark');
+            document.documentElement.classList.add('dark');
         }
     </script>
     <meta charset="UTF-8">
@@ -19,7 +18,20 @@
         [x-cloak] { display: none !important; }
     </style>
 </head>
-<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen flex" x-data="{ sidebarOpen: true }">
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200 min-h-screen flex" 
+    x-data="{ 
+        sidebarOpen: true,
+        darkMode: document.documentElement.classList.contains('dark')
+    }"
+    x-init="$watch('darkMode', val => {
+        if (val) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('theme', 'dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('theme', 'light');
+        }
+    })">
 
     {{-- Sidebar --}}
     <aside :class="sidebarOpen ? 'w-64' : 'w-16'" class="bg-slate-800 dark:bg-slate-950 text-white flex flex-col transition-all duration-300 fixed h-full z-30">
@@ -83,17 +95,14 @@
 
         {{-- Theme Toggle --}}
         <div class="px-6 py-3 border-t border-slate-700 bg-slate-800/50">
-            <button @click="
-                document.getElementById('html-root').classList.toggle('dark');
-                localStorage.setItem('theme', document.getElementById('html-root').classList.contains('dark') ? 'dark' : 'light');
-            " class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-xs font-medium transition-colors">
-                <template x-if="!document.getElementById('html-root').classList.contains('dark')">
+            <button @click="darkMode = !darkMode" class="w-full flex items-center justify-center gap-2 px-3 py-2 bg-slate-700/50 hover:bg-slate-700 rounded-lg text-xs font-medium transition-colors">
+                <template x-if="!darkMode">
                     <div class="flex items-center gap-2">
                         <svg class="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464l-.707-.707a1 1 0 00-1.414 1.414l.707.707a1 1 0 001.414-1.414zm2.12 8.485l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"/></svg>
                         <span x-show="sidebarOpen" x-cloak>Light Mode</span>
                     </div>
                 </template>
-                <template x-if="document.getElementById('html-root').classList.contains('dark')">
+                <template x-if="darkMode">
                     <div class="flex items-center gap-2 text-slate-300">
                         <svg class="w-4 h-4 text-indigo-400" fill="currentColor" viewBox="0 0 20 20"><path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/></svg>
                         <span x-show="sidebarOpen" x-cloak>Dark Mode</span>

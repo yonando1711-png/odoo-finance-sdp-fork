@@ -243,7 +243,7 @@ function importManager() {
                 this.chunkLabel = 'Syncing ' + chunks[i].label + '...';
                 this.syncStatusText = chunks.length > 1 ? ('Month ' + (i+1) + '/' + chunks.length) : 'Syncing...';
                 try {
-                    const resp = await fetch('{{ route("import.odoo.sync") }}', {
+                    const resp = await fetch('{{ route("import.odoo.sync", [], false) }}', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf },
                         body: JSON.stringify({ date_from: chunks[i].from, date_to: chunks[i].to, account_codes: this.selectedAccounts })
@@ -277,7 +277,7 @@ function importManager() {
         async loadHistory() {
             this.historyLoading = true;
             try {
-                const resp = await fetch('{{ route("import.history") }}');
+                const resp = await fetch('{{ route("import.history", [], false) }}');
                 this.historyLogs = await resp.json();
             } catch (e) {}
             this.historyLoading = false;

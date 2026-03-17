@@ -44,7 +44,7 @@
     ">
 
     {{-- Sidebar --}}
-    <aside :class="sidebarOpen ? 'w-64' : 'w-16'" class="bg-slate-800 dark:bg-slate-950 text-white flex flex-col transition-all duration-300 fixed h-full z-30">
+    <aside :class="sidebarOpen ? 'w-64' : 'w-16'" class="bg-slate-800 dark:bg-slate-950 text-white flex flex-col transition-all duration-300 fixed h-full z-[60]">
         {{-- Logo --}}
         <div class="flex items-center justify-between p-4 border-b border-slate-700 h-16">
             <img x-show="sidebarOpen" x-cloak src="{{ asset('images/logo.png') }}" alt="App Logo" class="h-8 object-contain">

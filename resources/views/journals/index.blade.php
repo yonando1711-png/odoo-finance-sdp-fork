@@ -322,20 +322,20 @@
                             </td>
                             @endif
                             {{-- Line-level columns on every row --}}
-                            <td x-show="columns.account.visible" :style="{ width: columns.account.width, minWidth: columns.account.width }" class="px-3 py-2 whitespace-nowrap overflow-hidden">
-                                <span class="font-mono text-xs text-violet-600 dark:text-violet-400">{{ $line->account_code }}</span>
-                                <span class="text-xs text-slate-500 ml-1 truncate block">{{ $line->account_name }}</span>
+                            <td x-show="columns.account.visible" :style="{ width: columns.account.width, minWidth: columns.account.width }" class="px-3 py-2 align-top overflow-hidden">
+                                <span class="font-mono text-xs text-violet-600 dark:text-violet-400 block">{{ $line->account_code }}</span>
+                                <span class="text-[10px] text-slate-500 break-words whitespace-normal block leading-tight">{{ $line->account_name }}</span>
                             </td>
-                            <td x-show="columns.desc.visible" :style="{ width: columns.desc.width, minWidth: columns.desc.width }" class="px-3 py-2 text-xs">
-                                <div class="truncate" title="{{ $line->display_name ?: '' }}">{{ $line->display_name ?: '' }}</div>
+                            <td x-show="columns.desc.visible" :style="{ width: columns.desc.width, minWidth: columns.desc.width }" class="px-3 py-2 text-xs align-top break-words whitespace-normal">
+                                {{ $line->display_name ?: '' }}
                             </td>
-                            <td x-show="columns.line_ref.visible" :style="{ width: columns.line_ref.width, minWidth: columns.line_ref.width }" class="px-3 py-2 text-xs text-slate-500">
-                                <div class="truncate" title="{{ $line->ref ?: '' }}">{{ $line->ref ?: '' }}</div>
+                            <td x-show="columns.line_ref.visible" :style="{ width: columns.line_ref.width, minWidth: columns.line_ref.width }" class="px-3 py-2 text-xs text-slate-500 align-top break-words whitespace-normal">
+                                {{ $line->ref ?: '' }}
                             </td>
-                            <td x-show="columns.debit.visible" :style="{ width: columns.debit.width, minWidth: columns.debit.width }" class="px-3 py-2 text-right font-mono text-xs {{ $line->debit > 0 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-300 dark:text-slate-700' }}">
+                            <td x-show="columns.debit.visible" :style="{ width: columns.debit.width, minWidth: columns.debit.width }" class="px-3 py-2 text-right font-mono text-xs align-top {{ $line->debit > 0 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-slate-300 dark:text-slate-700' }}">
                                 {{ $line->debit > 0 ? number_format($line->debit, 2) : '' }}
                             </td>
-                            <td x-show="columns.credit.visible" :style="{ width: columns.credit.width, minWidth: columns.credit.width }" class="px-3 py-2 text-right font-mono text-xs {{ $line->credit > 0 ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-slate-300 dark:text-slate-700' }}">
+                            <td x-show="columns.credit.visible" :style="{ width: columns.credit.width, minWidth: columns.credit.width }" class="px-3 py-2 text-right font-mono text-xs align-top {{ $line->credit > 0 ? 'text-red-600 dark:text-red-400 font-semibold' : 'text-slate-300 dark:text-slate-700' }}">
                                 {{ $line->credit > 0 ? number_format($line->credit, 2) : '' }}
                             </td>
                         </tr>

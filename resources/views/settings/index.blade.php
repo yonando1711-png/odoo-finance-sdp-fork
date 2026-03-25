@@ -185,31 +185,39 @@
                     this.saving = true;
                     this.configMsg = '';
                     try {
-                        const resp = await fetch('{{ route("admin.settings.odoo.config") }}', {
+                        const resp = await fetch('{{ route("admin.settings.odoo.config", [], false) }}', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                            headers: { 
+                                'Content-Type': 'application/json', 
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content 
+                            },
                             body: JSON.stringify({ odoo_url: this.config.url, odoo_db: this.config.db, odoo_user: this.config.user, odoo_password: this.config.password })
                         });
                         const data = await resp.json();
-                        this.configMsg = data.message;
+                        this.configMsg = data.message || 'Validation error or invalid config.';
                         this.configMsgType = data.success ? 'success' : 'error';
-                    } catch (e) { this.configMsg = 'Network error'; this.configMsgType = 'error'; }
+                    } catch (e) { this.configMsg = 'Request failed. Ensure URL includes http:// or https://'; this.configMsgType = 'error'; }
                     this.saving = false;
-                    setTimeout(() => this.configMsg = '', 3000);
+                    setTimeout(() => this.configMsg = '', 4000);
                 },
 
                 async testConnection() {
                     this.testing = true;
                     this.configMsg = '';
                     try {
-                        const resp = await fetch('{{ route("admin.settings.odoo.test") }}', {
+                        const resp = await fetch('{{ route("admin.settings.odoo.test", [], false) }}', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                            headers: { 
+                                'Content-Type': 'application/json', 
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content 
+                            }
                         });
                         const data = await resp.json();
-                        this.configMsg = data.message;
+                        this.configMsg = data.message || 'Connection failed';
                         this.configMsgType = data.success ? 'success' : 'error';
-                    } catch (e) { this.configMsg = 'Network error'; this.configMsgType = 'error'; }
+                    } catch (e) { this.configMsg = 'Server Error determining connection.'; this.configMsgType = 'error'; }
                     this.testing = false;
                 },
 
@@ -217,15 +225,19 @@
                     this.scheduleSaving = true;
                     this.scheduleMsg = '';
                     try {
-                        const resp = await fetch('{{ route("admin.settings.odoo.schedule.save") }}', {
+                        const resp = await fetch('{{ route("admin.settings.odoo.schedule.save", [], false) }}', {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                            headers: { 
+                                'Content-Type': 'application/json', 
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content 
+                            },
                             body: JSON.stringify({ enabled: this.schedule.enabled, interval: this.schedule.interval })
                         });
                         const data = await resp.json();
-                        this.scheduleMsg = data.message;
+                        this.scheduleMsg = data.message || 'Validation error.';
                         this.scheduleMsgType = data.success ? 'success' : 'error';
-                    } catch (e) { this.scheduleMsg = 'Network error'; this.scheduleMsgType = 'error'; }
+                    } catch (e) { this.scheduleMsg = 'Schedule save failed.'; this.scheduleMsgType = 'error'; }
                     this.scheduleSaving = false;
                     setTimeout(() => this.scheduleMsg = '', 3000);
                 }

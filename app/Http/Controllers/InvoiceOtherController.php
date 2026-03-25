@@ -263,6 +263,12 @@ class InvoiceOtherController extends Controller
         $invoice->load('lines');
         $invoices = collect([$invoice]);
 
+        foreach ($invoices as $inv) {
+            $log = \App\Models\PrintLog::firstOrCreate(['invoice_name' => $inv->name]);
+            $inv->print_count = $log->print_count;
+            $log->increment('print_count');
+        }
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-other.pdf', compact('invoices'))
                 ->setPaper('a4', 'portrait');
 
@@ -284,6 +290,12 @@ class InvoiceOtherController extends Controller
             ->orderBy('invoice_date', 'desc')
             ->orderBy('name', 'desc')
             ->get();
+
+        foreach ($invoices as $inv) {
+            $log = \App\Models\PrintLog::firstOrCreate(['invoice_name' => $inv->name]);
+            $inv->print_count = $log->print_count;
+            $log->increment('print_count');
+        }
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-other.pdf', compact('invoices'))
                 ->setPaper('a4', 'portrait');

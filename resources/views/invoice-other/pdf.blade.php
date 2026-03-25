@@ -8,7 +8,7 @@
             margin: 30px 40px;
         }
         body {
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
             font-size: 10px;
             color: #1e293b;
             margin: 0;
@@ -24,6 +24,20 @@
         }
         .invoice-page:last-child {
             page-break-after: auto;
+        }
+
+        /* Watermark */
+        .watermark {
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 80px;
+            color: rgba(255, 0, 0, 0.15);
+            font-weight: bold;
+            text-align: center;
+            white-space: nowrap;
+            z-index: -1;
         }
 
         /* Company Header */
@@ -241,6 +255,9 @@
             : \App\Models\Setting::get('default_bc_spv', '');
     @endphp
     <div class="invoice-page">
+        @if(isset($invoice->print_count) && $invoice->print_count > 0)
+            <div class="watermark">DUPLICATE - {{ $invoice->print_count }}</div>
+        @endif
 
         {{-- Company Header --}}
         <table class="company-header">

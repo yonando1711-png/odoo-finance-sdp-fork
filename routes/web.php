@@ -9,6 +9,7 @@ use App\Http\Controllers\SettingController;
 
 use App\Http\Controllers\InvoiceDriverController;
 use App\Http\Controllers\InvoiceOtherController;
+use App\Http\Controllers\Admin\PrintLogController;
 
 // ──────────────────────────────────────────────
 // Guest Routes
@@ -92,6 +93,11 @@ Route::middleware('auth')->group(function () {
         Route::post('sessions/settings', [\App\Http\Controllers\Admin\SessionController::class, 'updateSettings'])->name('sessions.settings');
         Route::post('sessions/cleanup', [\App\Http\Controllers\Admin\SessionController::class, 'cleanup'])->name('sessions.cleanup');
         Route::delete('sessions/{session}', [\App\Http\Controllers\Admin\SessionController::class, 'terminate'])->name('sessions.terminate');
+
+        // Print Logs
+        Route::get('print-logs', [PrintLogController::class, 'index'])->name('print_logs.index');
+        Route::post('print-logs/bulk-reset', [PrintLogController::class, 'resetBulk'])->name('print_logs.reset_bulk');
+        Route::post('print-logs/{printLog}/reset', [PrintLogController::class, 'reset'])->name('print_logs.reset');
 
         // Odoo Settings (Relocated)
         Route::post('odoo/config', [SettingController::class, 'saveOdooConfig'])->name('settings.odoo.config');

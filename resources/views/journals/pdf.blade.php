@@ -3,16 +3,14 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Journal Entries</title>
-    <!-- Using Google Fonts for Space Mono -->
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap');
         
         @page {
             margin: 40px 50px;
         }
         body {
             /* Fallback to Helvetica for headers, but table will use Space Mono */
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
             font-size: 11px;
             color: #1e293b;
             margin: 0;
@@ -70,8 +68,7 @@
         .lines-table {
             border-top: 2px solid #e2e8f0;
             margin-top: 10px;
-            /* Use Space Mono for the entire data table */
-            font-family: 'Space Mono', monospace;
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
         }
         .lines-table tr {
             page-break-inside: avoid;
@@ -84,7 +81,7 @@
             color: #000000;
             font-size: 11px;
             /* Keep header sans-serif for clean look if desired, or let it inherit */
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
         }
         .lines-table td {
             padding: 10px 5px;

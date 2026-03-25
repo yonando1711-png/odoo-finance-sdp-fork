@@ -169,6 +169,228 @@ class OdooService
     }
 
     /**
+     * Fetch Invoice Driver entries from Odoo using export_data
+     */
+    public function fetchInvoiceDrivers(string $dateFrom, string $dateTo): array
+    {
+        try {
+            // Search account.move where journal is "Invoice Driver" and state is posted
+            $domain = [
+                ['state', '=', 'posted'],
+                ['journal_id.name', '=', 'Invoice Driver'],
+                ['invoice_date', '>=', $dateFrom],
+                ['invoice_date', '<=', $dateTo],
+            ];
+
+            $moveIds = $this->execute('account.move', 'search', [$domain]);
+
+            if (empty($moveIds)) {
+                return ['success' => true, 'data' => [], 'count' => 0, 'message' => 'No invoice driver entries found.'];
+            }
+
+            $exportFields = [
+                'name',                                  // 0: Invoice number (INVDV/...)
+                'partner_id/name',                       // 1: Customer name
+                'invoice_date',                          // 2: Invoice date
+                'invoice_payment_term_id/name',          // 3: Payment terms
+                'ref',                                   // 4: Customer Reference
+                'journal_id/name',                       // 5: Journal name
+                'amount_untaxed',                        // 6: Subtotal
+                'amount_tax',                            // 7: Tax
+                'amount_total',                          // 8: Total
+                'invoice_line_ids/name',                 // 9: Line description
+                'invoice_line_ids/quantity',              // 10: Line qty
+                'invoice_line_ids/price_unit',            // 11: Line unit price
+                'partner_bank_id/acc_number',            // 12: Bank account number
+                'bc_manager_id/name',                    // 13: Manager name
+                'bc_spv_id/name',                        // 14: Supervisor name
+                'partner_id/contact_address',            // 15: Address (multiline)
+                'partner_id/contact_address_complete',   // 16: Address (single line)
+            ];
+
+            $entries = [];
+            $chunkSize = 500;
+            $moveIdsChunks = array_chunk($moveIds, $chunkSize);
+
+            foreach ($moveIdsChunks as $chunk) {
+                $result = $this->execute('account.move', 'export_data', [$chunk, $exportFields]);
+
+                if (!isset($result['datas'])) {
+                    continue;
+                }
+
+                $currentEntry = null;
+
+                foreach ($result['datas'] as $row) {
+                    $invoiceName = $row[0] ?? '';
+
+                    // If name is non-empty, this is a new entry header row
+                    if (!empty($invoiceName)) {
+                        if ($currentEntry !== null) {
+                            $entries[] = $currentEntry;
+                        }
+                        $currentEntry = [
+                            'name' => $invoiceName,
+                            'partner_name' => $row[1] ?? '',
+                            'invoice_date' => $row[2] ?? '',
+                            'payment_term' => $row[3] ?? '',
+                            'ref' => $row[4] ?? '',
+                            'journal_name' => $row[5] ?? 'Invoice Driver',
+                            'amount_untaxed' => (float)($row[6] ?? 0),
+                            'amount_tax' => (float)($row[7] ?? 0),
+                            'amount_total' => (float)($row[8] ?? 0),
+                            'partner_bank' => $row[12] ?? '',
+                            'manager_name' => $row[13] ?? '',
+                            'spv_name' => $row[14] ?? '',
+                            'partner_address' => $row[15] ?? '',
+                            'partner_address_complete' => $row[16] ?? '',
+                            'lines' => [],
+                        ];
+                    }
+
+                    // Add line item
+                    if ($currentEntry !== null) {
+                        $lineDesc = $row[9] ?? '';
+                        $lineQty = (float)($row[10] ?? 0);
+                        $linePrice = (float)($row[11] ?? 0);
+
+                        if (!empty($lineDesc) || $lineQty > 0 || $linePrice > 0) {
+                            $currentEntry['lines'][] = [
+                                'description' => $lineDesc,
+                                'quantity' => $lineQty,
+                                'price_unit' => $linePrice,
+                            ];
+                        }
+                    }
+                }
+
+                if ($currentEntry !== null) {
+                    $entries[] = $currentEntry;
+                }
+            }
+
+            return [
+                'success' => true,
+                'data' => $entries,
+                'count' => count($entries),
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Fetch failed: ' . $e->getMessage(), 'data' => []];
+        }
+    }
+
+    /**
+     * Fetch Invoice Other entries from Odoo using export_data
+     * Fetches both "Invoice Other with Tax" and "Invoice Other wo Tax" journals
+     */
+    public function fetchInvoiceOthers(string $dateFrom, string $dateTo): array
+    {
+        try {
+            // Search account.move where journal is Invoice Other (with or without tax) and state is posted
+            $domain = [
+                ['state', '=', 'posted'],
+                ['journal_id.name', 'in', ['Invoice Other with Tax', 'Invoice Other wo Tax']],
+                ['invoice_date', '>=', $dateFrom],
+                ['invoice_date', '<=', $dateTo],
+            ];
+
+            $moveIds = $this->execute('account.move', 'search', [$domain]);
+
+            if (empty($moveIds)) {
+                return ['success' => true, 'data' => [], 'count' => 0, 'message' => 'No invoice other entries found.'];
+            }
+
+            // Same export fields as Invoice Driver
+            $exportFields = [
+                'name',                                  // 0: Invoice number (INVOT/... or INVOW/...)
+                'partner_id/name',                       // 1: Customer name
+                'invoice_date',                          // 2: Invoice date
+                'invoice_payment_term_id/name',          // 3: Payment terms
+                'ref',                                   // 4: Customer Reference
+                'journal_id/name',                       // 5: Journal name
+                'amount_untaxed',                        // 6: Subtotal
+                'amount_tax',                            // 7: Tax
+                'amount_total',                          // 8: Total
+                'invoice_line_ids/name',                 // 9: Line description
+                'invoice_line_ids/quantity',              // 10: Line qty
+                'invoice_line_ids/price_unit',            // 11: Line unit price
+                'partner_bank_id/acc_number',            // 12: Bank account number
+                'bc_manager_id/name',                    // 13: Manager name
+                'bc_spv_id/name',                        // 14: Supervisor name
+                'partner_id/contact_address',            // 15: Address (multiline)
+                'partner_id/contact_address_complete',   // 16: Address (single line)
+            ];
+
+            $entries = [];
+            $chunkSize = 500;
+            $moveIdsChunks = array_chunk($moveIds, $chunkSize);
+
+            foreach ($moveIdsChunks as $chunk) {
+                $result = $this->execute('account.move', 'export_data', [$chunk, $exportFields]);
+
+                if (!isset($result['datas'])) {
+                    continue;
+                }
+
+                $currentEntry = null;
+
+                foreach ($result['datas'] as $row) {
+                    $invoiceName = $row[0] ?? '';
+
+                    if (!empty($invoiceName)) {
+                        if ($currentEntry !== null) {
+                            $entries[] = $currentEntry;
+                        }
+                        $currentEntry = [
+                            'name' => $invoiceName,
+                            'partner_name' => $row[1] ?? '',
+                            'invoice_date' => $row[2] ?? '',
+                            'payment_term' => $row[3] ?? '',
+                            'ref' => $row[4] ?? '',
+                            'journal_name' => $row[5] ?? 'Invoice Other',
+                            'amount_untaxed' => (float)($row[6] ?? 0),
+                            'amount_tax' => (float)($row[7] ?? 0),
+                            'amount_total' => (float)($row[8] ?? 0),
+                            'partner_bank' => $row[12] ?? '',
+                            'manager_name' => $row[13] ?? '',
+                            'spv_name' => $row[14] ?? '',
+                            'partner_address' => $row[15] ?? '',
+                            'partner_address_complete' => $row[16] ?? '',
+                            'lines' => [],
+                        ];
+                    }
+
+                    if ($currentEntry !== null) {
+                        $lineDesc = $row[9] ?? '';
+                        $lineQty = (float)($row[10] ?? 0);
+                        $linePrice = (float)($row[11] ?? 0);
+
+                        if (!empty($lineDesc) || $lineQty > 0 || $linePrice > 0) {
+                            $currentEntry['lines'][] = [
+                                'description' => $lineDesc,
+                                'quantity' => $lineQty,
+                                'price_unit' => $linePrice,
+                            ];
+                        }
+                    }
+                }
+
+                if ($currentEntry !== null) {
+                    $entries[] = $currentEntry;
+                }
+            }
+
+            return [
+                'success' => true,
+                'data' => $entries,
+                'count' => count($entries),
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Fetch failed: ' . $e->getMessage(), 'data' => []];
+        }
+    }
+
+    /**
      * Authenticate with Odoo and return user ID
      */
     protected function authenticate(): ?int

@@ -4,13 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Cash Bank</title>
+    <link rel="icon" href="{{ asset('favicon.ico') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="bg-slate-900 min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md">
         {{-- Logo --}}
         <div class="text-center mb-8">
-            <h1 class="text-4xl font-bold bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">Cash Bank</h1>
+            <img src="{{ asset('images/logo.png') }}" alt="Harent Logo" class="mx-auto h-20 mb-4 object-contain">
             <p class="text-slate-400 mt-2">Sign in to your account</p>
         </div>
 

@@ -12,8 +12,10 @@ class SettingController extends Controller
     public function index()
     {
         $settings = [
-            'show_dashboard' => Setting::get('show_dashboard', '1'),
+            'show_dashboard'  => Setting::get('show_dashboard', '1'),
             'empty_before_sync' => Setting::get('empty_before_sync', '0'),
+            'default_bc_manager' => Setting::get('default_bc_manager', ''),
+            'default_bc_spv'     => Setting::get('default_bc_spv', ''),
         ];
 
         $odooConfig = Setting::getOdooConfig();
@@ -30,6 +32,8 @@ class SettingController extends Controller
     {
         Setting::set('show_dashboard', $request->has('show_dashboard') ? '1' : '0');
         Setting::set('empty_before_sync', $request->has('empty_before_sync') ? '1' : '0');
+        Setting::set('default_bc_manager', $request->input('default_bc_manager', ''));
+        Setting::set('default_bc_spv', $request->input('default_bc_spv', ''));
         return back()->with('success', 'Settings updated successfully.');
     }
 

@@ -35,6 +35,28 @@
                 </div>
             </div>
 
+            <div class="space-y-4">
+                <h3 class="text-lg font-semibold border-b border-slate-200 dark:border-slate-700 pb-2">Invoice Defaults</h3>
+                <p class="text-xs text-slate-500">These values are used as fallback when Odoo does not provide them (e.g. BC Manager / SPV not set in Odoo).</p>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase">Default BC Manager</label>
+                        <input type="text" name="default_bc_manager"
+                            value="{{ $settings['default_bc_manager'] }}"
+                            placeholder="e.g. LISA IBRAHIM"
+                            class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-emerald-500 focus:border-emerald-500 transition uppercase">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 mb-1 uppercase">Default BC SPV</label>
+                        <input type="text" name="default_bc_spv"
+                            value="{{ $settings['default_bc_spv'] }}"
+                            placeholder="e.g. PURNIASIH"
+                            class="w-full px-4 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-emerald-500 focus:border-emerald-500 transition uppercase">
+                    </div>
+                </div>
+            </div>
+
             <div class="pt-4 flex items-center justify-between">
                 <button type="submit" class="px-6 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors shadow-sm">
                     Save Changes

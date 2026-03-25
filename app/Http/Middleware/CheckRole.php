@@ -9,7 +9,8 @@ use Symfony\Component\HttpFoundation\Response;
 class CheckRole
 {
     protected array $roleHierarchy = [
-        'admin' => ['admin', 'user'],
+        'admin' => ['admin', 'user', 'invoice_driver'],
+        'invoice_driver' => ['invoice_driver'],
         'user' => ['user'],
     ];
 

@@ -7,6 +7,9 @@ use App\Http\Controllers\JournalController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SettingController;
 
+use App\Http\Controllers\InvoiceDriverController;
+use App\Http\Controllers\InvoiceOtherController;
+
 // ──────────────────────────────────────────────
 // Guest Routes
 // ──────────────────────────────────────────────
@@ -39,6 +42,24 @@ Route::middleware('auth')->group(function () {
     Route::post('/journals/export-selected-pdf', [JournalController::class, 'printSelectedPdf'])->name('journals.print-selected');
     Route::get('/journals/{entry}', [JournalController::class, 'show'])->name('journals.show');
     Route::get('/journals/{entry}/pdf', [JournalController::class, 'printPdf'])->name('journals.print');
+
+    // Invoice Driver (requires invoice_driver or admin role)
+    Route::prefix('invoice-driver')->name('invoice-driver.')->middleware('role:invoice_driver')->group(function () {
+        Route::get('/', [InvoiceDriverController::class, 'index'])->name('index');
+        Route::post('/sync', [InvoiceDriverController::class, 'sync'])->name('sync');
+        Route::post('/print-selected', [InvoiceDriverController::class, 'printSelectedPdf'])->name('print-selected');
+        Route::get('/{invoice}', [InvoiceDriverController::class, 'show'])->name('show');
+        Route::get('/{invoice}/pdf', [InvoiceDriverController::class, 'printPdf'])->name('print');
+    });
+
+    // Invoice Other (requires invoice_driver or admin role)
+    Route::prefix('invoice-other')->name('invoice-other.')->middleware('role:invoice_driver')->group(function () {
+        Route::get('/', [InvoiceOtherController::class, 'index'])->name('index');
+        Route::post('/sync', [InvoiceOtherController::class, 'sync'])->name('sync');
+        Route::post('/print-selected', [InvoiceOtherController::class, 'printSelectedPdf'])->name('print-selected');
+        Route::get('/{invoice}', [InvoiceOtherController::class, 'show'])->name('show');
+        Route::get('/{invoice}/pdf', [InvoiceOtherController::class, 'printPdf'])->name('print');
+    });
 
     // Settings
     Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');

@@ -55,9 +55,7 @@
             </form>
         </div>
 
-        <p class="text-center text-slate-500 text-sm mt-6">
-            Don't have an account? <a href="{{ route('register') }}" class="text-emerald-400 hover:text-emerald-300 transition">Register</a>
-        </p>
+
     </div>
 </body>
 </html>

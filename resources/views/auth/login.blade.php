@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Cash Bank</title>
+    <title>Login - {{ config('app.name', 'Odoo Finance SDP') }}</title>
     <link rel="icon" href="{{ asset('favicon.ico') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>

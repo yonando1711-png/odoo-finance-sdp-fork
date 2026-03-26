@@ -16,8 +16,7 @@ services:
       - APP_URL=http://localhost:8006
       - SERVER_NAME=:80
       - DB_CONNECTION=sqlite
-    volumes:
-      - odoo_finance_data:/app/database
+      - odoo_finance_data:/app/database/data
       - odoo_finance_storage:/app/storage
     networks:
       - odoo_finance_net

@@ -280,8 +280,10 @@ class InvoiceOtherController extends Controller
             }
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-other.pdf', compact('invoices'))
-                ->setPaper('a4', 'portrait');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-other.pdf', [
+            'invoices' => $invoices,
+            'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
+        ])->setPaper('a4', 'portrait');
 
         $filename = 'invoice_other_' . str_replace('/', '_', $invoice->name);
         if ($invoice->print_count > 0) {

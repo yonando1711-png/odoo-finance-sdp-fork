@@ -276,7 +276,10 @@ class InvoiceRentalController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-rental.pdf', [
             'invoices' => $invoices,
             'showUsername' => $showUsername,
-            'printMode' => $printMode
+            'printMode' => $printMode,
+            'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
+            'defaultManager' => Setting::get('default_bc_manager', ''),
+            'defaultSpv' => Setting::get('default_bc_spv', ''),
         ])->setPaper('a4', 'portrait');
 
         $filename = 'invoice_rental_' . str_replace('/', '_', $invoice->name);

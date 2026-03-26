@@ -265,8 +265,10 @@ class InvoiceDriverController extends Controller
             }
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-driver.pdf', compact('invoices'))
-                ->setPaper('a4', 'portrait');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-driver.pdf', [
+            'invoices' => $invoices,
+            'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
+        ])->setPaper('a4', 'portrait');
 
         $filename = 'invoice_driver_' . str_replace('/', '_', $invoice->name);
         if ($invoice->print_count > 0) {

@@ -271,7 +271,7 @@
             <thead>
                 <tr>
                     <td colspan="{{ $showUnitColumn ? 5 : 4 }}" style="border: none; padding: 0 0 10px 0; background-color: white; position: relative;">
-                        @if(\App\Models\Setting::get('enable_pdf_watermark', '1') === '1' && isset($invoice->print_count) && $invoice->print_count > 0)
+                        @if(($enableWatermark ?? '1') === '1' && isset($invoice->print_count) && $invoice->print_count > 0)
                             <div class="watermark">DUPLICATE - {{ $invoice->print_count }}</div>
                         @endif
 

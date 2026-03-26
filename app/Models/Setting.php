@@ -8,10 +8,19 @@ class Setting extends Model
 {
     protected $fillable = ['key', 'value'];
 
+    protected static $cache = [];
+    
     public static function get(string $key, $default = null): ?string
     {
+        if (isset(static::$cache[$key])) {
+            return static::$cache[$key];
+        }
+
         $setting = static::where('key', $key)->first();
-        return $setting ? $setting->value : $default;
+        $value = $setting ? $setting->value : $default;
+        
+        static::$cache[$key] = $value;
+        return $value;
     }
 
     public static function set(string $key, $value): void

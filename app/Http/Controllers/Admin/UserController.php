@@ -27,7 +27,7 @@ class UserController extends Controller
         }
 
         $users = $query->paginate(20);
-        $roles = ['admin' => 'Admin', 'user' => 'User'];
+        $roles = ['admin' => 'Admin', 'user' => 'User', 'invoice' => 'Invoice'];
 
         return view('admin.users.index', compact('users', 'roles'));
     }
@@ -43,7 +43,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
             'password' => ['required', 'confirmed', Password::defaults()],
-            'role' => 'required|in:admin,user',
+            'role' => 'required|in:admin,user,invoice',
         ]);
 
         User::create([
@@ -67,7 +67,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => ['nullable', 'confirmed', Password::defaults()],
-            'role' => 'required|in:admin,user',
+            'role' => 'required|in:admin,user,invoice',
         ]);
 
         $user->update([

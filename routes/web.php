@@ -50,7 +50,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Invoice Driver
-    Route::group(['prefix' => 'invoice-driver', 'as' => 'invoice-driver.', 'middleware' => 'role:invoice_driver'], function () {
+    Route::group(['prefix' => 'invoice-driver', 'as' => 'invoice-driver.', 'middleware' => 'role:invoice'], function () {
         Route::get('/', [InvoiceDriverController::class, 'index'])->name('index');
         Route::post('/sync', [InvoiceDriverController::class, 'sync'])->name('sync');
         Route::post('/print-selected', [InvoiceDriverController::class, 'printSelectedPdf'])->name('print-selected');
@@ -59,7 +59,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Invoice Other
-    Route::group(['prefix' => 'invoice-other', 'as' => 'invoice-other.', 'middleware' => 'role:invoice_driver'], function () {
+    Route::group(['prefix' => 'invoice-other', 'as' => 'invoice-other.', 'middleware' => 'role:invoice'], function () {
         Route::get('/', [InvoiceOtherController::class, 'index'])->name('index');
         Route::post('/sync', [InvoiceOtherController::class, 'sync'])->name('sync');
         Route::post('/print-selected', [InvoiceOtherController::class, 'printSelectedPdf'])->name('print-selected');
@@ -68,7 +68,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Invoice Rental
-    Route::group(['prefix' => 'invoice-rental', 'as' => 'invoice-rental.', 'middleware' => 'role:invoice_driver'], function () {
+    Route::group(['prefix' => 'invoice-rental', 'as' => 'invoice-rental.', 'middleware' => 'role:invoice'], function () {
         Route::get('/', [InvoiceRentalController::class, 'index'])->name('index');
         Route::post('/sync', [InvoiceRentalController::class, 'sync'])->name('sync');
         Route::post('/print-selected', [InvoiceRentalController::class, 'printSelectedPdf'])->name('print-selected');
@@ -77,7 +77,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Invoice Vehicle (Penjualan Kendaraan)
-    Route::group(['prefix' => 'invoice-vehicle', 'as' => 'invoice-vehicle.', 'middleware' => 'role:invoice_driver'], function () {
+    Route::group(['prefix' => 'invoice-vehicle', 'as' => 'invoice-vehicle.', 'middleware' => 'role:invoice'], function () {
         Route::get('/', [InvoiceVehicleController::class, 'index'])->name('index');
         Route::post('/sync', [InvoiceVehicleController::class, 'sync'])->name('sync');
         Route::post('/print-selected', [InvoiceVehicleController::class, 'printSelectedPdf'])->name('print-selected');

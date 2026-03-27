@@ -26,7 +26,7 @@
                     <label class="block text-sm font-medium text-slate-600 dark:text-slate-400 mb-1">Role</label>
                     <select name="role" class="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
                         <option value="user">User</option>
-                        <option value="invoice_driver">Invoice Driver</option>
+                        <option value="invoice">Invoice</option>
                         <option value="admin">Admin</option>
                     </select>
                 </div>

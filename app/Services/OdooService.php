@@ -168,55 +168,109 @@ class OdooService
             // Deep Sync for Vendor Bills via Reconciliation
             $deepSync = \App\Models\Setting::get('odoo_deep_sync_journal', '0') === '1';
             if ($deepSync && !empty($entries)) {
-                $reconcileIds = [];
+                $allReconcileIds = [];
                 foreach ($entries as $entry) {
                     foreach ($entry['lines'] as $line) {
                         if (!empty($line['reconcile_id'])) {
-                            $reconcileIds[] = (int)$line['reconcile_id'];
+                            $allReconcileIds[] = (int)$line['reconcile_id'];
                         }
                     }
                 }
-                $reconcileIds = array_values(array_unique($reconcileIds));
+                $allReconcileIds = array_values(array_unique($allReconcileIds));
 
-                if (!empty($reconcileIds)) {
-                    // Fetch other lines (Bills) that share these reconciliation IDs
-                    $linkedLines = $this->execute('account.move.line', 'search_read', [
-                        [['full_reconcile_id', 'in', $reconcileIds]],
-                        ['full_reconcile_id', 'move_name', 'move_id']
-                    ]);
+                if (!empty($allReconcileIds)) {
+                    $billMap = []; // Final map from RecID to Bill Name
+                    $processedRecIds = [];
+                    $currentRecIds = $allReconcileIds;
+                    
+                    // Keep track of which original RecID each discovered RecID belongs to
+                    // mapping: discovered_rec_id => [original_rec_id, ...]
+                    $recRelationships = [];
+                    foreach ($allReconcileIds as $rid) {
+                        $recRelationships[$rid] = [$rid];
+                    }
+                    
+                    for ($level = 0; $level < 2; $level++) {
+                        if (empty($currentRecIds)) break;
+                        
+                        $linkedLines = $this->execute('account.move.line', 'search_read', [
+                            [['full_reconcile_id', 'in', $currentRecIds]],
+                            ['full_reconcile_id', 'move_name', 'move_id']
+                        ]);
 
-                    if (is_array($linkedLines)) {
-                        $billMap = [];
+                        if (!is_array($linkedLines)) break;
+
+                        $nextRecIds = [];
+                        $moveIdsToCheck = []; // move_id => [parent_rec_id, ...]
+
                         foreach ($linkedLines as $ll) {
                             $recIdFull = $ll['full_reconcile_id'] ?? null;
                             $recId = is_array($recIdFull) ? $recIdFull[0] : (int)$recIdFull;
                             
                             $moveName = $ll['move_name'] ?? '';
                             
-                            // Check if this move is a Vendor Bill (BILLO, INV, etc.)
-                            // Or look at the move_id's display name
-                            $moveRef = '';
-                            if (isset($ll['move_id']) && is_array($ll['move_id'])) {
-                                $moveDisplayName = $ll['move_id'][1] ?? '';
-                                if (preg_match('/\((.*)\)/', $moveDisplayName, $matches)) {
-                                    $moveRef = $matches[1];
-                                }
-                            }
-
-                            // We only want to map it if it LOOKS like a bill (BILL or INV)
-                            // or if it's different from the original move prefix
+                            // If it's a bill, attribute it to all its "ancestor" RecIDs
                             if (stripos($moveName, 'BILL') !== false || stripos($moveName, 'INV') !== false) {
-                                $billMap[$recId] = !empty($moveRef) ? "{$moveName} ({$moveRef})" : $moveName;
+                                $moveRef = '';
+                                if (isset($ll['move_id']) && is_array($ll['move_id'])) {
+                                    $moveDisplayName = $ll['move_id'][1] ?? '';
+                                    if (preg_match('/\((.*)\)/', $moveDisplayName, $matches)) {
+                                        $moveRef = $matches[1];
+                                    }
+                                }
+                                $billName = !empty($moveRef) ? "{$moveName} ({$moveRef})" : $moveName;
+                                
+                                foreach (($recRelationships[$recId] ?? [$recId]) as $ancestorId) {
+                                    $billMap[$ancestorId] = $billName;
+                                }
+                            } else {
+                                // If it's NOT a bill, check other lines of this move for more reconciliations
+                                if (isset($ll['move_id'][0])) {
+                                    $moveIdsToCheck[$ll['move_id'][0]] = $recRelationships[$recId] ?? [$recId];
+                                }
                             }
                         }
 
-                        // Map back to entries
-                        foreach ($entries as &$entry) {
-                            foreach ($entry['lines'] as &$line) {
-                                if (!empty($line['reconcile_id']) && isset($billMap[$line['reconcile_id']])) {
-                                    if (empty($entry['payment_reference'])) {
-                                        $entry['payment_reference'] = $billMap[$line['reconcile_id']];
+                        // Check moves for other reconciliations
+                        if (!empty($moveIdsToCheck)) {
+                            $mIds = array_keys($moveIdsToCheck);
+                            $otherLines = $this->execute('account.move.line', 'search_read', [
+                                [['move_id', 'in', $mIds], ['full_reconcile_id', '!=', false]],
+                                ['full_reconcile_id', 'move_id']
+                            ]);
+                            
+                            if (is_array($otherLines)) {
+                                foreach ($otherLines as $ol) {
+                                    $nextIdFull = $ol['full_reconcile_id'] ?? null;
+                                    $nextId = is_array($nextIdFull) ? $nextIdFull[0] : (int)$nextIdFull;
+                                    $mId = $ol['move_id'][0] ?? null;
+                                    
+                                    if ($nextId && !in_array($nextId, $processedRecIds) && !in_array($nextId, $currentRecIds)) {
+                                        $nextRecIds[] = $nextId;
+                                        // Pass the ancestors down
+                                        $ancestors = $moveIdsToCheck[$mId] ?? [];
+                                        foreach ($ancestors as $aid) {
+                                            if (!isset($recRelationships[$nextId])) $recRelationships[$nextId] = [];
+                                            if (!in_array($aid, $recRelationships[$nextId])) {
+                                                $recRelationships[$nextId][] = $aid;
+                                            }
+                                        }
                                     }
+                                }
+                            }
+                        }
+
+                        $processedRecIds = array_merge($processedRecIds, $currentRecIds);
+                        $currentRecIds = array_values(array_unique($nextRecIds));
+                    }
+
+                    // Map bills back to entries
+                    foreach ($entries as &$entry) {
+                        foreach ($entry['lines'] as &$line) {
+                            if (!empty($line['reconcile_id'])) {
+                                $rid = (int)$line['reconcile_id'];
+                                if (isset($billMap[$rid])) {
+                                    $this->appendPaymentRef($entry, $billMap[$rid]);
                                 }
                             }
                         }
@@ -231,6 +285,18 @@ class OdooService
             ];
         } catch (\Exception $e) {
             return ['success' => false, 'message' => 'Fetch failed: ' . $e->getMessage(), 'data' => []];
+        }
+    }
+
+    /**
+     * Helper to append payment reference without duplicates
+     */
+    protected function appendPaymentRef(array &$entry, string $ref): void
+    {
+        if (empty($entry['payment_reference'])) {
+            $entry['payment_reference'] = $ref;
+        } elseif (stripos($entry['payment_reference'], $ref) === false) {
+            $entry['payment_reference'] .= ', ' . $ref;
         }
     }
 

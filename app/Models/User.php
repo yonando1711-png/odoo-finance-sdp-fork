@@ -45,7 +45,7 @@ class User extends Authenticatable
     {
         return match($this->role) {
             'admin' => 'Administrator',
-            'invoice_driver' => 'Invoice Driver',
+            'invoice' => 'Invoice',
             default => 'User',
         };
     }

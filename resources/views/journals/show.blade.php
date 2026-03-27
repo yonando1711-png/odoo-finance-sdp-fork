@@ -91,9 +91,13 @@
                 <p class="text-xs text-slate-500 mb-1">Partner</p>
                 <p class="font-medium truncate" title="{{ $entry->partner_name }}">{{ $entry->partner_name ?? '-' }}</p>
             </div>
-            <div class="col-span-2">
+            <div class="col-span-1">
                 <p class="text-xs text-slate-500 mb-1">Reference</p>
-                <p class="font-medium text-slate-600 dark:text-slate-400 italic">"{{ $entry->ref ?? 'No reference' }}"</p>
+                <p class="font-medium text-slate-600 dark:text-slate-400 truncate" title="{{ $entry->ref }}">"{{ $entry->ref ?? '-' }}"</p>
+            </div>
+            <div class="col-span-1 border-l border-slate-100 dark:border-slate-700 pl-6">
+                <p class="text-xs text-slate-500 mb-1">Bill No</p>
+                <p class="font-medium text-slate-700 dark:text-slate-300">{{ $entry->payment_reference ?? '-' }}</p>
             </div>
             <div class="col-span-2 text-right">
                 <p class="text-xs text-slate-500 mb-1">Total Signed Amount</p>

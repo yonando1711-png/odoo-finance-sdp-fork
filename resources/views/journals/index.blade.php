@@ -184,15 +184,21 @@
                 <div class="flex gap-2 items-end pb-[2px]">
                     <button type="submit" class="px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors">Filter</button>
                     <a href="{{ route('journals.index') }}" class="px-4 py-2 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-sm font-medium rounded-lg hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">Clear</a>
-                    <a href="{{ route('journals.print-all', request()->all()) }}" target="_blank" class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1">
+                    <a href="{{ route('journals.print-all-html', request()->all()) }}" target="_blank" title="Direct Print All" class="px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                        <span class="hidden sm:inline">Print All (PDF)</span>
-                        <span class="sm:hidden">Print All</span>
+                        <span class="hidden md:inline">Print All</span>
                     </a>
-                    <button type="submit" form="bulkPrintForm" id="printSelectedBtn" class="px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-1 opacity-50 cursor-not-allowed" disabled>
+                    <a href="{{ route('journals.print-all', request()->all()) }}" target="_blank" title="Export All PDF" class="px-3 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span class="hidden md:inline">PDF All</span>
+                    </a>
+                    <button type="submit" form="bulkPrintForm" formaction="{{ route('journals.print-selected-html') }}" class="printSelectedBtn px-3 py-2 bg-sky-600 text-white text-sm font-medium rounded-lg hover:bg-sky-700 transition-colors flex items-center gap-1 opacity-50 cursor-not-allowed" disabled title="Direct Print Selected">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                        <span class="hidden sm:inline">Print Selected (<span id="selectedCount">0</span>)</span>
-                        <span class="sm:hidden">Selected (<span id="selectedCountSm">0</span>)</span>
+                        <span class="hidden md:inline">Print (<span class="selectedCount">0</span>)</span>
+                    </button>
+                    <button type="submit" form="bulkPrintForm" formaction="{{ route('journals.print-selected') }}" class="printSelectedBtn px-3 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-1 opacity-50 cursor-not-allowed" disabled title="Export Selected PDF">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        <span class="hidden md:inline">PDF (<span class="selectedCountSm">0</span>)</span>
                     </button>
                 </div>
             </div>
@@ -309,8 +315,11 @@
                             <td x-show="columns.name.visible" :style="{ width: columns.name.width, minWidth: columns.name.width }" class="px-3 py-2 font-mono text-xs font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap align-top sticky left-10 bg-white dark:bg-slate-800 z-10" rowspan="{{ $entry->lines->count() }}">
                                 <div class="flex items-center gap-2">
                                     <a href="{{ route('journals.show', $entry) }}" class="hover:underline">{{ $entry->move_name }}</a>
-                                    <a href="{{ route('journals.print', $entry) }}" target="_blank" title="Print PDF" class="text-slate-400 hover:text-indigo-600 transition-colors">
+                                    <a href="{{ route('journals.print-html', $entry) }}" target="_blank" title="Direct Print" class="text-slate-400 hover:text-blue-600 transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                    </a>
+                                    <a href="{{ route('journals.print', $entry) }}" target="_blank" title="Export PDF" class="text-slate-400 hover:text-indigo-600 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                     </a>
                                 </div>
                             </td>
@@ -385,22 +394,22 @@
     document.addEventListener('DOMContentLoaded', function() {
         const selectAll = document.getElementById('selectAllCheckbox');
         const checkboxes = document.querySelectorAll('.entry-checkbox');
-        const printBtn = document.getElementById('printSelectedBtn');
-        const countSpan = document.getElementById('selectedCount');
-        const countSpanSm = document.getElementById('selectedCountSm');
+        const printBtns = document.querySelectorAll('.printSelectedBtn');
+        const countSpan = document.querySelector('.selectedCount');
+        const countSpanSm = document.querySelector('.selectedCountSm');
 
         function updateSelection() {
             const checkedCount = document.querySelectorAll('.entry-checkbox:checked').length;
             if (countSpan) countSpan.textContent = checkedCount;
             if (countSpanSm) countSpanSm.textContent = checkedCount;
-            if (printBtn) {
+            printBtns.forEach(printBtn => {
                 printBtn.disabled = checkedCount === 0;
                 if (checkedCount === 0) {
                     printBtn.classList.add('opacity-50', 'cursor-not-allowed');
                 } else {
                     printBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 }
-            }
+            });
         }
 
         if (selectAll && checkboxes.length > 0) {

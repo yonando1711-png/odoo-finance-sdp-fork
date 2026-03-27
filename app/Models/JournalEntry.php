@@ -13,6 +13,7 @@ class JournalEntry extends Model
         'move_name',
         'partner_name',
         'ref',
+        'payment_reference',
         'amount_total_signed',
     ];
 

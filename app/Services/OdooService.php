@@ -70,17 +70,20 @@ class OdooService
 
             // Export fields matching the Excel columns
             $exportFields = [
-                'name',                           // 0: Move name (e.g. KJKT/2026/00427)
-                'date',                            // 1: Date
-                'journal_id/display_name',         // 2: Journal name (e.g. Kas Jakarta)
-                'partner_id/display_name',         // 3: Partner
-                'ref',                             // 4: Reference
-                'amount_total_signed',             // 5: Total amount
-                'line_ids/account_id/display_name',// 6: Account (e.g. "111002 Kas Jakarta")
-                'line_ids/display_name',           // 7: Line description
-                'line_ids/ref',                    // 8: Line reference
-                'line_ids/debit',                  // 9: Debit
-                'line_ids/credit',                 // 10: Credit
+                'id',                             // 0: Odoo ID
+                'name',                           // 1: Move name (e.g. KJKT/2026/00427)
+                'date',                            // 2: Date
+                'journal_id/display_name',         // 3: Journal name (e.g. Kas Jakarta)
+                'partner_id/display_name',         // 4: Partner
+                'ref',                             // 5: Reference
+                'amount_total_signed',             // 6: Total amount
+                'line_ids/account_id/display_name',// 7: Account (e.g. "111002 Kas Jakarta")
+                'line_ids/display_name',           // 8: Line description
+                'line_ids/ref',                    // 9: Line reference
+                'line_ids/debit',                  // 10: Debit
+                'line_ids/credit',                 // 11: Credit
+                'payment_reference',               // 12: Payment Reference (Vendor Bill)
+                'line_ids/full_reconcile_id/.id',  // 13: Reconciliation ID (Numeric)
             ];
 
             // Chunked export_data to prevent memory issues for large moves
@@ -98,8 +101,9 @@ class OdooService
                 $currentEntry = null;
 
                 foreach ($result['datas'] as $row) {
-                    $moveName = $row[0] ?? '';
-                    $accountDisplay = $row[6] ?? '';
+                    $odooId = $row[0] ?? '';
+                    $moveName = $row[1] ?? '';
+                    $accountDisplay = $row[7] ?? '';
                     
                     // Extract account code from display name
                     $accountCode = '';
@@ -116,12 +120,14 @@ class OdooService
                             $entries[] = $currentEntry;
                         }
                         $currentEntry = [
+                            'odoo_id' => $row[0] ?? '',
                             'move_name' => $moveName,
-                            'date' => $row[1] ?? '',
-                            'journal_name' => $row[2] ?? '',
-                            'partner_name' => $row[3] ?? '',
-                            'ref' => $row[4] ?? '',
-                            'amount_total_signed' => (float)($row[5] ?? 0),
+                            'date' => $row[2] ?? '',
+                            'journal_name' => $row[3] ?? '',
+                            'partner_name' => $row[4] ?? '',
+                            'ref' => $row[5] ?? '',
+                            'amount_total_signed' => (float)($row[6] ?? 0),
+                            'payment_reference' => $row[12] ?? '',
                             'lines' => [],
                         ];
                     }
@@ -131,10 +137,11 @@ class OdooService
                         $currentEntry['lines'][] = [
                             'account_code' => $accountCode,
                             'account_name' => $accountName,
-                            'display_name' => $row[7] ?? '',
-                            'ref' => $row[8] ?? '',
-                            'debit' => (float)($row[9] ?? 0),
-                            'credit' => (float)($row[10] ?? 0),
+                            'display_name' => $row[8] ?? '',
+                            'ref' => $row[9] ?? '',
+                            'debit' => (float)($row[10] ?? 0),
+                            'credit' => (float)($row[11] ?? 0),
+                            'reconcile_id' => $row[13] ?? null,
                         ];
                     }
                 }
@@ -156,6 +163,65 @@ class OdooService
                     }
                     return false;
                 }));
+            }
+
+            // Deep Sync for Vendor Bills via Reconciliation
+            $deepSync = \App\Models\Setting::get('odoo_deep_sync_journal', '0') === '1';
+            if ($deepSync && !empty($entries)) {
+                $reconcileIds = [];
+                foreach ($entries as $entry) {
+                    foreach ($entry['lines'] as $line) {
+                        if (!empty($line['reconcile_id'])) {
+                            $reconcileIds[] = (int)$line['reconcile_id'];
+                        }
+                    }
+                }
+                $reconcileIds = array_values(array_unique($reconcileIds));
+
+                if (!empty($reconcileIds)) {
+                    // Fetch other lines (Bills) that share these reconciliation IDs
+                    $linkedLines = $this->execute('account.move.line', 'search_read', [
+                        [['full_reconcile_id', 'in', $reconcileIds]],
+                        ['full_reconcile_id', 'move_name', 'move_id']
+                    ]);
+
+                    if (is_array($linkedLines)) {
+                        $billMap = [];
+                        foreach ($linkedLines as $ll) {
+                            $recIdFull = $ll['full_reconcile_id'] ?? null;
+                            $recId = is_array($recIdFull) ? $recIdFull[0] : (int)$recIdFull;
+                            
+                            $moveName = $ll['move_name'] ?? '';
+                            
+                            // Check if this move is a Vendor Bill (BILLO, INV, etc.)
+                            // Or look at the move_id's display name
+                            $moveRef = '';
+                            if (isset($ll['move_id']) && is_array($ll['move_id'])) {
+                                $moveDisplayName = $ll['move_id'][1] ?? '';
+                                if (preg_match('/\((.*)\)/', $moveDisplayName, $matches)) {
+                                    $moveRef = $matches[1];
+                                }
+                            }
+
+                            // We only want to map it if it LOOKS like a bill (BILL or INV)
+                            // or if it's different from the original move prefix
+                            if (stripos($moveName, 'BILL') !== false || stripos($moveName, 'INV') !== false) {
+                                $billMap[$recId] = !empty($moveRef) ? "{$moveName} ({$moveRef})" : $moveName;
+                            }
+                        }
+
+                        // Map back to entries
+                        foreach ($entries as &$entry) {
+                            foreach ($entry['lines'] as &$line) {
+                                if (!empty($line['reconcile_id']) && isset($billMap[$line['reconcile_id']])) {
+                                    if (empty($entry['payment_reference'])) {
+                                        $entry['payment_reference'] = $billMap[$line['reconcile_id']];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             return [

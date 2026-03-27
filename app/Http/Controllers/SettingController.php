@@ -17,6 +17,8 @@ class SettingController extends Controller
             'default_bc_manager' => Setting::get('default_bc_manager', ''),
             'default_bc_spv'     => Setting::get('default_bc_spv', ''),
             'enable_pdf_watermark' => Setting::get('enable_pdf_watermark', '1'),
+            'journal_paper_size' => Setting::get('journal_paper_size', 'A5'),
+            'odoo_deep_sync_journal' => Setting::get('odoo_deep_sync_journal', '0'),
         ];
 
         $odooConfig = Setting::getOdooConfig();
@@ -36,6 +38,8 @@ class SettingController extends Controller
         Setting::set('default_bc_manager', $request->input('default_bc_manager', ''));
         Setting::set('default_bc_spv', $request->input('default_bc_spv', ''));
         Setting::set('enable_pdf_watermark', $request->has('enable_pdf_watermark') ? '1' : '0');
+        Setting::set('journal_paper_size', $request->input('journal_paper_size', 'A5'));
+        Setting::set('odoo_deep_sync_journal', $request->has('odoo_deep_sync_journal') ? '1' : '0');
         return back()->with('success', 'Settings updated successfully.');
     }
 

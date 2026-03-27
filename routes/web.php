@@ -40,9 +40,12 @@ Route::middleware('auth')->group(function () {
     Route::group(['prefix' => 'journals', 'as' => 'journals.'], function () {
         Route::get('/', [JournalController::class, 'index'])->name('index');
         Route::get('/export-pdf', [JournalController::class, 'printAllPdf'])->name('print-all');
+        Route::get('/export-html', [JournalController::class, 'printAllHtml'])->name('print-all-html');
         Route::post('/export-selected-pdf', [JournalController::class, 'printSelectedPdf'])->name('print-selected');
+        Route::post('/export-selected-html', [JournalController::class, 'printSelectedHtml'])->name('print-selected-html');
         Route::get('/{entry}', [JournalController::class, 'show'])->name('show');
         Route::get('/{entry}/pdf', [JournalController::class, 'printPdf'])->name('print');
+        Route::get('/{entry}/html', [JournalController::class, 'printHtml'])->name('print-html');
     });
 
     // Invoice Driver

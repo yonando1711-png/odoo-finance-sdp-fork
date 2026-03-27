@@ -44,6 +44,30 @@
                         <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-blue-600"></div>
                     </label>
                 </div>
+
+                <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <div>
+                        <p class="font-medium text-violet-600 dark:text-violet-500">Enable Deep Sync (Vendor Bill)</p>
+                        <p class="text-xs text-slate-500 mt-1">If enabled, the system will perform extra lookups in Odoo to find the Vendor Bill number for payment journals. This makes synchronization slower but more complete.</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" name="odoo_deep_sync_journal" value="1" {{ $settings['odoo_deep_sync_journal'] === '1' ? 'checked' : '' }} class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-violet-300 dark:peer-focus:ring-violet-800 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-violet-600"></div>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                    <div>
+                        <p class="font-medium text-indigo-600 dark:text-indigo-500">Journal Print Paper Size</p>
+                        <p class="text-xs text-slate-500 mt-1">Select the default paper size for printing Journal Entries. A4 will print 2 entries per page.</p>
+                    </div>
+                    <div>
+                        <select name="journal_paper_size" class="px-8 py-1.5 pr-10 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M5%208l5%205%205-5%22%20fill%3D%22none%22%20stroke%3D%22%2364748b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E')] bg-[length:20px_20px] bg-[right_8px_center] bg-no-repeat cursor-pointer">
+                            <option value="A5" {{ $settings['journal_paper_size'] === 'A5' ? 'selected' : '' }}>A5 (1-up)</option>
+                            <option value="A4" {{ $settings['journal_paper_size'] === 'A4' ? 'selected' : '' }}>A4 (2-up)</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div class="space-y-4">

@@ -184,11 +184,13 @@ class ImportController extends Controller
             $journalEntry = JournalEntry::updateOrCreate(
                 ['move_name' => $entry['move_name']],
                 [
+                    'odoo_id' => $entry['odoo_id'] ?? null,
                     'date' => $entry['date'],
                     'journal_name' => $entry['journal_name'],
                     'partner_name' => $entry['partner_name'] ?? null,
                     'ref' => $entry['ref'] ?? null,
                     'amount_total_signed' => $entry['amount_total_signed'],
+                    'payment_reference' => $entry['payment_reference'] ?? null,
                 ]
             );
             

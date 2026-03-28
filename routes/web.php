@@ -32,21 +32,31 @@ Route::middleware('auth')->group(function () {
     // Dashboard / Landing
     Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Import Data Routes
-    Route::get('/import', [ImportController::class, 'index'])->name('import');
-    Route::post('/import/odoo/sync', [ImportController::class, 'syncOdoo'])->name('import.odoo.sync');
-    Route::get('/import/history', [ImportController::class, 'history'])->name('import.history');
+    // ──────────────────────────────────────────
+    // Admin/Manager Routes (requires admin role)
+    // ──────────────────────────────────────────
+    Route::middleware('role:admin')->group(function () {
+        // Import Data Routes
+        Route::get('/import', [ImportController::class, 'index'])->name('import');
+        Route::post('/import/odoo/sync', [ImportController::class, 'syncOdoo'])->name('import.odoo.sync');
+        Route::get('/import/history', [ImportController::class, 'history'])->name('import.history');
 
-    // Journal entries
-    Route::group(['prefix' => 'journals', 'as' => 'journals.'], function () {
-        Route::get('/', [JournalController::class, 'index'])->name('index');
-        Route::get('/export-pdf', [JournalController::class, 'printAllPdf'])->name('print-all');
-        Route::get('/export-html', [JournalController::class, 'printAllHtml'])->name('print-all-html');
-        Route::post('/export-selected-pdf', [JournalController::class, 'printSelectedPdf'])->name('print-selected');
-        Route::post('/export-selected-html', [JournalController::class, 'printSelectedHtml'])->name('print-selected-html');
-        Route::get('/{entry}', [JournalController::class, 'show'])->name('show');
-        Route::get('/{entry}/pdf', [JournalController::class, 'printPdf'])->name('print');
-        Route::get('/{entry}/html', [JournalController::class, 'printHtml'])->name('print-html');
+        // Journal entries
+        Route::group(['prefix' => 'journals', 'as' => 'journals.'], function () {
+            Route::get('/', [JournalController::class, 'index'])->name('index');
+            Route::get('/export-pdf', [JournalController::class, 'printAllPdf'])->name('print-all');
+            Route::get('/export-html', [JournalController::class, 'printAllHtml'])->name('print-all-html');
+            Route::post('/export-selected-pdf', [JournalController::class, 'printSelectedPdf'])->name('print-selected');
+            Route::post('/export-selected-html', [JournalController::class, 'printSelectedHtml'])->name('print-selected-html');
+            Route::get('/{entry}', [JournalController::class, 'show'])->name('show');
+            Route::get('/{entry}/pdf', [JournalController::class, 'printPdf'])->name('print');
+            Route::get('/{entry}/html', [JournalController::class, 'printHtml'])->name('print-html');
+        });
+
+        // Settings
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/settings/empty-database', [SettingController::class, 'emptyDatabase'])->name('settings.empty-database');
     });
 
     // Invoice Driver
@@ -85,10 +95,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{invoice}/pdf', [InvoiceVehicleController::class, 'printPdf'])->name('print');
     });
 
-    // Settings
-    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
-    Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
-    Route::post('/settings/empty-database', [SettingController::class, 'emptyDatabase'])->name('settings.empty-database');
+
 
     // ──────────────────────────────────────────
     // Admin Routes (requires admin role)

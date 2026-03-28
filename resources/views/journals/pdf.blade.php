@@ -26,11 +26,9 @@
         .voucher-page {
             position: relative;
         }
-        .voucher-page:not(:last-child) {
-            page-break-after: always;
-        }
-        .voucher-page:last-child {
-            page-break-after: auto;
+        /* Use page-break-before instead of page-break-after for dompdf multi-page entries */
+        .voucher-page-break {
+            page-break-before: always;
         }
         .header-move-name {
             font-size: 26px;
@@ -119,7 +117,7 @@
     @else
         {{-- A5 Mode: 1 voucher per page, thead repetition enabled for sticky headers --}}
         @foreach($entries as $entry)
-        <div class="voucher-page">
+        <div class="voucher-page {{ !$loop->first ? 'voucher-page-break' : '' }}">
             @include('journals.partials.voucher', ['entry' => $entry, 'isPdf' => true, 'useRepeatHeader' => true])
         </div>
         @endforeach

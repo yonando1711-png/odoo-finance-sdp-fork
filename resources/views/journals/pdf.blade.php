@@ -113,6 +113,13 @@
             background-color: #f8fafc;
         }
         .text-right { text-align: right; }
+
+        /* Ensure repeated header doesn't have borders/styles from th */
+        .lines-table thead tr:first-child td {
+            border: none !important;
+            background-color: white !important;
+            padding: 0 0 15px 0 !important;
+        }
     </style>
 </head>
 <body>

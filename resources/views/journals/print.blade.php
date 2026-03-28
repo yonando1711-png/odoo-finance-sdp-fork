@@ -58,9 +58,7 @@
         .lines-table > tbody > tr {
             page-break-inside: avoid;
         }
-        .lines-table thead {
-            display: table-header-group;
-        }
+
         .lines-table th {
             text-align: left;
             border-top: 1px solid #1e293b;
@@ -162,6 +160,10 @@
                 .voucher-entry { display: none; }
             @else
                 @page { size: A5 landscape; margin: 10mm; }
+                /* Disable Chrome's native thead repetition - JS handles this */
+                .lines-table thead {
+                    display: table-row-group;
+                }
                 .voucher-entry {
                     box-shadow: none;
                     padding: 0;

@@ -3,7 +3,7 @@
                 {{-- Repeating Header Content --}}
                 <tr>
                     <td colspan="5" style="border: none; padding: 0 0 10px 0; background-color: white;">
-                        <table class="header-table" style="margin-bottom: 10px; border: none;">
+                        <table class="header-table metadata-table" style="margin-bottom: 10px; border: none;">
                             <tr>
                                 <td style="vertical-align: middle; border: none; padding: 0;">
                                     <div class="header-move-name">{{ $entry->move_name }}</div>
@@ -21,10 +21,10 @@
                             </tr>
                         </table>
                         
-                        <table class="info-table" style="margin-bottom: 10px; border: none;">
+                        <table class="info-table metadata-table" style="margin-bottom: 10px; border: none;">
                             <tr>
                                 <td style="width: 50%; padding-right: 20px; border: none; padding-top: 5px;">
-                                    <table style="width: 100%; table-layout: auto; border: none;">
+                                    <table class="metadata-table" style="width: 100%; table-layout: auto; border: none;">
                                         <tr>
                                             <td class="info-label" style="border: none;">Reference</td>
                                             <td style="border: none;">
@@ -37,7 +37,7 @@
                                     </table>
                                 </td>
                                 <td style="width: 50%; border: none; padding-top: 5px;">
-                                    <table style="width: 100%; table-layout: auto; border: none;">
+                                    <table class="metadata-table" style="width: 100%; table-layout: auto; border: none;">
                                         <tr>
                                             <td class="info-label" style="width: 130px; border: none;">Accounting Date</td>
                                             <td style="border: none;">{{ \Carbon\Carbon::parse($entry->date)->locale('id')->isoFormat('D MMMM YYYY') }}</td>

@@ -104,16 +104,25 @@
         }
         .text-right { text-align: right; }
 
-        /* Repeated Header styling */
-        .lines-table thead {
-            display: table-header-group;
+        /* Repeated Header styling - for browser print support */
+        @media print {
+            .lines-table thead {
+                display: table-header-group !important;
+            }
         }
+        
         .lines-table thead tr:first-child td {
             border: none !important;
             border-bottom: 1px solid #cbd5e1 !important; /* Divider Line */
             background-color: white !important;
             padding: 0 0 15px 0 !important;
-            margin-bottom: 10px !important;
+            margin-bottom: 15px !important;
+        }
+
+        /* Strip all borders from nested metadata tables */
+        .metadata-table, .metadata-table tr, .metadata-table td {
+            border: none !important;
+            box-shadow: none !important;
         }
 
         /* Print Specifics */
@@ -142,7 +151,7 @@
                 }
                 .voucher-wrapper {
                     height: 48%; /* Slightly less than 50 to avoid spilling */
-                    overflow: hidden;
+                    overflow: visible !important; /* CRITICAL: overflow:hidden breaks sticky thead in browsers */
                     box-sizing: border-box;
                     padding: 10px 0;
                 }

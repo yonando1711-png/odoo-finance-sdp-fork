@@ -122,6 +122,12 @@
             padding: 0 0 15px 0 !important;
             margin-bottom: 10px !important;
         }
+
+        /* Strip all borders from nested metadata tables */
+        .metadata-table, .metadata-table tr, .metadata-table td {
+            border: none !important;
+            box-shadow: none !important;
+        }
     </style>
 </head>
 <body>

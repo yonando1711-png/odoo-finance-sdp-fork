@@ -104,6 +104,18 @@
         }
         .text-right { text-align: right; }
 
+        /* Repeated Header styling */
+        .lines-table thead {
+            display: table-header-group;
+        }
+        .lines-table thead tr:first-child td {
+            border: none !important;
+            border-bottom: 1px solid #cbd5e1 !important; /* Divider Line */
+            background-color: white !important;
+            padding: 0 0 15px 0 !important;
+            margin-bottom: 10px !important;
+        }
+
         /* Print Specifics */
         @media print {
             body {

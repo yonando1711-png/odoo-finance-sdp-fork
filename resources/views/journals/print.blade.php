@@ -56,8 +56,13 @@
             margin-top: 0;
             font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
         }
-        .lines-table tr {
+        /* Only avoid page-breaks inside data rows — NOT thead rows (which need to repeat) */
+        .lines-table > tbody > tr {
             page-break-inside: avoid;
+        }
+        /* Tell ALL rendering contexts (screen + print) to treat thead as repeating header group */
+        .lines-table thead {
+            display: table-header-group;
         }
         .lines-table th {
             text-align: left;
@@ -125,10 +130,6 @@
             body { margin: 0; padding: 0; background: none; }
             .print-container { box-shadow: none; max-width: none; width: 100%; margin: 0; padding: 0; }
 
-            /* Tell browser to treat thead as a repeating header group */
-            .lines-table thead {
-                display: table-header-group;
-            }
 
             @if(($paperSize ?? 'A5') === 'A4')
                 @page { size: A4 portrait; margin: 10mm; }

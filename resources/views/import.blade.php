@@ -49,6 +49,19 @@
                             <input type="date" x-model="syncConfig.dateTo"
                                 class="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-emerald-500 focus:border-emerald-500 transition shadow-sm">
                         </div>
+                        <div class="col-span-full">
+                            <label class="block text-xs font-bold text-slate-500 mb-2 uppercase tracking-wider">Sync Chunk Size</label>
+                            <div class="flex gap-4">
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" x-model="syncConfig.chunkSize" value="week" class="text-emerald-500 focus:ring-emerald-500">
+                                    <span class="text-sm text-slate-700 dark:text-slate-300">Weekly (Faster, prevents timeouts)</span>
+                                </label>
+                                <label class="flex items-center gap-2 cursor-pointer">
+                                    <input type="radio" x-model="syncConfig.chunkSize" value="month" class="text-emerald-500 focus:ring-emerald-500">
+                                    <span class="text-sm text-slate-700 dark:text-slate-300">Monthly</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
 
                     {{-- Account Filter --}}
@@ -165,6 +178,7 @@ function importManager() {
         syncConfig: {
             dateFrom: new Date().toISOString().slice(0, 10),
             dateTo: new Date().toISOString().slice(0, 10),
+            chunkSize: 'week', // Default to weekly
         },
         availableAccounts: @json($availableAccounts),
         selectedAccounts: @json($accountCodes),
@@ -191,38 +205,43 @@ function importManager() {
             }
         },
         
-        // Build array of monthly chunks between two dates (time-zone safe)
-        buildMonthChunks(dateFrom, dateTo) {
+        // Build array of chunks between two dates (time-zone safe)
+        buildChunks(dateFrom, dateTo) {
             const chunks = [];
-            
             if (!dateFrom || !dateTo || dateFrom > dateTo) return chunks;
 
-            const [yF, mF] = dateFrom.split('-');
-            const [yT, mT] = dateTo.split('-');
+            const start = new Date(dateFrom);
+            const end = new Date(dateTo);
+            const chunkSize = this.syncConfig.chunkSize;
 
-            let curY = parseInt(yF, 10);
-            let curM = parseInt(mF, 10);
-            const endY = parseInt(yT, 10);
-            const endM = parseInt(mT, 10);
+            let currentStart = new Date(start);
 
-            while (curY < endY || (curY === endY && curM <= endM)) {
-                const mStr = String(curM).padStart(2, '0');
-                const firstDay = curY + '-' + mStr + '-01';
-                
-                // Find last day of this month
-                const lastDayObj = new Date(curY, curM, 0); // 0th day of next month = last day of current month
-                const lastDayStr = curY + '-' + mStr + '-' + String(lastDayObj.getDate()).padStart(2, '0');
-                
-                const chunkStart = firstDay < dateFrom ? dateFrom : firstDay;
-                const chunkEnd = lastDayStr > dateTo ? dateTo : lastDayStr;
-                
-                chunks.push({ from: chunkStart, to: chunkEnd, label: curY + '-' + mStr });
-                
-                curM++;
-                if (curM > 12) {
-                    curM = 1;
-                    curY++;
+            while (currentStart <= end) {
+                let currentEnd;
+                let label;
+
+                if (chunkSize === 'week') {
+                    // Start from Monday if possible? No, just keep the requested start and add 6 days
+                    currentEnd = new Date(currentStart);
+                    currentEnd.setDate(currentStart.getDate() + 6);
+                    if (currentEnd > end) currentEnd = new Date(end);
+                    label = currentStart.toISOString().slice(0,10) + ' to ' + currentEnd.toISOString().slice(0,10);
+                } else {
+                    // Month logic
+                    currentEnd = new Date(currentStart.getFullYear(), currentStart.getMonth() + 1, 0); // Last day of month
+                    if (currentEnd > end) currentEnd = new Date(end);
+                    label = currentStart.getFullYear() + '-' + String(currentStart.getMonth() + 1).padStart(2, '0');
                 }
+
+                chunks.push({ 
+                    from: currentStart.toISOString().slice(0, 10), 
+                    to: currentEnd.toISOString().slice(0, 10), 
+                    label: label 
+                });
+
+                // Move to next start
+                currentStart = new Date(currentEnd);
+                currentStart.setDate(currentEnd.getDate() + 1);
             }
 
             return chunks;
@@ -231,7 +250,7 @@ function importManager() {
         async syncOdoo() {
             this.syncing = true;
             this.syncMsg = '';
-            const chunks = this.buildMonthChunks(this.syncConfig.dateFrom, this.syncConfig.dateTo);
+            const chunks = this.buildChunks(this.syncConfig.dateFrom, this.syncConfig.dateTo);
             this.chunkTotal = chunks.length;
             this.chunkCurrent = 0;
             let totalCount = 0;

@@ -408,11 +408,15 @@
                     </td>
                 </tr>
                 <tr class="table-header-row">
-                    <th class="col-no">NO.</th>
-                    <th class="col-desc">KETERANGAN</th>
-                    <th class="col-unit">SATUAN</th>
-                    <th class="col-price">HARGA SATUAN</th>
-                    <th class="col-amount">JUMLAH</th>
+                    @if(isset($printMode) && $printMode === 'summary')
+                        <th colspan="5" style="border-top: 2px solid #1e293b; border-bottom: 2px solid #1e293b; background-color: white; height: 5px; padding: 0;"></th>
+                    @else
+                        <th class="col-no">NO.</th>
+                        <th class="col-desc">KETERANGAN</th>
+                        <th class="col-unit">SATUAN</th>
+                        <th class="col-price">HARGA SATUAN</th>
+                        <th class="col-amount">JUMLAH</th>
+                    @endif
                 </tr>
             </thead>
             <tbody>
@@ -434,13 +438,17 @@
                         @endif
                     </td>
                     <td class="text-center">
-                        @if($line->quantity > 0)
-                            {{ number_format($line->quantity, 0) }} {{ $line->uom ?? 'Unit' }}
+                        @if(!isset($printMode) || $printMode !== 'summary')
+                            @if($line->quantity > 0)
+                                {{ number_format($line->quantity, 0) }} {{ $line->uom ?? 'Unit' }}
+                            @endif
                         @endif
                     </td>
                     <td class="text-right">
-                        @if(isset($line->price_unit) && $line->price_unit > 0)
-                            {{ number_format($line->price_unit, 0, ',', '.') }}
+                        @if(!isset($printMode) || $printMode !== 'summary')
+                            @if(isset($line->price_unit) && $line->price_unit > 0)
+                                {{ number_format($line->price_unit, 0, ',', '.') }}
+                            @endif
                         @endif
                     </td>
                     <td class="text-right">
@@ -492,17 +500,19 @@
                                 <td style="text-align: right; font-weight: bold;">Jumlah</td>
                                 <td style="text-align: right; width: 140px;">{{ number_format($rentalSubtotal, 0, ',', '.') }}</td>
                             </tr>
-                            @if($discountTotal != 0)
-                            <tr>
-                                <td style="text-align: right; color: #ef4444;">Discount</td>
-                                <td style="text-align: right; color: #ef4444;">{{ number_format($discountTotal, 0, ',', '.') }}</td>
-                            </tr>
-                            @endif
-                            @if($roundingTotal != 0)
-                            <tr>
-                                <td style="text-align: right;">Lain - lain</td>
-                                <td style="text-align: right;">{{ number_format($roundingTotal, 0, ',', '.') }}</td>
-                            </tr>
+                            @if(!isset($printMode) || $printMode !== 'summary')
+                                @if($discountTotal != 0)
+                                <tr>
+                                    <td style="text-align: right; color: #ef4444;">Discount</td>
+                                    <td style="text-align: right; color: #ef4444;">{{ number_format($discountTotal, 0, ',', '.') }}</td>
+                                </tr>
+                                @endif
+                                @if($roundingTotal != 0)
+                                <tr>
+                                    <td style="text-align: right;">Lain - lain</td>
+                                    <td style="text-align: right;">{{ number_format($roundingTotal, 0, ',', '.') }}</td>
+                                </tr>
+                                @endif
                             @endif
                             <tr><td colspan="2" style="height: 8px;"></td></tr>
                             <tr>

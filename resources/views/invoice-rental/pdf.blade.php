@@ -409,7 +409,7 @@
                 </tr>
                 <tr class="table-header-row">
                     @if(isset($printMode) && $printMode === 'summary')
-                        <th colspan="5" style="border-top: 2px solid #1e293b; border-bottom: 2px solid #1e293b; background-color: white; height: 5px; padding: 0;"></th>
+                        <th colspan="5" style="border-bottom: 2px solid #1e293b; background-color: white; height: 2px; padding: 0;"></th>
                     @else
                         <th class="col-no">NO.</th>
                         <th class="col-desc">KETERANGAN</th>

@@ -123,10 +123,25 @@
             margin-bottom: 10px !important;
         }
 
-        /* Strip all borders from nested metadata tables */
-        .metadata-table, .metadata-table tr, .metadata-table td {
+        /* Strip all borders from nested metadata tables (more aggressive) */
+        .metadata-table,
+        .metadata-table thead,
+        .metadata-table tbody,
+        .metadata-table tr,
+        .metadata-table th,
+        .metadata-table td {
             border: none !important;
+            border-top: none !important;
+            border-bottom: none !important;
+            border-left: none !important;
+            border-right: none !important;
             box-shadow: none !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+        }
+        .metadata-table > tbody > tr > td,
+        .metadata-table > tr > td {
+            padding: 3px 4px !important;
         }
     </style>
 </head>

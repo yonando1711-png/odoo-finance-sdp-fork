@@ -167,21 +167,26 @@
         }
 
         /* Notes / Catatan */
-        .catatan-section {
+        .catatan-container {
             margin-top: 10px;
-            border-top: 1px solid #94a3b8;
-            padding-top: 6px;
+            width: 55%;
+        }
+        .catatan-box {
+            border: 1px solid #1e293b;
+            padding: 8px;
+            min-height: 40px;
         }
         .catatan-label {
             font-weight: bold;
-            font-size: 10px;
+            font-size: 9px;
             text-decoration: underline;
+            display: block;
+            margin-bottom: 4px;
         }
         .catatan-content {
-            font-size: 9px;
-            color: #334155;
-            white-space: pre-line;
-            margin-top: 3px;
+            font-size: 10px;
+            color: #1e293b;
+            font-family: inherit;
         }
 
         /* Signatures */
@@ -276,9 +281,20 @@
             if (isset($printMode) && $printMode === 'summary' && str_starts_with($invoice->name, 'INVRS')) {
                 // Summary Mode: Group all rental lines
                 if ($rentalLines->isNotEmpty()) {
+                    $totalQty = $rentalLines->sum('quantity');
+                    
+                    // Earliest start and Latest end
+                    $earliestStart = $rentalLines->filter(fn($l) => !empty($l->actual_start))->min('actual_start');
+                    $latestEnd = $rentalLines->filter(fn($l) => !empty($l->actual_end))->max('actual_end');
+                    
+                    $periodStr = '';
+                    if ($earliestStart && $latestEnd) {
+                        $periodStr = ' Periode ' . $earliestStart->format('d/m/Y') . ' - ' . $latestEnd->format('d/m/Y');
+                    }
+                    
                     $displayLines->push((object)[
-                        'description' => 'Sewa Unit Rental',
-                        'quantity' => $rentalLines->sum('quantity'),
+                        'description' => 'Sewa ' . number_format($totalQty, 0) . ' Unit Kendaraan' . $periodStr,
+                        'quantity' => $totalQty,
                         'uom' => $rentalLines->first()->uom ?? 'Unit',
                         'price_unit' => null, 
                         'amount' => $rentalLines->sum(fn($l) => $l->quantity * $l->price_unit),
@@ -508,16 +524,12 @@
                 <em>{{ ucwords(\App\Helpers\Terbilang::convert($invoice->amount_total)) }} Rupiah #</em>
             </div>
 
-            @php
-                $noteLines = $invoice->lines->filter(fn($l) => $l->quantity == 0 && $l->price_unit == 0 && !empty($l->description));
-            @endphp
-            @if($noteLines->isNotEmpty())
-            <div class="catatan-section">
-                <span class="catatan-label">CATATAN</span>
-                <div class="catatan-content">@foreach($noteLines as $note){{ $note->description }}
-@endforeach</div>
+            <div class="catatan-container">
+                <div class="catatan-box">
+                    <span class="catatan-label">CATATAN</span>
+                    <div class="catatan-content">{{ $invoice->ref ?? '' }}</div>
+                </div>
             </div>
-            @endif
 
             <table class="signature-table" style="margin-top: 20px;">
                 <tr>

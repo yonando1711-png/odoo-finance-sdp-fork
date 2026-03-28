@@ -19,14 +19,6 @@
             background: #fff;
         }
 
-        /* Each entry is a page-like block on screen */
-        .voucher-entry {
-            padding: 20px 25px;
-            background: #fff;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            margin-bottom: 20px;
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
@@ -94,8 +86,7 @@
         }
         .text-right { text-align: right; }
 
-        /* ========= HEADER INSIDE THEAD ========= */
-        /* The outer wrapper cell that holds the metadata block */
+        /* ========= REPEATING HEADER INSIDE THEAD ========= */
         .lines-table thead tr:first-child > td {
             border: none !important;
             border-bottom: 1px solid #cbd5e1 !important;
@@ -120,12 +111,39 @@
             padding-top: 0 !important;
             padding-bottom: 0 !important;
         }
-
-        /* Override the generic td padding for metadata cells only */
         .metadata-table > tbody > tr > td,
         .metadata-table > tr > td {
             padding: 3px 4px !important;
         }
+
+        @if(($paperSize ?? 'A5') === 'A4')
+            /* ========= A4 MODE: 2 vouchers per A4 page ========= */
+            .voucher-page {
+                background: #fff;
+                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+                margin-bottom: 20px;
+                padding: 15px 20px;
+                min-height: 200px;
+            }
+            .voucher-half {
+                padding: 10px 0;
+                overflow: hidden;
+                max-height: 135mm; /* Half of A4 minus margins */
+                box-sizing: border-box;
+            }
+            .voucher-half:first-child {
+                border-bottom: 1px dashed #94a3b8;
+                margin-bottom: 10px;
+            }
+        @else
+            /* ========= A5 MODE: 1 voucher per page, free-flow ========= */
+            .voucher-entry {
+                padding: 20px 25px;
+                background: #fff;
+                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+                margin-bottom: 20px;
+            }
+        @endif
 
         /* ========= PRINT SPECIFICS ========= */
         @media print {
@@ -141,15 +159,6 @@
                 margin: 0;
                 padding: 0;
             }
-            .voucher-entry {
-                box-shadow: none;
-                padding: 10mm;
-                margin-bottom: 0;
-                page-break-after: always;
-            }
-            .voucher-entry:last-child {
-                page-break-after: auto;
-            }
 
             /* THIS is the key: tell browser to treat thead as a repeating header */
             .lines-table thead {
@@ -158,19 +167,63 @@
 
             @if(($paperSize ?? 'A5') === 'A4')
                 @page { size: A4 portrait; margin: 10mm; }
+                .voucher-page {
+                    box-shadow: none;
+                    margin-bottom: 0;
+                    padding: 5mm;
+                    page-break-after: always;
+                    page-break-inside: avoid;
+                }
+                .voucher-page:last-child {
+                    page-break-after: auto;
+                }
+                .voucher-half {
+                    max-height: none;
+                    overflow: hidden;
+                    height: 128mm; /* ~half of A4 height minus padding */
+                    padding: 5px 0;
+                    box-sizing: border-box;
+                }
+                .voucher-half:first-child {
+                    border-bottom: 1px dashed #94a3b8;
+                    margin-bottom: 5px;
+                }
             @else
                 @page { size: A5 landscape; margin: 10mm; }
+                .voucher-entry {
+                    box-shadow: none;
+                    padding: 0;
+                    margin-bottom: 0;
+                    page-break-after: always;
+                }
+                .voucher-entry:last-child {
+                    page-break-after: auto;
+                }
             @endif
         }
     </style>
 </head>
 <body>
     <div class="print-container">
-        @foreach($entries as $entry)
-        <div class="voucher-entry">
-            @include('journals.partials.voucher', ['entry' => $entry, 'isPdf' => false])
-        </div>
-        @endforeach
+        @if(($paperSize ?? 'A5') === 'A4')
+            {{-- A4 Mode: 2 vouchers per page --}}
+            @foreach($entries->chunk(2) as $chunk)
+            <div class="voucher-page">
+                @foreach($chunk as $entry)
+                    <div class="voucher-half">
+                        @include('journals.partials.voucher', ['entry' => $entry, 'isPdf' => false])
+                    </div>
+                @endforeach
+            </div>
+            @endforeach
+        @else
+            {{-- A5 Mode: 1 voucher per page, free-flowing --}}
+            @foreach($entries as $entry)
+            <div class="voucher-entry">
+                @include('journals.partials.voucher', ['entry' => $entry, 'isPdf' => false])
+            </div>
+            @endforeach
+        @endif
     </div>
 
     <!-- Auto trigger print dialog -->

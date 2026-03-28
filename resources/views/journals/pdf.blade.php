@@ -57,7 +57,8 @@
         }
         .lines-table th {
             text-align: left;
-            border-bottom: 1px solid #1e293b;
+            border-top: 1px solid #000000;
+            border-bottom: 1px solid #000000;
             font-weight: bold;
             padding: 8px 5px;
             color: #000000;
@@ -94,7 +95,7 @@
         /* The repeating header cell (thead first row td) */
         .voucher-header-cell {
             border: none !important;
-            border-bottom: 1px solid #cbd5e1 !important;
+            border-bottom: 1px solid #1a237e !important;
             background-color: white !important;
             padding: 8px 0 15px 0 !important;
         }

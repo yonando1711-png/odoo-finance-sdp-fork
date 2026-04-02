@@ -67,6 +67,7 @@
             font-size: 10px;
             color: #64748b;
             margin-top: 2px;
+            counter-increment: page;
         }
         .page-number-counter::after {
             content: counter(page);

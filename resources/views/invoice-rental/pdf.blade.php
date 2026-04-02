@@ -410,17 +410,12 @@
                                         <tr>
                                             <td class="info-label">Kode Pelanggan</td>
                                             <td class="info-colon">:</td>
-                                            <td>
-                                                @php
-                                                    $kodePelanggan = count($refParts) > 0 ? trim($refParts[0]) : '';
-                                                @endphp
-                                                {{ $kodePelanggan }}
-                                            </td>
+                                            <td></td>
                                         </tr>
                                         <tr>
                                             <td class="info-label">No. PO/Tanggal</td>
                                             <td class="info-colon">:</td>
-                                            <td></td>
+                                            <td>{{ $invoice->ref ?? '' }}</td>
                                         </tr>
                                         <tr>
                                             <td class="info-label">Payment Terms</td>
@@ -569,7 +564,7 @@
             <div class="catatan-container">
                 <div class="catatan-box">
                     <span class="catatan-label">CATATAN</span>
-                    <div class="catatan-content">{{ $invoice->ref ?? '' }}</div>
+                    <div class="catatan-content">{!! nl2br(e($invoice->narration ?? '')) !!}</div>
                 </div>
             </div>
 

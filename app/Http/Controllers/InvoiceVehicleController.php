@@ -196,6 +196,7 @@ class InvoiceVehicleController extends Controller
                     'partner_address' => $entry['partner_address'] ?? null,
                     'partner_address_complete' => $entry['partner_address_complete'] ?? null,
                     'partner_npwp' => $entry['partner_npwp'] ?? null,
+                    'narration' => $entry['narration'] ?? null,
                 ]
             );
 

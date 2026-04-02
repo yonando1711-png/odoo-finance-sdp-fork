@@ -60,7 +60,7 @@
                     <p class="text-sm mt-1 whitespace-pre-line text-slate-600 dark:text-slate-400">{{ $invoice->partner_address ?? $invoice->partner_address_complete ?? '-' }}</p>
                 </div>
                 <div>
-                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Customer Reference</p>
+                    <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">No. PO/Tanggal</p>
                     <p class="text-sm mt-1 text-slate-600 dark:text-slate-400">{{ $invoice->ref ?? '-' }}</p>
                 </div>
                 <div>

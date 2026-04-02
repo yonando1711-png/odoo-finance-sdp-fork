@@ -338,6 +338,7 @@ class OdooService
                 'bc_spv_id/name',                        // 14: Supervisor name
                 'partner_id/contact_address',            // 15: Address (multiline)
                 'partner_id/contact_address_complete',   // 16: Address (single line)
+                'narration',                             // 17: Terms and Condition
             ];
 
             $entries = [];
@@ -376,6 +377,7 @@ class OdooService
                             'spv_name' => $row[14] ?? '',
                             'partner_address' => $row[15] ?? '',
                             'partner_address_complete' => $row[16] ?? '',
+                            'narration' => $row[17] ?? '',
                             'lines' => [],
                         ];
                     }
@@ -451,6 +453,7 @@ class OdooService
                 'bc_spv_id/name',                        // 14: Supervisor name
                 'partner_id/contact_address',            // 15: Address (multiline)
                 'partner_id/contact_address_complete',   // 16: Address (single line)
+                'narration',                             // 17: Terms and Condition
             ];
 
             $entries = [];
@@ -488,6 +491,7 @@ class OdooService
                             'spv_name' => $row[14] ?? '',
                             'partner_address' => $row[15] ?? '',
                             'partner_address_complete' => $row[16] ?? '',
+                            'narration' => $row[17] ?? '',
                             'lines' => [],
                         ];
                     }
@@ -563,6 +567,7 @@ class OdooService
                 'invoice_line_ids/product_id/name',      // 17: Product name (vehicle model)
                 'invoice_line_ids/serial_ids/name',         // 18: Serial = No Polisi
                 'partner_id/vat',                        // 19: NPWP
+                'narration',                             // 20: Terms and Condition
             ];
 
             $entries = [];
@@ -601,6 +606,7 @@ class OdooService
                             'partner_address' => $row[15] ?? '',
                             'partner_address_complete' => $row[16] ?? '',
                             'partner_npwp' => $row[19] ?? '',
+                            'narration' => $row[20] ?? '',
                             'lines' => [],
                         ];
                     }
@@ -693,6 +699,7 @@ class OdooService
                 'bc_spv_id/name',                                         // 20: Supervisor name
                 'partner_id/contact_address',                             // 21: Address (multiline)
                 'partner_id/contact_address_complete',                    // 22: Address (single line)
+                'narration',                                              // 23: Terms and Condition
             ];
 
             $entries = [];
@@ -730,6 +737,7 @@ class OdooService
                             'spv_name' => $row[20] ?? '',
                             'partner_address' => $row[21] ?? '',
                             'partner_address_complete' => $row[22] ?? '',
+                            'narration' => $row[23] ?? '',
                             'lines' => [],
                         ];
                     }

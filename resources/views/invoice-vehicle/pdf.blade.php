@@ -326,12 +326,12 @@
                                         <tr>
                                             <td class="info-label">Kode Pelanggan</td>
                                             <td class="info-colon">:</td>
-                                            <td>{{ $invoice->ref ?? '' }}</td>
+                                            <td></td>
                                         </tr>
                                         <tr>
                                             <td class="info-label">No. PO/Tanggal</td>
                                             <td class="info-colon">:</td>
-                                            <td></td>
+                                            <td>{{ $invoice->ref ?? '' }}</td>
                                         </tr>
                                         <tr>
                                             <td class="info-label">Kontrak/Tanggal</td>
@@ -449,14 +449,10 @@
                 <em>{{ ucwords(\App\Helpers\Terbilang::convert($invoice->amount_total)) }} Rupiah #</em>
             </div>
 
-            {{-- Catatan / Notes - Lines with 0 qty are notes --}}
-            @if($noteLines->isNotEmpty())
             <div class="catatan-section">
                 <span class="catatan-label">CATATAN</span>
-                <div class="catatan-content">@foreach($noteLines as $note){{ $note->description }}
-    @endforeach</div>
+                <div class="catatan-content">{!! nl2br(e($invoice->narration ?? '')) !!}</div>
             </div>
-            @endif
 
             {{-- Signature Block --}}
             <table class="signature-table" style="margin-top: 20px;">

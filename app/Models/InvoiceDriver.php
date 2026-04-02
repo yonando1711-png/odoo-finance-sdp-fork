@@ -22,6 +22,7 @@ class InvoiceDriver extends Model
         'spv_name',
         'partner_address',
         'partner_address_complete',
+        'narration',
     ];
 
     protected $casts = [

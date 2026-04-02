@@ -23,6 +23,7 @@ class InvoiceVehicle extends Model
         'partner_address',
         'partner_address_complete',
         'partner_npwp',
+        'narration',
     ];
 
     protected $casts = [

@@ -22,7 +22,8 @@ class InvoiceRental extends Model
         'bc_spv',
         'partner_address',
         'partner_address_complete',
-        'print_count'
+        'print_count',
+        'narration'
     ];
 
     protected $casts = [

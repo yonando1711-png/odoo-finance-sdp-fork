@@ -206,6 +206,7 @@ class InvoiceOtherController extends Controller
                     'spv_name' => $entry['spv_name'] ?? null,
                     'partner_address' => $entry['partner_address'] ?? null,
                     'partner_address_complete' => $entry['partner_address_complete'] ?? null,
+                    'narration' => $entry['narration'] ?? null,
                 ]
             );
 

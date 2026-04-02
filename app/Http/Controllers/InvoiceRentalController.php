@@ -190,6 +190,7 @@ class InvoiceRentalController extends Controller
                     'bc_spv' => $entry['spv_name'] ?? null,
                     'partner_address' => $entry['partner_address'] ?? null,
                     'partner_address_complete' => $entry['partner_address_complete'] ?? null,
+                    'narration' => $entry['narration'] ?? null,
                 ]
             );
 

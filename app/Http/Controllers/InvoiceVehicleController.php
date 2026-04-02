@@ -330,4 +330,68 @@ class InvoiceVehicleController extends Controller
 
         return $pdf->stream($filename . '.pdf');
     }
+    /**
+     * Print a single invoice vehicle entry to HTML
+     */
+    public function printHtml(InvoiceVehicle $invoice)
+    {
+        $invoice->load('lines');
+        $invoices = collect([$invoice]);
+
+        // Track print count
+        try {
+            foreach ($invoices as $inv) {
+                $log = PrintLog::firstOrCreate(['invoice_name' => $inv->name]);
+                $inv->print_count = $log->print_count;
+                $log->increment('print_count');
+            }
+        } catch (\Exception $e) {
+            Log::warning('Could not update print log for vehicle invoice: ' . $e->getMessage());
+            foreach ($invoices as $inv) {
+                if (!isset($inv->print_count)) $inv->print_count = 0;
+            }
+        }
+
+        return view('invoice-vehicle.pdf', [
+            'invoices' => $invoices,
+            'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
+            'isHtml' => true,
+        ]);
+    }
+
+    /**
+     * Print selected invoice vehicle entries to HTML
+     */
+    public function printSelectedHtml(Request $request)
+    {
+        $request->validate([
+            'selected_ids' => 'required|array',
+            'selected_ids.*' => 'integer|exists:invoice_vehicles,id'
+        ]);
+
+        $invoices = InvoiceVehicle::with('lines')
+            ->whereIn('id', $request->selected_ids)
+            ->orderBy('invoice_date', 'desc')
+            ->orderBy('name', 'desc')
+            ->get();
+
+        try {
+            foreach ($invoices as $inv) {
+                $log = PrintLog::firstOrCreate(['invoice_name' => $inv->name]);
+                $inv->print_count = $log->print_count;
+                $log->increment('print_count');
+            }
+        } catch (\Exception $e) {
+            Log::warning('Could not update print log for selected vehicle invoices: ' . $e->getMessage());
+            foreach ($invoices as $inv) {
+                if (!isset($inv->print_count)) $inv->print_count = 0;
+            }
+        }
+
+        return view('invoice-vehicle.pdf', [
+            'invoices' => $invoices,
+            'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
+            'isHtml' => true,
+        ]);
+    }
 }

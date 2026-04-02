@@ -61,14 +61,11 @@
             text-align: right;
             color: #1a237e;
         }
-        .page-number-container {
-            position: fixed;
-            top: 58px;
-            right: 5px;
-            font-size: 11px;
-            color: #64748b;
+        .page-label {
             text-align: right;
-            z-index: 9999;
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 2px;
         }
         .page-number-counter::after {
             content: counter(page);
@@ -249,12 +246,12 @@
     </style>
 </head>
 <body>
-    <div class="page-number-container">Hal : <span class="page-number-counter"></span></div>
+
 
     @foreach($invoices as $invoice)
     @php
         $hasTax = str_starts_with($invoice->name, 'INVOT');
-        $regularLines = $invoice->lines->filter(fn($l) => $l->quantity > 0 || $l->price_unit > 0)->values();
+        $regularLines = $invoice->lines->filter(fn($l) => $l->quantity != 0 || $l->price_unit != 0)->values();
         $noteLines = $invoice->lines->filter(fn($l) => $l->quantity == 0 && $l->price_unit == 0 && !empty($l->description));
         // Check if any line has a quantity to decide whether to show SATUAN column
         $showUnitColumn = $regularLines->contains(fn($l) => $l->quantity > 0);
@@ -280,11 +277,11 @@
                             <tr>
                                 <td style="width: 60%;">
                                     @php
-                                        $logoPath = public_path('images/logo.png');
+                                        // For PDF we need absolute path, for Browser we need URL
+                                        $isPdf = request()->is('*/pdf');
+                                        $logoSource = $isPdf ? public_path('images/logo.png') : asset('images/logo.png');
                                     @endphp
-                                    @if(file_exists($logoPath))
-                                        <img src="{{ $logoPath }}" style="max-height: 45px; max-width: 180px; margin-bottom: 5px;" alt="Logo"><br>
-                                    @endif
+                                    <img src="{{ $logoSource }}" style="max-height: 45px; max-width: 180px; margin-bottom: 5px;" alt="Logo"><br>
                                     <span class="company-name">PT. SURYA DARMA PERKASA</span><br>
                                     <span class="company-address">
                                         JL. DAAN MOGOT KM.1 NO. 99, JAKARTA BARAT<br>
@@ -293,7 +290,7 @@
                                 </td>
                                 <td style="width: 40%;">
                                     <div class="invoice-title">INVOICE</div>
-                                    <div class="page-label" style="visibility: hidden;">Hal : 1</div>
+                                    <div class="page-label">Hal : <span class="page-number-counter"></span></div>
                                 </td>
                             </tr>
                         </table>
@@ -368,18 +365,18 @@
                     <td>{{ $line->description }}</td>
                     @if($showUnitColumn)
                     <td class="text-center">
-                        @if($line->quantity > 0)
+                        @if($line->quantity != 0)
                             {{ number_format($line->quantity, 0) }}
                         @endif
                     </td>
                     @endif
                     <td class="text-right">
-                        @if($line->price_unit > 0)
+                        @if($line->price_unit != 0)
                             {{ number_format($line->price_unit, 0, ',', '.') }}
                         @endif
                     </td>
                     <td class="text-right">
-                        @if($line->quantity > 0 && $line->price_unit > 0)
+                        @if($line->quantity != 0 && $line->price_unit != 0)
                             {{ number_format($line->quantity * $line->price_unit, 0, ',', '.') }}
                         @endif
                     </td>
@@ -483,5 +480,21 @@
     </div>
     @endforeach
 
+    @if(isset($isHtml) && $isHtml)
+    <script>
+        window.onload = function() {
+            setTimeout(function() { window.print(); }, 500);
+        }
+    </script>
+    <style>
+        /* A4 Continuous Form Print */
+        @media print {
+            @page { size: A4 portrait; margin: 0; }
+            body { margin: 1cm; }
+            .invoice-page { page-break-after: always; }
+            .watermark { opacity: 0.05 !important; }
+        }
+    </style>
+    @endif
 </body>
 </html>

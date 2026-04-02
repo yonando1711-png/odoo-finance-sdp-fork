@@ -64,8 +64,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [InvoiceDriverController::class, 'index'])->name('index');
         Route::post('/sync', [InvoiceDriverController::class, 'sync'])->name('sync');
         Route::post('/print-selected', [InvoiceDriverController::class, 'printSelectedPdf'])->name('print-selected');
+        Route::post('/print-selected-html', [InvoiceDriverController::class, 'printSelectedHtml'])->name('print-selected-html');
         Route::get('/{invoice}', [InvoiceDriverController::class, 'show'])->name('show');
         Route::get('/{invoice}/pdf', [InvoiceDriverController::class, 'printPdf'])->name('print');
+        Route::get('/{invoice}/html', [InvoiceDriverController::class, 'printHtml'])->name('print-html');
     });
 
     // Invoice Other
@@ -73,8 +75,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [InvoiceOtherController::class, 'index'])->name('index');
         Route::post('/sync', [InvoiceOtherController::class, 'sync'])->name('sync');
         Route::post('/print-selected', [InvoiceOtherController::class, 'printSelectedPdf'])->name('print-selected');
+        Route::post('/print-selected-html', [InvoiceOtherController::class, 'printSelectedHtml'])->name('print-selected-html');
         Route::get('/{invoice}', [InvoiceOtherController::class, 'show'])->name('show');
         Route::get('/{invoice}/pdf', [InvoiceOtherController::class, 'printPdf'])->name('print');
+        Route::get('/{invoice}/html', [InvoiceOtherController::class, 'printHtml'])->name('print-html');
     });
 
     // Invoice Rental
@@ -82,8 +86,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [InvoiceRentalController::class, 'index'])->name('index');
         Route::post('/sync', [InvoiceRentalController::class, 'sync'])->name('sync');
         Route::post('/print-selected', [InvoiceRentalController::class, 'printSelectedPdf'])->name('print-selected');
+        Route::post('/print-selected-html', [InvoiceRentalController::class, 'printSelectedHtml'])->name('print-selected-html');
         Route::get('/{invoice}', [InvoiceRentalController::class, 'show'])->name('show');
         Route::get('/{invoice}/pdf', [InvoiceRentalController::class, 'printPdf'])->name('print');
+        Route::get('/{invoice}/html', [InvoiceRentalController::class, 'printHtml'])->name('print-html');
     });
 
     // Invoice Vehicle (Penjualan Kendaraan)
@@ -91,8 +97,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [InvoiceVehicleController::class, 'index'])->name('index');
         Route::post('/sync', [InvoiceVehicleController::class, 'sync'])->name('sync');
         Route::post('/print-selected', [InvoiceVehicleController::class, 'printSelectedPdf'])->name('print-selected');
+        Route::post('/print-selected-html', [InvoiceVehicleController::class, 'printSelectedHtml'])->name('print-selected-html');
         Route::get('/{invoice}', [InvoiceVehicleController::class, 'show'])->name('show');
         Route::get('/{invoice}/pdf', [InvoiceVehicleController::class, 'printPdf'])->name('print');
+        Route::get('/{invoice}/html', [InvoiceVehicleController::class, 'printHtml'])->name('print-html');
     });
 
 

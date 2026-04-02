@@ -335,4 +335,67 @@ class InvoiceOtherController extends Controller
 
         return $pdf->stream($filename . '.pdf');
     }
+    /**
+     * Print a single invoice other entry to HTML
+     */
+    public function printHtml(InvoiceOther $invoice)
+    {
+        $invoice->load('lines');
+        $invoices = collect([$invoice]);
+
+        // Track print count (wrap in try-catch for production safety)
+        try {
+            foreach ($invoices as $inv) {
+                $log = PrintLog::firstOrCreate(['invoice_name' => $inv->name]);
+                $inv->print_count = $log->print_count;
+                $log->increment('print_count');
+            }
+        } catch (\Exception $e) {
+            Log::warning('Could not update print log for other invoice: ' . $e->getMessage());
+            foreach ($invoices as $inv) {
+                if (!isset($inv->print_count)) $inv->print_count = 0;
+            }
+        }
+
+        return view('invoice-other.pdf', [
+            'invoices' => $invoices,
+            'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
+            'isHtml' => true,
+        ]);
+    }
+
+    /**
+     * Print selected invoice other entries to HTML
+     */
+    public function printSelectedHtml(Request $request)
+    {
+        $request->validate([
+            'selected_ids' => 'required|array',
+            'selected_ids.*' => 'integer|exists:invoice_others,id'
+        ]);
+
+        $invoices = InvoiceOther::with('lines')
+            ->whereIn('id', $request->selected_ids)
+            ->orderBy('invoice_date', 'desc')
+            ->orderBy('name', 'desc')
+            ->get();
+
+        try {
+            foreach ($invoices as $inv) {
+                $log = PrintLog::firstOrCreate(['invoice_name' => $inv->name]);
+                $inv->print_count = $log->print_count;
+                $log->increment('print_count');
+            }
+        } catch (\Exception $e) {
+            Log::warning('Could not update print log for selected other invoices: ' . $e->getMessage());
+            foreach ($invoices as $inv) {
+                if (!isset($inv->print_count)) $inv->print_count = 0;
+            }
+        }
+
+        return view('invoice-other.pdf', [
+            'invoices' => $invoices,
+            'isHtml' => true,
+        ]);
+    }
 }

@@ -254,6 +254,7 @@ class InvoiceRentalController extends Controller
     public function printPdf(Request $request, InvoiceRental $invoice)
     {
         $printMode = $request->query('print_mode', 'detail');
+        \Illuminate\Support\Facades\Log::info("InvoiceRental Print PDF Mode: " . $printMode);
         $showUsername = $request->query('show_username', '0') === '1';
         
         $invoice->load('lines');
@@ -337,5 +338,81 @@ class InvoiceRentalController extends Controller
         }
 
         return $pdf->stream($filename . '.pdf');
+    }
+    /**
+     * Print a single invoice rental entry to HTML
+     */
+    public function printHtml(Request $request, InvoiceRental $invoice)
+    {
+        $printMode = $request->query('print_mode', 'detail');
+        \Illuminate\Support\Facades\Log::info("InvoiceRental Print HTML Mode: " . $printMode);
+        $showUsername = $request->query('show_username', '0') === '1';
+        
+        $invoice->load('lines');
+        $invoices = collect([$invoice]);
+
+        // Track print count
+        try {
+            foreach ($invoices as $inv) {
+                $log = PrintLog::firstOrCreate(['invoice_name' => $inv->name]);
+                $inv->print_count = $log->print_count;
+                $log->increment('print_count');
+            }
+        } catch (\Exception $e) {
+            Log::warning('Could not update print log for invoice: ' . $e->getMessage());
+            foreach ($invoices as $inv) {
+                if (!isset($inv->print_count)) $inv->print_count = 0;
+            }
+        }
+
+        return view('invoice-rental.pdf', [
+            'invoices' => $invoices,
+            'showUsername' => $showUsername,
+            'printMode' => $printMode,
+            'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
+            'defaultManager' => Setting::get('default_bc_manager', ''),
+            'defaultSpv' => Setting::get('default_bc_spv', ''),
+            'isHtml' => true,
+        ]);
+    }
+
+    /**
+     * Print selected invoice rental entries to HTML
+     */
+    public function printSelectedHtml(Request $request)
+    {
+        $request->validate([
+            'selected_ids' => 'required|array',
+            'selected_ids.*' => 'integer|exists:invoice_rentals,id'
+        ]);
+
+        $printMode = $request->query('print_mode', 'detail');
+        $showUsername = $request->query('show_username', '0') === '1';
+        
+        $invoices = InvoiceRental::with('lines')
+            ->whereIn('id', $request->selected_ids)
+            ->orderBy('invoice_date', 'desc')
+            ->orderBy('name', 'desc')
+            ->get();
+
+        try {
+            foreach ($invoices as $inv) {
+                $log = PrintLog::firstOrCreate(['invoice_name' => $inv->name]);
+                $inv->print_count = $log->print_count;
+                $log->increment('print_count');
+            }
+        } catch (\Exception $e) {
+            Log::warning('Could not update print log for selected invoices: ' . $e->getMessage());
+            foreach ($invoices as $inv) {
+                if (!isset($inv->print_count)) $inv->print_count = 0;
+            }
+        }
+
+        return view('invoice-rental.pdf', [
+            'invoices' => $invoices,
+            'showUsername' => $showUsername,
+            'printMode' => $printMode,
+            'isHtml' => true,
+        ]);
     }
 }

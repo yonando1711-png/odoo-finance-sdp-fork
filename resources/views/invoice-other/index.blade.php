@@ -184,9 +184,13 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                         Sync Odoo
                     </button>
-                    <button type="submit" form="bulkPrintForm" id="printSelectedBtn" class="px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-1 opacity-50 cursor-not-allowed" disabled>
+                    <button type="submit" form="bulkPrintForm" data-print-type="html" class="printSelectedBtn px-4 py-2 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-1 opacity-50 cursor-not-allowed" disabled>
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                        <span>Print (<span id="selectedCount">0</span>)</span>
+                        <span>Print Browser (<span class="selectedCount">0</span>)</span>
+                    </button>
+                    <button type="submit" form="bulkPrintForm" data-print-type="pdf" class="printSelectedBtn px-4 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-1 opacity-50 cursor-not-allowed" disabled>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        <span>Print PDF (<span class="selectedCount">0</span>)</span>
                     </button>
                 </div>
             </div>
@@ -337,8 +341,11 @@
                         <td x-show="columns.name.visible" class="px-3 py-2 font-mono text-xs font-semibold whitespace-nowrap {{ str_starts_with($invoice->name, 'INVOT') ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-600 dark:text-orange-400' }}">
                             <div class="flex items-center gap-2">
                                 <a href="{{ route('invoice-other.show', $invoice) }}" class="hover:underline">{{ $invoice->name }}</a>
-                                <a href="{{ route('invoice-other.print', $invoice) }}" target="_blank" title="Print PDF" class="text-slate-400 hover:text-indigo-600 transition-colors">
+                                <a href="{{ route('invoice-other.print-html', $invoice) }}" target="_blank" title="Print Browser" class="text-slate-400 hover:text-emerald-600 transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                </a>
+                                <a href="{{ route('invoice-other.print', $invoice) }}" target="_blank" title="Print PDF" class="text-slate-400 hover:text-indigo-600 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                 </a>
                             </div>
                         </td>
@@ -400,20 +407,29 @@
     document.addEventListener('DOMContentLoaded', function() {
         const selectAll = document.getElementById('selectAllCheckbox');
         const checkboxes = document.querySelectorAll('.entry-checkbox');
-        const printBtn = document.getElementById('printSelectedBtn');
-        const countSpan = document.getElementById('selectedCount');
+        const countSpans = document.querySelectorAll('.selectedCount');
 
         function updateSelection() {
             const checkedCount = document.querySelectorAll('.entry-checkbox:checked').length;
-            if (countSpan) countSpan.textContent = checkedCount;
-            if (printBtn) {
-                printBtn.disabled = checkedCount === 0;
+            countSpans.forEach(span => span.textContent = checkedCount);
+            printBtns.forEach(btn => {
+                btn.disabled = checkedCount === 0;
                 if (checkedCount === 0) {
-                    printBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                    btn.classList.add('opacity-50', 'cursor-not-allowed');
                 } else {
-                    printBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
                 }
-            }
+            });
+        }
+
+        const printBtns = document.querySelectorAll('.printSelectedBtn');
+        const bulkForm = document.getElementById('bulkPrintForm');
+
+        if (bulkForm) {
+            bulkForm.addEventListener('submit', function(e) {
+                const isHtml = e.submitter && e.submitter.dataset.printType === 'html';
+                bulkForm.action = isHtml ? "{{ route('invoice-other.print-selected-html') }}" : "{{ route('invoice-other.print-selected') }}";
+            });
         }
 
         if (selectAll && checkboxes.length > 0) {

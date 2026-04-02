@@ -234,14 +234,11 @@
             color: #334155;
         }
 
-        .page-number-container {
-            position: fixed;
-            top: 58px;
-            right: 5px;
-            font-size: 11px;
-            color: #64748b;
+        .page-label {
             text-align: right;
-            z-index: 9999;
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 2px;
         }
         .page-number-counter::after {
             content: counter(page);
@@ -249,7 +246,6 @@
     </style>
 </head>
 <body>
-    <div class="page-number-container">Hal : <span class="page-number-counter"></span></div>
     @foreach($invoices as $invoice)
     <div class="invoice-page" style="{{ $loop->last ? 'page-break-after: auto;' : 'page-break-after: always;' }}">
         @php
@@ -292,12 +288,30 @@
                         $periodStr = ' Periode ' . $earliestStart->format('d/m/Y') . ' - ' . $latestEnd->format('d/m/Y');
                     }
                     
+                    $detailTexts = [];
+                    foreach($rentalLines as $rl) {
+                        $desc = trim($rl->description);
+                        if (!empty($desc)) {
+                            $detailTexts[] = $desc;
+                        }
+                    }
+                    
+                    if (!empty($detailTexts)) {
+                        $lastLine = end($detailTexts);
+                        $summaryDesc = $lastLine;
+                    } else {
+                        // Include untaxed amount reference in description if needed
+                        $summaryDesc = 'Sewa ' . number_format($totalQty, 0) . ' Unit Kendaraan' . $periodStr;
+                    }
+                    
+                    $summaryAmount = $invoice->amount_untaxed; // Use the actual untaxed amount from Odoo
+                    
                     $displayLines->push((object)[
-                        'description' => 'Sewa ' . number_format($totalQty, 0) . ' Unit Kendaraan' . $periodStr,
+                        'description' => $summaryDesc,
                         'quantity' => $totalQty,
                         'uom' => $rentalLines->first()->uom ?? 'Unit',
                         'price_unit' => null, 
-                        'amount' => $rentalLines->sum(fn($l) => $l->quantity * $l->price_unit),
+                        'amount' => $summaryAmount,
                         'is_summary' => true
                     ]);
                 }
@@ -314,13 +328,16 @@
                 }
             }
 
-            $rentalSubtotal = $rentalLines->sum(fn($l) => $l->quantity * $l->price_unit);
+            $rentalSubtotal = $invoice->amount_untaxed;
             $discountTotal = $discountLines->sum(fn($l) => $l->quantity * $l->price_unit ?: $l->price_unit);
             $roundingTotal = $roundingLines->sum(fn($l) => $l->quantity * $l->price_unit ?: $l->price_unit);
 
             $refParts = $invoice->ref ? explode(' - ', $invoice->ref) : [];
             $isSubscription = str_starts_with($invoice->name, 'INVRS');
-            $invoiceTitle = $isSubscription ? 'INVOICE SEWA SUBSCRIPTION' : 'INVOICE SEWA REGULER';
+            $invoiceTitle = $isSubscription ? 'INVOICE SEWA' : 'INVOICE SEWA REGULER';
+            if (isset($printMode) && $printMode === 'summary') {
+                $invoiceTitle = 'INVOICE SEWA';
+            }
         @endphp
 
         <table class="lines-table">
@@ -336,11 +353,11 @@
                             <tr>
                                 <td style="width: 60%;">
                                     @php
-                                        $logoPath = public_path('images/logo.png');
+                                        // For PDF we need absolute path, for Browser we need URL
+                                        $isPdf = request()->is('*/pdf');
+                                        $logoSource = $isPdf ? public_path('images/logo.png') : asset('images/logo.png');
                                     @endphp
-                                    @if(file_exists($logoPath))
-                                        <img src="{{ $logoPath }}" style="max-height: 45px; max-width: 180px; margin-bottom: 5px;" alt="Logo"><br>
-                                    @endif
+                                    <img src="{{ $logoSource }}" style="max-height: 45px; max-width: 180px; margin-bottom: 5px;" alt="Logo"><br>
                                     <span class="company-name">PT. SURYA DARMA PERKASA</span><br>
                                     <span class="company-address">
                                         JL. DAAN MOGOT KM.1 NO. 99, JAKARTA BARAT<br>
@@ -349,7 +366,14 @@
                                 </td>
                                 <td style="width: 40%;">
                                     <div class="invoice-title">{{ $invoiceTitle }}</div>
-                                    <div class="page-label" style="visibility: hidden;">Hal : 1</div>
+                                    <div class="page-label">
+                                        Hal : 
+                                        @if(isset($printMode) && $printMode === 'summary')
+                                            1
+                                        @else
+                                            <span class="page-number-counter"></span>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         </table>
@@ -422,31 +446,37 @@
             <tbody>
                 @foreach($displayLines as $idx => $line)
                 <tr>
-                    <td class="text-center">{{ $idx + 1 }}</td>
-                    <td>
-                        <strong>{{ $line->description }}</strong>
-                        @if(!$line->is_summary)
-                            @if($line->serial_number)
-                                <br/><span style="color: #475569;">No. Polisi/Serial: {{ $line->serial_number }}</span>
+                    @if(isset($printMode) && $printMode === 'summary')
+                        <td colspan="2">
+                            <strong>{!! nl2br(e($line->description)) !!}</strong>
+                        </td>
+                    @else
+                        <td class="text-center">{{ $idx + 1 }}</td>
+                        <td>
+                            <strong>{!! nl2br(e($line->description)) !!}</strong>
+                            @if(!$line->is_summary)
+                                @if($line->serial_number)
+                                    <br/><span style="color: #475569;">No. Polisi/Serial: {{ $line->serial_number }}</span>
+                                @endif
+                                @if($line->actual_start || $line->actual_end)
+                                    <br/><span style="color: #475569;">Periode: {{ $line->actual_start ? $line->actual_start->format('d/m/Y') : '-' }} s/d {{ $line->actual_end ? $line->actual_end->format('d/m/Y') : '-' }}</span>
+                                @endif
+                                @if(isset($showUsername) && $showUsername && $line->customer_name)
+                                    <br/><span style="color: #475569;">User: {{ $line->customer_name }}</span>
+                                @endif
                             @endif
-                            @if($line->actual_start || $line->actual_end)
-                                <br/><span style="color: #475569;">Periode: {{ $line->actual_start ? $line->actual_start->format('d/m/Y') : '-' }} s/d {{ $line->actual_end ? $line->actual_end->format('d/m/Y') : '-' }}</span>
-                            @endif
-                            @if(isset($showUsername) && $showUsername && $line->customer_name)
-                                <br/><span style="color: #475569;">User: {{ $line->customer_name }}</span>
-                            @endif
-                        @endif
-                    </td>
+                        </td>
+                    @endif
                     <td class="text-center">
                         @if(!isset($printMode) || $printMode !== 'summary')
-                            @if($line->quantity > 0)
+                            @if($line->quantity != 0)
                                 {{ number_format($line->quantity, 0) }} {{ $line->uom ?? 'Unit' }}
                             @endif
                         @endif
                     </td>
                     <td class="text-right">
                         @if(!isset($printMode) || $printMode !== 'summary')
-                            @if(isset($line->price_unit) && $line->price_unit > 0)
+                            @if(isset($line->price_unit) && $line->price_unit != 0)
                                 {{ number_format($line->price_unit, 0, ',', '.') }}
                             @endif
                         @endif
@@ -556,5 +586,22 @@
                 </tr>
             </table>
         </div>
-    </div>@endforeach</body>
+    </div>@endforeach
+    @if(isset($isHtml) && $isHtml)
+    <script>
+        window.onload = function() {
+            setTimeout(function() { window.print(); }, 500);
+        }
+    </script>
+    <style>
+        /* A4 Continuous Form Print */
+        @media print {
+            @page { size: A4 portrait; margin: 0; }
+            body { margin: 1cm; }
+            .invoice-box { border: none !important; box-shadow: none !important; }
+            .watermark { opacity: 0.05 !important; }
+        }
+    </style>
+    @endif
+</body>
 </html>

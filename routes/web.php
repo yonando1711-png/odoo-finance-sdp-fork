@@ -48,6 +48,12 @@ Route::middleware('auth')->group(function () {
             Route::get('/export-html', [JournalController::class, 'printAllHtml'])->name('print-all-html');
             Route::post('/export-selected-pdf', [JournalController::class, 'printSelectedPdf'])->name('print-selected');
             Route::post('/export-selected-html', [JournalController::class, 'printSelectedHtml'])->name('print-selected-html');
+            
+            // Print Hub
+            Route::get('/printers', [JournalController::class, 'getPrinters'])->name('printers');
+            Route::post('/print-hub-selected', [JournalController::class, 'printSelectedViaHub'])->name('print-hub-selected');
+            Route::post('/{entry}/print-hub', [JournalController::class, 'printViaHub'])->name('print-hub');
+
             Route::get('/{entry}', [JournalController::class, 'show'])->name('show');
             Route::get('/{entry}/pdf', [JournalController::class, 'printPdf'])->name('print');
             Route::get('/{entry}/html', [JournalController::class, 'printHtml'])->name('print-html');
@@ -144,5 +150,18 @@ Route::middleware('auth')->group(function () {
         Route::post('odoo/test', [SettingController::class, 'testOdooConnection'])->name('settings.odoo.test');
         Route::get('odoo/schedule', [SettingController::class, 'getSchedule'])->name('settings.odoo.schedule.get');
         Route::post('odoo/schedule', [SettingController::class, 'saveSchedule'])->name('settings.odoo.schedule.save');
+
+        // Print Hub Settings
+        Route::post('print-hub/config', [SettingController::class, 'savePrintHubConfig'])->name('settings.print_hub.config');
+        Route::post('print-hub/test', [SettingController::class, 'testHubConnection'])->name('settings.print_hub.test');
+        Route::post('print-hub/sync-schemas', [SettingController::class, 'syncHubSchemas'])->name('settings.print_hub.sync_schemas');
+    });
+
+    // ──────────────────────────────────────────
+    // User Profile / Preferences
+    // ──────────────────────────────────────────
+    Route::group(['prefix' => 'profile', 'as' => 'profile.'], function () {
+        Route::get('/preferences', [\App\Http\Controllers\PreferenceController::class, 'index'])->name('preferences');
+        Route::post('/preferences', [\App\Http\Controllers\PreferenceController::class, 'update'])->name('preferences.update');
     });
 });

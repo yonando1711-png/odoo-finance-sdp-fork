@@ -4,10 +4,95 @@ namespace App\Http\Controllers;
 
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
+use App\Services\PrintHubService;
 use Illuminate\Http\Request;
 
 class JournalController extends Controller
 {
+    /**
+     * Get list of printers from Print Hub
+     */
+    public function getPrinters()
+    {
+        $service = new PrintHubService();
+        return response()->json($service->getPrinters());
+    }
+
+    /**
+     * Send a single journal entry to Print Hub
+     */
+    public function printViaHub(JournalEntry $entry, Request $request)
+    {
+        $printer = $request->input('printer') ?? auth()->user()->getPreference('default_printer');
+        
+        if (!$printer) {
+            return response()->json(['success' => false, 'message' => 'No printer selected and no default printer set.'], 422);
+        }
+
+        $entry->load('lines');
+        $entries = collect([$entry]);
+        $paperSize = \App\Models\Setting::get('journal_paper_size', 'A5');
+        $isPdf = true;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('journals.pdf', compact('entries', 'paperSize', 'isPdf'))
+                ->setPaper($paperSize === 'A4' ? 'a4' : 'a5', $paperSize === 'A4' ? 'portrait' : 'landscape');
+        
+        $pdfBase64 = base64_encode($pdf->output());
+        
+        $service = new PrintHubService();
+        $result = $service->printPdf($printer, $pdfBase64, [
+            'job_name' => 'Journal: ' . $entry->move_name
+        ]);
+
+        if ($result['success'] && $request->has('set_default')) {
+            auth()->user()->setPreference('default_printer', $printer);
+        }
+
+        return response()->json($result);
+    }
+
+    /**
+     * Send multiple selected journal entries to Print Hub
+     */
+    public function printSelectedViaHub(Request $request)
+    {
+        $request->validate([
+            'selected_ids' => 'required|array',
+            'selected_ids.*' => 'integer|exists:journal_entries,id'
+        ]);
+
+        $printer = $request->input('printer') ?? auth()->user()->getPreference('default_printer');
+        
+        if (!$printer) {
+            return response()->json(['success' => false, 'message' => 'No printer selected and no default printer set.'], 422);
+        }
+
+        $entries = JournalEntry::with('lines')
+            ->whereIn('id', $request->selected_ids)
+            ->orderBy('date', 'desc')
+            ->orderBy('move_name', 'desc')
+            ->get();
+            
+        $paperSize = \App\Models\Setting::get('journal_paper_size', 'A5');
+        $isPdf = true;
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('journals.pdf', compact('entries', 'paperSize', 'isPdf'))
+                ->setPaper($paperSize === 'A4' ? 'a4' : 'a5', $paperSize === 'A4' ? 'portrait' : 'landscape');
+        
+        $pdfBase64 = base64_encode($pdf->output());
+        
+        $service = new PrintHubService();
+        $result = $service->printPdf($printer, $pdfBase64, [
+            'job_name' => 'Bulk Journals (' . count($entries) . ')'
+        ]);
+
+        if ($result['success'] && $request->has('set_default')) {
+            auth()->user()->setPreference('default_printer', $printer);
+        }
+
+        return response()->json($result);
+    }
+
     public function index(Request $request)
     {
         $flowType = $request->input('flow_type', 'credit');

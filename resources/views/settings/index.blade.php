@@ -278,7 +278,156 @@
                 }
             }
         }
+
+        function printHubManager() {
+            return {
+                config: {
+                    url: @json($printHubConfig['url']),
+                    api_key: @json($printHubConfig['api_key']),
+                    timeout: @json($printHubConfig['timeout']),
+                },
+                saving: false,
+                testing: false,
+                syncing: false,
+                msg: '',
+                msgType: '',
+                syncOutput: '',
+
+                async save() {
+                    this.saving = true;
+                    this.msg = '';
+                    try {
+                        const resp = await fetch('{{ route("admin.settings.print_hub.config", [], false) }}', {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json', 
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content 
+                            },
+                            body: JSON.stringify({ 
+                                print_hub_url: this.config.url, 
+                                print_hub_api_key: this.config.api_key,
+                                print_hub_timeout: this.config.timeout
+                            })
+                        });
+                        const data = await resp.json();
+                        this.msg = data.message;
+                        this.msgType = data.success ? 'success' : 'error';
+                    } catch (e) { this.msg = 'Request failed.'; this.msgType = 'error'; }
+                    this.saving = false;
+                    setTimeout(() => this.msg = '', 4000);
+                },
+
+                async test() {
+                    this.testing = true;
+                    this.msg = '';
+                    try {
+                        const resp = await fetch('{{ route("admin.settings.print_hub.test", [], false) }}', {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json', 
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content 
+                            },
+                            body: JSON.stringify({
+                                print_hub_url: this.config.url,
+                                print_hub_api_key: this.config.api_key
+                            })
+                        });
+                        const data = await resp.json();
+                        this.msg = data.message;
+                        this.msgType = data.success ? 'success' : 'error';
+                    } catch (e) { this.msg = 'Connection failed.'; this.msgType = 'error'; }
+                    this.testing = false;
+                },
+
+                async syncSchemas() {
+                    if (!confirm('This will push all document schemas (Journals, Invoices) to Print Hub. Continue?')) return;
+                    this.syncing = true;
+                    this.msg = '';
+                    this.syncOutput = '';
+                    try {
+                        const resp = await fetch('{{ route("admin.settings.print_hub.sync_schemas", [], false) }}', {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json', 
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content 
+                            }
+                        });
+                        const data = await resp.json();
+                        this.msg = data.message;
+                        this.msgType = data.success ? 'success' : 'error';
+                        if (data.output) this.syncOutput = data.output;
+                    } catch (e) { 
+                        this.msg = 'Sync request failed.'; 
+                        this.msgType = 'error'; 
+                    }
+                    this.syncing = false;
+                }
+            }
+        }
         </script>
+
+        {{-- ═══ PRINT HUB CONFIGURATION (ADMIN ONLY) ═══ --}}
+        <div class="px-6 py-6 border-t border-slate-200 dark:border-slate-700 space-y-6" x-data="printHubManager()">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-200">Print Hub Integration</h3>
+                <span class="px-2.5 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 text-[10px] font-bold rounded-full uppercase tracking-wider">Production SDK</span>
+            </div>
+            
+            <div class="p-5 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-700">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Hub Endpoint URL</label>
+                            <input type="url" x-model="config.url" placeholder="https://print-hub.yourdomain.com"
+                                class="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">API Key / Token</label>
+                            <input type="password" x-model="config.api_key" placeholder="Enter Hub API Key"
+                                class="w-full px-4 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 mb-1.5 uppercase">Request Timeout (Seconds)</label>
+                            <div class="flex items-center gap-3">
+                                <input type="range" min="5" max="60" step="5" x-model="config.timeout" class="flex-1 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                                <span class="text-sm font-mono w-8 text-center" x-text="config.timeout"></span>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 grid grid-cols-2 gap-3">
+                            <button @click="save()" :disabled="saving" class="flex items-center justify-center gap-2 py-2.5 bg-slate-800 dark:bg-slate-700 text-white text-xs font-bold rounded-lg hover:bg-slate-900 dark:hover:bg-slate-600 transition-all shadow-sm disabled:opacity-50">
+                                <svg x-show="saving" class="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <span x-text="saving ? 'SAVING...' : 'SAVE CONFIG'"></span>
+                            </button>
+                            <button @click="test()" :disabled="testing" class="flex items-center justify-center gap-2 py-2.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition-all shadow-sm disabled:opacity-50">
+                                <svg x-show="testing" class="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <span x-text="testing ? 'TESTING...' : 'TEST CONNECTION'"></span>
+                            </button>
+                            <button @click="syncSchemas()" :disabled="syncing" class="col-span-2 flex items-center justify-center gap-2 py-2.5 bg-indigo-600 text-white text-xs font-bold rounded-lg hover:bg-indigo-700 transition-all shadow-sm disabled:opacity-50">
+                                <svg x-show="syncing" class="animate-spin h-3 w-3 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                <span x-text="syncing ? 'SYNCING SCHEMAS...' : '🔄 SYNC DATA SCHEMAS TO HUB'"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div x-show="msg" x-cloak x-transition class="mt-4 p-3 rounded-lg text-xs flex items-center gap-2" :class="msgType === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'">
+                    <svg x-show="msgType === 'success'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                    <svg x-show="msgType === 'error'" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span x-text="msg"></span>
+                </div>
+
+                <div x-show="syncOutput" x-cloak x-transition class="mt-2 p-3 bg-slate-900 rounded-lg text-[10px] font-mono text-slate-300 overflow-x-auto whitespace-pre">
+                    <span x-text="syncOutput"></span>
+                </div>
+            </div>
+        </div>
         @endif
     </div>
 </div>

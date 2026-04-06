@@ -192,13 +192,9 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         <span class="hidden md:inline">PDF All</span>
                     </a>
-                    <button type="submit" form="bulkPrintForm" formaction="{{ route('journals.print-selected-html', [], false) }}" class="printSelectedBtn px-3 py-2 bg-sky-600 text-white text-sm font-medium rounded-lg hover:bg-sky-700 transition-colors flex items-center gap-1 opacity-50 cursor-not-allowed" disabled title="Direct Print Selected">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                        <span class="hidden md:inline">Print (<span class="selectedCount">0</span>)</span>
-                    </button>
-                    <button type="submit" form="bulkPrintForm" formaction="{{ route('journals.print-selected', [], false) }}" class="printSelectedBtn px-3 py-2 bg-violet-600 text-white text-sm font-medium rounded-lg hover:bg-violet-700 transition-colors flex items-center gap-1 opacity-50 cursor-not-allowed" disabled title="Export Selected PDF">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        <span class="hidden md:inline">PDF (<span class="selectedCountSm">0</span>)</span>
+                    <button type="button" @click="$dispatch('open-print-hub')" class="printSelectedBtn px-3 py-2 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-900 transition-colors flex items-center gap-1 opacity-50 cursor-not-allowed" disabled title="Print via Hub">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                        <span class="hidden md:inline">Hub (<span class="selectedCountHub">0</span>)</span>
                     </button>
                 </div>
             </div>
@@ -321,6 +317,9 @@
                                     <a href="{{ route('journals.print', $entry) }}" target="_blank" title="Export PDF" class="text-slate-400 hover:text-indigo-600 transition-colors">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                     </a>
+                                    <button type="button" @click="$dispatch('open-print-hub', { id: {{ $entry->id }} })" title="Print Hub" class="text-slate-400 hover:text-amber-600 transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                                    </button>
                                 </div>
                             </td>
                             <td x-show="columns.date.visible" :style="{ width: columns.date.width, minWidth: columns.date.width }" class="px-3 py-2 text-xs text-slate-500 whitespace-nowrap align-top" rowspan="{{ $entry->lines->count() }}">{{ \Carbon\Carbon::parse($entry->date)->format('Y-m-d') }}</td>
@@ -390,6 +389,8 @@
     </div>
 </div>
 
+@include('journals.partials.print-hub-modal')
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const selectAll = document.getElementById('selectAllCheckbox');
@@ -397,11 +398,13 @@
         const printBtns = document.querySelectorAll('.printSelectedBtn');
         const countSpan = document.querySelector('.selectedCount');
         const countSpanSm = document.querySelector('.selectedCountSm');
+        const countSpanHub = document.querySelector('.selectedCountHub');
 
         function updateSelection() {
             const checkedCount = document.querySelectorAll('.entry-checkbox:checked').length;
             if (countSpan) countSpan.textContent = checkedCount;
             if (countSpanSm) countSpanSm.textContent = checkedCount;
+            if (countSpanHub) countSpanHub.textContent = checkedCount;
             printBtns.forEach(printBtn => {
                 printBtn.disabled = checkedCount === 0;
                 if (checkedCount === 0) {

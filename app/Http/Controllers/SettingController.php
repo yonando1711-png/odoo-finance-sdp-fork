@@ -6,6 +6,7 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use App\Services\OdooService;
+use App\Services\PrintHubService;
 
 class SettingController extends Controller
 {
@@ -22,13 +23,18 @@ class SettingController extends Controller
         ];
 
         $odooConfig = Setting::getOdooConfig();
+        $printHubConfig = [
+            'url' => Setting::get('print_hub_url', ''),
+            'api_key' => Setting::get('print_hub_api_key', ''),
+            'timeout' => Setting::get('print_hub_timeout', '15'),
+        ];
         $schedule = [
             'enabled' => Setting::getValue('odoo_schedule_enabled', 'false') === 'true',
             'interval' => Setting::getValue('odoo_schedule_interval', 'daily'),
             'last_sync' => Setting::getValue('odoo_last_sync', null),
         ];
 
-        return view('settings.index', compact('settings', 'odooConfig', 'schedule'));
+        return view('settings.index', compact('settings', 'odooConfig', 'printHubConfig', 'schedule'));
     }
 
     public function update(Request $request)
@@ -112,5 +118,71 @@ class SettingController extends Controller
                 ? "Auto-sync enabled ({$validated['interval']})" 
                 : 'Auto-sync disabled',
         ]);
+    }
+
+    /**
+     * Save Print Hub configuration
+     */
+    public function savePrintHubConfig(Request $request): JsonResponse
+    {
+        $request->validate([
+            'print_hub_url' => 'required|url',
+            'print_hub_api_key' => 'required|string',
+            'print_hub_timeout' => 'required|integer|min:1',
+        ]);
+
+        Setting::set('print_hub_url', $request->input('print_hub_url'));
+        Setting::set('print_hub_api_key', $request->input('print_hub_api_key'));
+        Setting::set('print_hub_timeout', $request->input('print_hub_timeout'));
+
+        return response()->json(['success' => true, 'message' => 'Print Hub configuration saved successfully.']);
+    }
+
+    /**
+     * Test Print Hub connection
+     */
+    public function testHubConnection(Request $request): JsonResponse
+    {
+        $url = $request->input('print_hub_url');
+        $apiKey = $request->input('print_hub_api_key');
+
+        $printHub = new PrintHubService($url, $apiKey);
+        $result = $printHub->testConnection();
+        
+        if ($result['success']) {
+            $appName = $result['app_name'] ?? 'Unknown App';
+            $agentCount = $result['agents'] ?? 0;
+            return response()->json([
+                'success' => true, 
+                'message' => "Successfully connected to Print Hub as '{$appName}'! Found {$agentCount} online agents."
+            ]);
+        }
+
+        return response()->json([
+            'success' => false, 
+            'message' => 'Connection failed: ' . ($result['message'] ?? 'Unknown error')
+        ]);
+    }
+
+    /**
+     * Sync data schemas to Print Hub
+     */
+    public function syncHubSchemas(): JsonResponse
+    {
+        try {
+            \Illuminate\Support\Facades\Artisan::call('printhub:register-schemas');
+            $output = \Illuminate\Support\Facades\Artisan::output();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Schemas synced successfully!',
+                'output' => $output
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sync failed: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

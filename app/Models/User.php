@@ -16,6 +16,7 @@ class User extends Authenticatable
         'password',
         'role',
         'auth_source',
+        'preferences',
     ];
 
     protected $hidden = [
@@ -28,7 +29,21 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'preferences' => 'array',
         ];
+    }
+
+    public function getPreference(string $key, $default = null)
+    {
+        return $this->preferences[$key] ?? $default;
+    }
+
+    public function setPreference(string $key, $value)
+    {
+        $prefs = $this->preferences ?? [];
+        $prefs[$key] = $value;
+        $this->preferences = $prefs;
+        return $this->save();
     }
 
     public function hasRole(string $role): bool

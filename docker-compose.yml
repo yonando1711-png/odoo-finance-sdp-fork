@@ -13,7 +13,8 @@ services:
       - APP_ENV=local
       - APP_KEY=base64:vtYRZg/ynlWETTu1NiEhNPf2h24J8BBrKRdwkqYXD6c= # Use your real APP_KEY
       - APP_DEBUG=true
-      - APP_URL=http://localhost:8006
+      - APP_URL=http://localhost:8006 # This can stay as-is if we use TRUSTED_PROXIES
+      - TRUSTED_PROXIES=*
       - SERVER_NAME=:80
       - DB_CONNECTION=sqlite
     volumes:

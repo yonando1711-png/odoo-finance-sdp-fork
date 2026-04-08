@@ -4,5 +4,30 @@ use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 
 Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
+    $this->comment(Illuminate\Foundation\Inspiring::quote());
 })->purpose('Display an inspiring quote');
+
+// Odoo Automatic Synchronization Schedule
+Illuminate\Support\Facades\Schedule::command('app:sync-odoo')->when(function () {
+    return \App\Models\Setting::getValue('odoo_schedule_enabled', 'false') === 'true';
+})->everyMinute()->onOneServer()->runInBackground()->onSuccess(function () {
+    \Illuminate\Support\Facades\Log::info('Automated Odoo Sync completed successfully.');
+})->when(function() {
+    $interval = \App\Models\Setting::getValue('odoo_schedule_interval', 'daily');
+    $lastSync = \App\Models\Setting::getValue('odoo_last_sync');
+    
+    if (!$lastSync) return true; // Never synced before
+    
+    $lastSyncDate = \Illuminate\Support\Carbon::parse($lastSync);
+    $now = now();
+    
+    return match($interval) {
+        'hourly'         => $lastSyncDate->diffInHours($now) >= 1,
+        'every_2_hours'  => $lastSyncDate->diffInHours($now) >= 2,
+        'every_4_hours'  => $lastSyncDate->diffInHours($now) >= 4,
+        'every_6_hours'  => $lastSyncDate->diffInHours($now) >= 6,
+        'every_12_hours' => $lastSyncDate->diffInHours($now) >= 12,
+        'daily'          => $lastSyncDate->diffInDays($now) >= 1,
+        default          => $lastSyncDate->diffInDays($now) >= 1,
+    };
+});

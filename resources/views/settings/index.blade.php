@@ -161,7 +161,7 @@
                 </div>
 
                 {{-- Schedule Card --}}
-                <div class="space-y-4">
+                <div class="space-y-4" id="schedule">
                     <h4 class="text-sm font-bold text-slate-500 uppercase tracking-wider">Auto-Sync Schedule</h4>
                     <div class="p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700 space-y-4">
                         <div class="flex items-center justify-between">

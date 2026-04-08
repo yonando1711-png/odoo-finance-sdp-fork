@@ -24,7 +24,16 @@ class CheckRole
 
         $userRole = $user->role ?? 'user';
 
-        foreach ($roles as $allowedRole) {
+        // Flatten roles in case they were passed as a single comma-separated string
+        $expandedRoles = [];
+        foreach ($roles as $role) {
+            $parts = explode(',', $role);
+            foreach ($parts as $part) {
+                $expandedRoles[] = trim($part);
+            }
+        }
+
+        foreach ($expandedRoles as $allowedRole) {
             if ($this->userHasRole($userRole, $allowedRole)) {
                 return $next($request);
             }

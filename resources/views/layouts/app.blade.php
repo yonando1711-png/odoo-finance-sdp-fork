@@ -104,10 +104,19 @@
             @endif
 
             @if(auth()->check() && auth()->user()->role === 'admin')
-            <div class="pt-4 pb-2">
-                <p x-show="sidebarOpen" x-cloak class="px-3 text-xs font-semibold uppercase tracking-wider text-slate-500">Admin</p>
+            <div class="px-3 mb-2 mt-6">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4" x-show="sidebarOpen" x-cloak>Admin Tools</span>
+                <div class="h-px bg-slate-700/50 mt-1" x-show="!sidebarOpen"></div>
             </div>
-            <a href="{{ route('admin.users.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors {{ request()->routeIs('admin.users*') ? 'bg-emerald-600/30 text-emerald-300' : 'hover:bg-slate-700 text-slate-300' }}">
+
+            <a href="{{ route('admin.settings.index') }}#schedule" 
+               class="flex items-center gap-3 px-4 py-2 mx-3 rounded-lg transition-all {{ request()->routeIs('admin.settings.index') ? 'bg-indigo-600/30 text-indigo-300 ring-1 ring-indigo-500/50' : 'text-slate-400 hover:bg-slate-800' }}">
+                <svg class="w-5 h-5 {{ request()->routeIs('admin.settings.index') ? 'text-indigo-400' : 'text-slate-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                <span x-show="sidebarOpen" x-cloak>Odoo Schedule</span>
+            </a>
+
+            <a href="{{ route('admin.settings.index') }}" 
+               class="flex items-center gap-3 px-4 py-2 mx-3 mt-1 rounded-lg transition-all {{ request()->routeIs('admin.settings.index') && !request()->has('anchor') ? 'bg-indigo-600/30 text-indigo-300 ring-1 ring-indigo-500/50' : 'text-slate-400 hover:bg-slate-800' }}">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                 <span x-show="sidebarOpen" x-cloak>Users</span>
             </a>

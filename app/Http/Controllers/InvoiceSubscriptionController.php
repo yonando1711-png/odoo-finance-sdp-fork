@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\InvoiceSubscription;
 use App\Models\ImportLog;
 use App\Services\OdooService;
+use App\Services\SyncService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -203,11 +204,11 @@ class InvoiceSubscriptionController extends Controller
      * Sync subscription invoice periods from Odoo.
      * Uses a fixed date window: 2025-04-01 → today + 15 days.
      */
-    public function sync(Request $request)
+    public function sync(Request $request, SyncService $sync)
     {
         try {
-            $dateFrom = $request->input('from', self::DATE_FROM);
-            $dateTo   = $request->input('to', Carbon::today()->addDays(15)->format('Y-m-d'));
+            $dateFrom = $request->input('from') ?: Carbon::today()->subMonth()->startOfMonth()->format('Y-m-d');
+            $dateTo   = $request->input('to') ?: Carbon::today()->addDays(15)->format('Y-m-d');
 
             // Basic validation
             try {
@@ -244,7 +245,7 @@ class InvoiceSubscriptionController extends Controller
                 ]);
             }
 
-            $savedCount = $this->saveRecords($result['data']);
+            $savedCount = $sync->saveInvoiceSubscriptions($result['data']);
 
             ImportLog::create([
                 'source'       => 'odoo_subscription_periods',
@@ -425,12 +426,12 @@ class InvoiceSubscriptionController extends Controller
     {
         return match($colId) {
             'status'       => $this->getStatusLabel($row),
-            'period_start' => $row->period_start ? Carbon::parse($row->period_start)->format('d M Y') . ' - ' . ($row->period_end ? Carbon::parse($row->period_end)->format('d M Y') : '') : '',
-            'invoice_date' => $row->invoice_date ? Carbon::parse($row->invoice_date)->format('d M Y') : '',
-            'synced_at'    => $row->synced_at ? Carbon::parse($row->synced_at)->format('d M Y H:i') : '',
+            'period_start' => $row->period_start ? \Carbon\Carbon::parse($row->period_start)->format('d M Y') . ' - ' . ($row->period_end ? \Carbon\Carbon::parse($row->period_end)->format('d M Y') : '') : '',
+            'invoice_date' => $row->invoice_date ? \Carbon\Carbon::parse($row->invoice_date)->format('d M Y') : '',
+            'synced_at'    => $row->synced_at ? \Carbon\Carbon::parse($row->synced_at)->format('d M Y H:i') : '',
             'price_unit'   => number_format($row->price_unit, 2),
-            'actual_start_rental' => $row->actual_start_rental ? Carbon::parse($row->actual_start_rental)->format('d M Y') : '',
-            'actual_end_rental'   => $row->actual_end_rental ? Carbon::parse($row->actual_end_rental)->format('d M Y') : '',
+            'actual_start_rental' => $row->actual_start_rental ? \Carbon\Carbon::parse($row->actual_start_rental)->format('d M Y') : '',
+            'actual_end_rental'   => $row->actual_end_rental ? \Carbon\Carbon::parse($row->actual_end_rental)->format('d M Y') : '',
             default        => $row->{$colId} ?? ''
         };
     }
@@ -453,47 +454,5 @@ class InvoiceSubscriptionController extends Controller
         if ($state === 'posted') return 'Posted/Unpaid';
         
         return $row->invoice_state ?? 'Unknown';
-    }
-
-    /**
-     * Upsert records into the local database.
-     */
-    protected function saveRecords(array $entries): int
-    {
-        $count   = 0;
-        $syncedAt = now();
-
-        foreach ($entries as $entry) {
-            if (empty($entry['period_odoo_id'])) continue;
-
-            InvoiceSubscription::updateOrCreate(
-                ['period_odoo_id' => $entry['period_odoo_id']],
-                [
-                    'period_numeric_id'   => $entry['period_numeric_id'] ?? null,
-                    'so_name'             => $entry['so_name'] ?? null,
-                    'partner_name'        => $entry['partner_name'] ?? null,
-                    'rental_status'       => $entry['rental_status'] ?? null,
-                    'rental_type'         => $entry['rental_type'] ?? 'Subscription',
-                    'actual_start_rental' => $entry['actual_start_rental'] ?: null,
-                    'actual_end_rental'   => $entry['actual_end_rental'] ?: null,
-                    'period_type'         => $entry['period_type'] ?? null,
-                    'product_name'        => $entry['product_name'] ?? null,
-                    'invoice_date'        => $entry['invoice_date'] ?: null,
-                    'period_start'        => $entry['period_start'] ?: null,
-                    'period_end'          => $entry['period_end'] ?: null,
-                    'price_unit'          => $entry['price_unit'] ?? 0,
-                    'rental_uom'          => $entry['rental_uom'] ?? null,
-                    'invoice_name'        => $entry['invoice_name'] ?: null,
-                    'invoice_ref'         => $entry['invoice_ref'] ?: null,
-                    'invoice_state'       => $entry['invoice_state'] ?: null,
-                    'payment_state'       => $entry['payment_state'] ?: null,
-                    'synced_at'           => $syncedAt,
-                ]
-            );
-
-            $count++;
-        }
-
-        return $count;
     }
 }

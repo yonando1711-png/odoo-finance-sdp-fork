@@ -54,9 +54,11 @@
     selectedIds: [],
     exportOpen: false,
     columns: {{ json_encode($tablePrefs['columns']) }},
-    generateChunks() {
-        // Start from 2025-04-01
-        const start = new Date(2025, 3, 1); 
+    generateChunks(isFull = false) {
+        // Start from 2025-04-01 if full, otherwise start from previous month
+        const start = isFull 
+            ? new Date(2025, 3, 1) 
+            : new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1);
         const end = new Date();
         end.setDate(end.getDate() + 15);
         
@@ -84,8 +86,8 @@
         }
         return chunks;
     },
-    async doSync() {
-        const chunks = this.generateChunks();
+    async doSync(isFull = false) {
+        const chunks = this.generateChunks(isFull);
         this.syncing = true;
         this.syncProgress = 0;
         this.syncResults = [];
@@ -449,40 +451,56 @@
                 @if($lastSync)
                     Last sync: {{ $lastSync->imported_at->diffForHumans() }} ({{ $lastSync->items_count }} items)
                 @else
-                    Never synced.
-                @endif
-            </p>
-            <div class="flex flex-wrap items-end gap-3">
-                <button @click="doSync()" :disabled="syncing" class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2">
-                    <svg x-show="syncing" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                    <span x-text="syncing ? 'Syncing...' : 'Start Chunked Sync (Monthly)'"></span>
-                </button>
-            </div>
+        {{-- Sync Panels (Quick Sync Choice) --}}
+        <div x-show="openSyncModal" 
+             x-cloak 
+             class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95"
+             x-transition:enter-end="opacity-100 scale-100">
             
-            {{-- Progress State --}}
-            <div x-show="syncing || syncResults.length > 0" x-cloak class="mt-4 p-3 bg-white/50 dark:bg-slate-800/50 rounded-lg border border-blue-100 dark:border-blue-900">
-                <div class="flex justify-between items-center text-xs font-semibold text-blue-800 dark:text-blue-300 mb-2">
-                    <span x-text="syncCurrentStep"></span>
-                    <span x-text="syncProgress + '%'"></span>
-                </div>
-                
-                {{-- Progress Bar --}}
-                <div class="w-full bg-blue-100 dark:bg-slate-700 rounded-full h-2 mb-3">
-                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" :style="'width: ' + syncProgress + '%'"></div>
-                </div>
+            <div class="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700 w-full max-w-md overflow-hidden" @click.away="if(!syncing) openSyncModal = false">
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-bold text-slate-800 dark:text-slate-100">Sync with Odoo</h3>
+                        <button @click="openSyncModal = false" :disabled="syncing" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
 
-                {{-- Detail Results --}}
-                <div class="space-y-1 max-h-40 overflow-y-auto custom-scrollbar pr-2">
-                    <template x-for="(res, index) in syncResults.slice().reverse()" :key="index">
-                        <div class="flex justify-between text-[10px] items-center py-1 border-b border-blue-50 dark:border-blue-900 last:border-0">
-                            <span class="font-medium text-slate-600 dark:text-slate-400" x-text="res.label"></span>
-                            <div class="flex items-center gap-2">
-                                <span x-show="res.success" class="text-emerald-600 dark:text-emerald-400 font-bold" x-text="'+' + res.count"></span>
-                                <span x-show="!res.success" class="text-red-500" x-text="'Failed'"></span>
-                                <svg x-show="res.success" class="w-3 h-3 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                    <div x-show="!syncing" class="space-y-4">
+                        <button @click="doSync(false)" class="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-emerald-100 dark:border-emerald-900/30 bg-emerald-50/50 dark:bg-emerald-900/10 hover:border-emerald-500 transition-all text-left">
+                            <div class="p-3 bg-emerald-500 rounded-lg text-white">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            </div>
+                            <div>
+                                <div class="font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tighter">Fast Sync (v2)</div>
+                                <div class="text-sm text-slate-500 leading-tight">Sync only latest data only (Prev Month → Today). Best for daily updates.</div>
+                            </div>
+                        </button>
+
+                        <button @click="doSync(true)" class="w-full flex items-center gap-4 p-4 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-violet-500 transition-all text-left group">
+                            <div class="p-3 bg-slate-100 dark:bg-slate-700 rounded-lg text-slate-500 group-hover:bg-violet-500 group-hover:text-white transition-all">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                            </div>
+                            <div>
+                                <div class="font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tighter">Deep Re-Sync</div>
+                                <div class="text-sm text-slate-500 leading-tight">Fetch everything from April 2025. Use this if historical data changed.</div>
+                            </div>
+                        </button>
+                    </div>
+
+                    <div x-show="syncing" class="space-y-6">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-slate-500 font-medium" x-text="syncCurrentStep"></span>
+                                <span class="font-bold text-emerald-600 dark:text-emerald-400" x-text="`${syncProgress}%`"></span>
+                            </div>
+                            <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                                <div class="bg-emerald-500 h-2.5 transition-all duration-300" :style="`width: ${syncProgress}%`"></div>
                             </div>
                         </div>
-                    </template>
+                    </div>
                 </div>
             </div>
         </div>

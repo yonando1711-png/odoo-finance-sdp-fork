@@ -60,10 +60,6 @@ Route::middleware('auth')->group(function () {
             Route::get('/{entry}/html', [JournalController::class, 'printHtml'])->name('print-html');
         });
 
-        // Settings
-        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
-        Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
-        Route::post('/settings/empty-database', [SettingController::class, 'emptyDatabase'])->name('settings.empty-database');
     });
 
     // Invoice Driver
@@ -125,6 +121,11 @@ Route::middleware('auth')->group(function () {
     // Admin Routes (requires admin role)
     // ──────────────────────────────────────────
     Route::prefix('admin')->name('admin.')->middleware('role:admin')->group(function () {
+        // Settings
+        Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/settings/empty-database', [SettingController::class, 'emptyDatabase'])->name('settings.empty-database');
+
         // User Management
         Route::get('users', [\App\Http\Controllers\Admin\UserController::class, 'index'])->name('users.index');
         Route::get('users/create', [\App\Http\Controllers\Admin\UserController::class, 'create'])->name('users.create');

@@ -48,6 +48,7 @@
 <div x-data="{
     syncOpen: false,
     syncing: false,
+    openSyncModal: false,
     syncProgress: 0,
     syncCurrentStep: '',
     syncResults: [],
@@ -442,19 +443,28 @@
         </form>
 
         {{-- Sync Panel --}}
-        <div x-show="syncOpen" x-cloak x-transition class="mt-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-            <h3 class="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2">Sync Subscription Invoice Periods</h3>
-            <p class="text-xs text-blue-600 dark:text-blue-400 mb-3">
-                This will fetch all subscription rental periods falling between 
-                <strong class="font-mono">{{ $dateWindow['from'] }}</strong> and <strong class="font-mono">{{ $dateWindow['to'] }}</strong>.
-                <br>
-                @if($lastSync)
-                    Last sync: {{ $lastSync->imported_at->diffForHumans() }} ({{ $lastSync->items_count }} items)
-                @else
-        {{-- Sync Panels (Quick Sync Choice) --}}
+        <div x-show="syncOpen" x-cloak x-transition class="mt-3 p-4 bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/50 rounded-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-sm font-bold text-emerald-800 dark:text-emerald-300">Sync Subscription Periods</h3>
+                    <p class="text-xs text-emerald-600 dark:text-emerald-400">
+                        @if($lastSync)
+                            Last sync: <strong>{{ $lastSync->imported_at->diffForHumans() }}</strong> ({{ $lastSync->items_count }} items)
+                        @else
+                            Never synced.
+                        @endif
+                    </p>
+                </div>
+                <button @click="openSyncModal = true" class="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition shadow-sm">
+                    Open Sync Options
+                </button>
+            </div>
+        </div>
+
+        {{-- Sync Modal (Quick / Full Choice) --}}
         <div x-show="openSyncModal" 
              x-cloak 
-             class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
+             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 scale-95"
              x-transition:enter-end="opacity-100 scale-100">
@@ -474,8 +484,8 @@
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
                             </div>
                             <div>
-                                <div class="font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tighter">Fast Sync (v2)</div>
-                                <div class="text-sm text-slate-500 leading-tight">Sync only latest data only (Prev Month → Today). Best for daily updates.</div>
+                                <div class="font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tighter text-sm">Fast Sync (v2)</div>
+                                <div class="text-xs text-slate-500 leading-tight">Sync only latest data (Prev Month → Today). Best for daily updates.</div>
                             </div>
                         </button>
 
@@ -484,8 +494,8 @@
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                             </div>
                             <div>
-                                <div class="font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tighter">Deep Re-Sync</div>
-                                <div class="text-sm text-slate-500 leading-tight">Fetch everything from April 2025. Use this if historical data changed.</div>
+                                <div class="font-bold text-slate-800 dark:text-slate-100 uppercase tracking-tighter text-sm">Deep Re-Sync</div>
+                                <div class="text-xs text-slate-500 leading-tight">Fetch everything from April 2025. Use this if historical data changed.</div>
                             </div>
                         </button>
                     </div>
@@ -496,15 +506,27 @@
                                 <span class="text-slate-500 font-medium" x-text="syncCurrentStep"></span>
                                 <span class="font-bold text-emerald-600 dark:text-emerald-400" x-text="`${syncProgress}%`"></span>
                             </div>
-                            <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden">
+                            <div class="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2.5 overflow-hidden border border-slate-200 dark:border-slate-600">
                                 <div class="bg-emerald-500 h-2.5 transition-all duration-300" :style="`width: ${syncProgress}%`"></div>
                             </div>
+                        </div>
+
+                        {{-- Sync Stats while running --}}
+                        <div class="max-h-40 overflow-y-auto space-y-2 mt-4 text-[10px] scrollbar-thin">
+                            <template x-for="res in syncResults" :key="res.label">
+                                <div class="flex items-center justify-between py-1 border-b border-slate-50 dark:border-slate-700/50">
+                                    <span class="text-slate-600 dark:text-slate-400" x-text="res.label"></span>
+                                    <div class="flex items-center gap-2">
+                                        <span x-show="res.success" class="text-emerald-600 dark:text-emerald-400 font-bold" x-text="`+${res.count}`"></span>
+                                        <span x-show="!res.success" class="text-red-500" x-text="res.error || 'Failed'"></span>
+                                    </div>
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
     {{-- Table --}}
     <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">

@@ -277,7 +277,7 @@
                                     </span>
                                 </td>
                                 <td style="width: 40%;">
-                                    <div class="invoice-title">INVOICE</div>
+                                    <div class="invoice-title">INVOICE DRIVER</div>
                                     <div class="page-label">Hal : <span class="page-number-counter"></span></div>
                                 </td>
                             </tr>
@@ -286,13 +286,20 @@
                         {{-- Invoice Info (Repeated) --}}
                         <table class="info-section">
                             <tr>
-                                <td style="width: 65%; vertical-align: top;">
-                                    <table style="width: 100%;">
+                                <td style="width: 65%; vertical-align: top; padding: 0;">
+                                    <table style="width: 100%; border-spacing: 0;">
                                         <tr>
-                                            <td colspan="3" style="padding-bottom: 5px;">
+                                            <td colspan="3" style="padding-bottom: 5px; padding-left: 0;">
                                                 <span style="font-size: 9px; color: #64748b;">Kepada Yth.</span><br>
                                                 <span class="customer-name">{{ $invoice->partner_name }}</span>
-                                                <div class="customer-address">{!! nl2br(e($invoice->partner_address ?? $invoice->partner_address_complete ?? '')) !!}</div>
+                                                @php
+                                                    $address = $invoice->partner_address ?? $invoice->partner_address_complete ?? '';
+                                                    $address = preg_replace('/^' . preg_quote($invoice->partner_name, '/') . '[\r\n]*/i', '', $address);
+                                                @endphp
+                                                <div class="customer-address">{!! nl2br(e(trim($address))) !!}</div>
+                                                @if($invoice->partner_npwp)
+                                                <div style="font-size: 9px; margin-top: 3px; font-weight: bold; padding-top: 5px;">NPWP : {{ $invoice->partner_npwp }}</div>
+                                                @endif
                                             </td>
                                         </tr>
                                     </table>
@@ -315,12 +322,12 @@
                                         </tr>
                                         <tr><td colspan="3" style="height: 5px;"></td></tr>
                                         <tr>
-                                            <td class="info-label">Kode Pelanggan</td>
+                                            <td class="info-label">No Kontrak</td>
                                             <td class="info-colon">:</td>
-                                            <td></td>
+                                            <td>{{ $invoice->contract_ref ?? '' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="info-label">No. PO/Tanggal</td>
+                                            <td class="info-label">No. PO</td>
                                             <td class="info-colon">:</td>
                                             <td>{{ $invoice->ref ?? '' }}</td>
                                         </tr>
@@ -421,8 +428,8 @@
                             </tr>
                             <tr><td colspan="2" style="height: 8px;"></td></tr>
                             <tr>
-                                <td style="text-align: right;">PPN 11.00 %</td>
-                                <td style="text-align: right;">{{ number_format($invoice->amount_tax, 0, ',', '.') }}</td>
+                                        <td style="text-align: right;">PPN</td>
+                                        <td style="text-align: right;">{{ number_format($invoice->amount_tax, 0, ',', '.') }}</td>
                             </tr>
                             <tr><td colspan="2" style="height: 8px;"></td></tr>
                             <tr class="total-row">
@@ -449,12 +456,13 @@
             {{-- Signature Block --}}
             <table class="signature-table" style="margin-top: 20px;">
                 <tr>
-                    <td style="width: 50%;">
+                    <td style="width: 60%;"></td>
+                    <td style="width: 20%; text-align: center;">
                         <div class="signature-name" style="margin-top: 60px;">
                             {{ strtoupper($managerName) }}
                         </div>
                     </td>
-                    <td style="width: 50%;">
+                    <td style="width: 20%; text-align: center;">
                         <div class="signature-name" style="margin-top: 60px;">
                             {{ strtoupper($spvName) }}
                         </div>

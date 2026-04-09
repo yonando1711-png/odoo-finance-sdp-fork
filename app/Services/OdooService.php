@@ -339,6 +339,9 @@ class OdooService
                 'partner_id/contact_address',            // 15: Address (multiline)
                 'partner_id/contact_address_complete',   // 16: Address (single line)
                 'narration',                             // 17: Terms and Condition
+                'partner_id/vat',                        // 18: NPWP
+                'contract_ref',                          // 19: Contract Ref
+                'invoice_line_ids/sale_order_id/rental_contract_id/name', // 20: Rental Contract Ref from related SO
             ];
 
             $entries = [];
@@ -378,6 +381,8 @@ class OdooService
                             'partner_address' => $row[15] ?? '',
                             'partner_address_complete' => $row[16] ?? '',
                             'narration' => $row[17] ?? '',
+                            'partner_npwp' => $row[18] ?? '',
+                            'contract_ref' => !empty($row[19]) ? $row[19] : ($row[20] ?? ''),
                             'lines' => [],
                         ];
                     }
@@ -387,6 +392,10 @@ class OdooService
                         $lineDesc = $row[9] ?? '';
                         $lineQty = (float)($row[10] ?? 0);
                         $linePrice = (float)($row[11] ?? 0);
+
+                        if (empty($currentEntry['contract_ref']) && !empty($row[20])) {
+                            $currentEntry['contract_ref'] = $row[20];
+                        }
 
                         if (!empty($lineDesc) || $lineQty > 0 || $linePrice > 0) {
                             $currentEntry['lines'][] = [

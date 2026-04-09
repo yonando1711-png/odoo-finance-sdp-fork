@@ -13,7 +13,7 @@ class DashboardController extends Controller
     public function index()
     {
         if (Setting::get('show_dashboard', '1') !== '1') {
-            return redirect()->route('import');
+            return redirect()->route('profile.preferences');
         }
 
         $stats = [

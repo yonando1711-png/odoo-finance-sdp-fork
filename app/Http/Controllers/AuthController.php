@@ -12,7 +12,7 @@ class AuthController extends Controller
     public function showLogin()
     {
         if (Auth::check()) {
-            return redirect()->route('import');
+            return redirect()->route('profile.preferences');
         }
         return view('auth.login');
     }
@@ -28,7 +28,7 @@ class AuthController extends Controller
         
         if ($user && Hash::check($request->password, $user->password)) {
             $this->completeLogin($user, $request);
-            return redirect()->intended(route('import'));
+            return redirect()->intended(route('profile.preferences'));
         }
 
         return back()->withErrors([
@@ -52,7 +52,7 @@ class AuthController extends Controller
     public function showRegister()
     {
         if (Auth::check()) {
-            return redirect()->route('import');
+            return redirect()->route('profile.preferences');
         }
         return view('auth.register');
     }
@@ -74,7 +74,7 @@ class AuthController extends Controller
         ]);
 
         Auth::login($user);
-        return redirect()->route('import');
+        return redirect()->route('profile.preferences');
     }
 
     public function logout(Request $request)

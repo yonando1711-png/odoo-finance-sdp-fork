@@ -190,6 +190,8 @@ class InvoiceDriverController extends Controller
                     'spv_name' => $entry['spv_name'] ?? null,
                     'partner_address' => $entry['partner_address'] ?? null,
                     'partner_address_complete' => $entry['partner_address_complete'] ?? null,
+                    'partner_npwp' => $entry['partner_npwp'] ?? null,
+                    'contract_ref' => $entry['contract_ref'] ?? null,
                     'narration' => $entry['narration'] ?? null,
                 ]
             );

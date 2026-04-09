@@ -22,6 +22,8 @@ class InvoiceDriver extends Model
         'spv_name',
         'partner_address',
         'partner_address_complete',
+        'partner_npwp',
+        'contract_ref',
         'narration',
     ];
 

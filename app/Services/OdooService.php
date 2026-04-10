@@ -870,6 +870,7 @@ class OdooService
                 'invoice_line_ids/sale_order_id/rental_contract_id/name', // 24: Path A: Contract from Line
                 'rental_period_id/rental_order_id/rental_contract_id/name', // 25: Path B: Contract from Period
                 'invoice_date_due',                                       // 26: Due date
+                'partner_id/vat',                                         // 27: NPWP
             ];
 
             $entries = [];
@@ -910,6 +911,7 @@ class OdooService
                             'partner_address_complete' => $row[22] ?? '',
                             'narration' => $row[23] ?? '',
                             'contract_ref' => !empty($row[24]) ? $row[24] : ($row[25] ?? ''),
+                            'partner_npwp' => $row[27] ?? '',
                             'lines' => [],
                         ];
                     }

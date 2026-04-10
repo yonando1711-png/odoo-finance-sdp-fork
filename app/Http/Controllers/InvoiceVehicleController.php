@@ -408,11 +408,14 @@ class InvoiceVehicleController extends Controller
         try {
             foreach ($invoices as $inv) {
                 $log = PrintLog::firstOrCreate(['invoice_name' => $inv->name]);
-                $inv->print_count = $log->print_count;
+                $inv->kuitansi_print_count = $log->kuitansi_print_count;
+                $inv->kuitansi_pembayaran = $log->kuitansi_pembayaran;
+                $log->increment('kuitansi_print_count');
             }
         } catch (\Exception $e) {
             foreach ($invoices as $inv) {
-                if (!isset($inv->print_count)) $inv->print_count = 0;
+                if (!isset($inv->kuitansi_print_count)) $inv->kuitansi_print_count = 0;
+                $inv->kuitansi_pembayaran = null;
             }
         }
 
@@ -436,11 +439,14 @@ class InvoiceVehicleController extends Controller
         try {
             foreach ($invoices as $inv) {
                 $log = PrintLog::firstOrCreate(['invoice_name' => $inv->name]);
-                $inv->print_count = $log->print_count;
+                $inv->kuitansi_print_count = $log->kuitansi_print_count;
+                $inv->kuitansi_pembayaran = $log->kuitansi_pembayaran;
+                $log->increment('kuitansi_print_count');
             }
         } catch (\Exception $e) {
             foreach ($invoices as $inv) {
-                if (!isset($inv->print_count)) $inv->print_count = 0;
+                if (!isset($inv->kuitansi_print_count)) $inv->kuitansi_print_count = 0;
+                $inv->kuitansi_pembayaran = null;
             }
         }
 

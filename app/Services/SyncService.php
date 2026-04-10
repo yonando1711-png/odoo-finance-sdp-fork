@@ -78,6 +78,7 @@ class SyncService
                     'partner_address' => $entry['partner_address'] ?? null,
                     'partner_address_complete' => $entry['partner_address_complete'] ?? null,
                     'narration' => $entry['narration'] ?? null,
+                    'partner_npwp' => $entry['partner_npwp'] ?? null,
                 ]
             );
 
@@ -164,6 +165,7 @@ class SyncService
                     'partner_address' => $entry['partner_address'] ?? null,
                     'partner_address_complete' => $entry['partner_address_complete'] ?? null,
                     'narration' => $entry['narration'] ?? null,
+                    'partner_npwp' => $entry['partner_npwp'] ?? null,
                 ]
             );
 

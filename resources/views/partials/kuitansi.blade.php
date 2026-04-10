@@ -39,19 +39,19 @@
 
         /* ── HEADER ── */
         .company-name { font-size: 12px; font-weight: bold; }
-        .company-addr { font-size: 9px;  color: #334155; line-height: 1.5; }
-        .kuitansi-ttl { font-size: 30px; font-weight: bold; color: #000; letter-spacing: 2px; }
+        .company-addr { font-size: 9px;  color: #334155; line-height: 1.4; }
+        .kuitansi-ttl { font-size: 28px; font-weight: bold; color: #000; letter-spacing: 2px; }
 
         .header-divider {
             border: none;
             border-top: 1.5px solid #000;
-            margin: 6px 0 15px 0;
+            margin: 4px 0 10px 0;
             width: 100%;
         }
 
         /* ── FULL-WIDTH BODY ROWS ── */
         .body-table { width: 100%; }
-        .body-table td { padding: 3.5px 0; vertical-align: top; font-size: 10px; }
+        .body-table td { padding: 2px 0; vertical-align: top; font-size: 10px; }
         .lbl   { font-weight: normal; white-space: nowrap; width: 130px; }
         .colon { width: 12px; }
         .val   { color: #1e293b; }
@@ -92,7 +92,7 @@
         .sig-date-row td {
             text-align: center;
             font-size: 10px;
-            padding-bottom: 20px;
+            padding-bottom: 12px;
         }
         .sig-cell {
             text-align: center;
@@ -101,7 +101,7 @@
             vertical-align: bottom;
         }
         .sig-name-line {
-            margin-top: 40px;
+            margin-top: 50px;
             border-top: 1px solid #000;
             padding-top: 3px;
             font-weight: bold;
@@ -112,26 +112,32 @@
 </head>
 <body>
 @foreach($invoices as $invoice)
-<div class="kuitansi-page">
+<div class="kuitansi-page" style="{{ !$loop->last ? 'page-break-after: always;' : '' }}">
 
-    @if(($enableWatermark ?? '1') === '1' && isset($invoice->print_count) && $invoice->print_count > 0)
-        <div class="watermark">DUPLICATE - {{ $invoice->print_count }}</div>
+    @if(($enableWatermark ?? '1') === '1' && isset($invoice->kuitansi_print_count) && $invoice->kuitansi_print_count > 0)
+        <div class="watermark">DUPLICATE - {{ $invoice->kuitansi_print_count }}</div>
     @endif
 
     @php
         $isPdf   = !isset($isHtml) || !$isHtml;
         $logoSrc = $isPdf ? public_path('images/logo.png') : asset('images/logo.png');
 
-        // Description from invoice lines
-        $lines     = $invoice->lines ?? collect();
-        $descLines = $lines->filter(fn($l) => !empty($l->description));
-        $descArr   = $descLines->take(3)->pluck('description')->toArray();
-        if ($descLines->count() > 3) {
-            $descArr[] = '...dan ' . ($descLines->count() - 3) . ' item lainnya';
+        // Description logic: Use manual override if exists AND use_override parameter is 1
+        $useOverride = request('use_override', '0') === '1';
+        if ($useOverride && !empty($invoice->kuitansi_pembayaran)) {
+            $descArr = array_filter(array_map('trim', explode("\n", $invoice->kuitansi_pembayaran)));
+            $descSummary = implode("\n", $descArr);
+        } else {
+            $lines     = $invoice->lines ?? collect();
+            $descLines = $lines->filter(fn($l) => !empty($l->description) && ($l->quantity ?? 0) > 0);
+            $descArr   = $descLines->take(3)->pluck('description')->toArray();
+            if ($descLines->count() > 3) {
+                $descArr[] = '...dan ' . ($descLines->count() - 3) . ' item lainnya';
+            }
+            $descSummary = empty($descArr)
+                ? ($invoice->narration ?? '-')
+                : implode(', ', $descArr);
         }
-        $descSummary = empty($descArr)
-            ? ($invoice->narration ?? '-')
-            : implode(', ', $descArr);
 
         // Address: strip partner name from top
         $addr     = $invoice->partner_address ?? $invoice->partner_address_complete ?? '';
@@ -210,12 +216,12 @@
         <tr>
             <td class="lbl">UNTUK PEMBAYARAN</td>
             <td class="colon"></td>
-            <td class="val">{{ $descSummary }}</td>
+            <td class="val">{!! nl2br(e($descSummary)) !!}</td>
         </tr>
         <tr><td colspan="3" style="height:6px;"></td></tr>
         @php
             $kontrakPo = !empty($invoice->contract_ref) ? $invoice->contract_ref : (!empty($invoice->ref) ? $invoice->ref : null);
-            $showContract = request('show_contract', '1') === '1';
+            $showContract = request('show_contract', '0') === '1';
         @endphp
         @if($kontrakPo && $showContract)
         <tr>
@@ -291,9 +297,10 @@
 </script>
 <style>
     @media print {
-        @page { size: 8.5in 5.5in landscape; margin: 8mm 14mm; }
-        body  { margin: 0; }
-        .kuitansi-page { page-break-after: always; }
+        @page { size: A5 landscape; margin: 0; }
+        body  { margin: 8mm 14mm; }
+        .kuitansi-page { overflow: hidden; page-break-after: always; }
+        .kuitansi-page:last-of-type { page-break-after: auto; }
     }
 </style>
 @endif

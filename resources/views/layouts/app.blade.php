@@ -65,7 +65,7 @@
             </a>
             @endif
 
-            @if(auth()->check() && auth()->user()->role === 'admin')
+            @if(auth()->check() && (auth()->user()->role === 'admin' || auth()->user()->role === 'user'))
             {{-- Import Data --}}
             <a href="{{ route('import') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors {{ request()->routeIs('import*') ? 'bg-emerald-600/30 text-emerald-300' : 'hover:bg-slate-700 text-slate-300' }}">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
@@ -112,7 +112,7 @@
             <a href="{{ route('admin.settings.index') }}#schedule" 
                class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors {{ request()->routeIs('admin.settings.index') ? 'bg-emerald-600/30 text-emerald-300' : 'hover:bg-slate-700 text-slate-300' }}">
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                <span x-show="sidebarOpen" x-cloak>Odoo Schedule</span>
+                <span x-show="sidebarOpen" x-cloak>Settings</span>
             </a>
 
             <a href="{{ route('admin.users.index') }}" 

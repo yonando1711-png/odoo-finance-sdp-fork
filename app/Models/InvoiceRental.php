@@ -25,7 +25,8 @@ class InvoiceRental extends Model
         'partner_address',
         'partner_address_complete',
         'print_count',
-        'narration'
+        'narration',
+        'partner_npwp',
     ];
 
     protected $casts = [

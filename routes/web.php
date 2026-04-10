@@ -12,7 +12,9 @@ use App\Http\Controllers\InvoiceOtherController;
 use App\Http\Controllers\InvoiceRentalController;
 use App\Http\Controllers\InvoiceVehicleController;
 use App\Http\Controllers\InvoiceSubscriptionController;
-use App\Http\Controllers\Admin\PrintLogController;
+use App\Http\Controllers\PrintLogController;
+use App\Http\Controllers\Admin\PrintLogController as AdminPrintLogController;
+// use App\Http\Controllers\Admin\PrintLogController;
 
 // ──────────────────────────────────────────────
 // Guest Routes
@@ -36,7 +38,7 @@ Route::middleware('auth')->group(function () {
     // ──────────────────────────────────────────
     // Admin/Manager Routes (requires admin role)
     // ──────────────────────────────────────────
-    Route::middleware('role:admin')->group(function () {
+    Route::middleware('role:admin,user')->group(function () {
         // Import Data Routes
         Route::get('/import', [ImportController::class, 'index'])->name('import');
         Route::post('/import/odoo/sync', [ImportController::class, 'syncOdoo'])->name('import.odoo.sync');
@@ -123,6 +125,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/export', [InvoiceSubscriptionController::class, 'export'])->name('export');
     });
 
+    // Kuitansi Override Route (accessible by authenticated users printing Kuitansi)
+    Route::post('/kuitansi-override', [PrintLogController::class, 'updateKuitansi'])->name('kuitansi.override.update');
+
 
 
     // ──────────────────────────────────────────
@@ -160,9 +165,9 @@ Route::middleware('auth')->group(function () {
         Route::delete('sessions/{session}', [\App\Http\Controllers\Admin\SessionController::class, 'terminate'])->name('sessions.terminate');
 
         // Print Logs
-        Route::get('print-logs', [PrintLogController::class, 'index'])->name('print_logs.index');
-        Route::post('print-logs/bulk-reset', [PrintLogController::class, 'resetBulk'])->name('print_logs.reset_bulk');
-        Route::post('print-logs/{printLog}/reset', [PrintLogController::class, 'reset'])->name('print_logs.reset');
+        Route::get('print-logs', [AdminPrintLogController::class, 'index'])->name('print_logs.index');
+        Route::post('print-logs/bulk-reset', [AdminPrintLogController::class, 'resetBulk'])->name('print_logs.reset_bulk');
+        Route::post('print-logs/{printLog}/reset', [AdminPrintLogController::class, 'reset'])->name('print_logs.reset');
 
         // Odoo Settings (Relocated)
         Route::post('odoo/config', [SettingController::class, 'saveOdooConfig'])->name('settings.odoo.config');

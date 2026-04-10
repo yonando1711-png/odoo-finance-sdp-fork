@@ -254,7 +254,7 @@
     @php
         $regularLines = $invoice->lines->filter(fn($l) => $l->quantity != 0 || $l->price_unit != 0)->values();
         $noteLines = $invoice->lines->filter(fn($l) => $l->quantity == 0 && $l->price_unit == 0 && !empty($l->description));
-        // Always show SATUAN column for vehicle invoices (shows No Polisi)
+        // Always show NOPOL column for vehicle invoices (shows No Polisi)
         $showUnitColumn = true;
         // Fallback to app settings if Odoo fields are empty
         $managerName = !empty($invoice->manager_name)
@@ -274,9 +274,9 @@
                         @endif
 
                         {{-- Company Header (Repeated) --}}
-                        <table class="company-header">
+                        <table class="company-header" style="border-spacing: 0;">
                             <tr>
-                                <td style="width: 60%;">
+                                <td style="width: 60%; padding: 0;">
                                     @php
                                         // For PDF we need absolute path, for Browser we need URL
                                         $isPdf = request()->is('*/pdf');
@@ -299,13 +299,20 @@
                         {{-- Invoice Info (Repeated) --}}
                         <table class="info-section">
                             <tr>
-                                <td style="width: 55%; vertical-align: top;">
-                                    <table style="width: 100%; table-layout: fixed;">
+                                <td style="width: 55%; vertical-align: top; padding: 0;">
+                                    <table style="width: 100%; table-layout: fixed; border-spacing: 0;">
                                         <tr>
-                                            <td colspan="3" style="padding-bottom: 5px;">
+                                            <td colspan="3" style="padding-bottom: 5px; padding-left: 0;">
                                                 <span style="font-size: 9px; color: #64748b;">Kepada Yth.</span><br>
                                                 <span class="customer-name">{{ $invoice->partner_name }}</span>
-                                                <div class="customer-address">{!! nl2br(e($invoice->partner_address ?? $invoice->partner_address_complete ?? '')) !!}</div>
+                                                @php
+                                                    $address = $invoice->partner_address ?? $invoice->partner_address_complete ?? '';
+                                                    $address = preg_replace('/^' . preg_quote($invoice->partner_name, '/') . '[\r\n]*/i', '', $address);
+                                                @endphp
+                                                <div class="customer-address">{!! nl2br(e(trim($address))) !!}</div>
+                                                @if($invoice->partner_npwp)
+                                                <div style="font-size: 9px; margin-top: 3px; font-weight: bold; padding-top: 5px;">NPWP : {{ $invoice->partner_npwp }}</div>
+                                                @endif
                                             </td>
                                         </tr>
                                     </table>
@@ -324,19 +331,14 @@
                                         </tr>
                                         <tr><td colspan="3" style="height: 5px;"></td></tr>
                                         <tr>
-                                            <td class="info-label">Kode Pelanggan</td>
+                                            <td class="info-label">No Kontrak</td>
                                             <td class="info-colon">:</td>
-                                            <td></td>
+                                            <td>{{ $invoice->contract_ref ?? '' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="info-label">No. PO/Tanggal</td>
+                                            <td class="info-label">No. PO</td>
                                             <td class="info-colon">:</td>
                                             <td>{{ $invoice->ref ?? '' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="info-label">Kontrak/Tanggal</td>
-                                            <td class="info-colon">:</td>
-                                            <td></td>
                                         </tr>
                                         <tr>
                                             <td class="info-label">Payment Terms</td>
@@ -353,7 +355,7 @@
                     <th class="col-no">NO.</th>
                     <th class="{{ $showUnitColumn ? 'col-desc' : 'col-desc-wide' }}">KETERANGAN</th>
                     @if($showUnitColumn)
-                    <th class="col-unit">SATUAN</th>
+                    <th class="col-unit">NOPOL</th>
                     @endif
                     <th class="col-price">HARGA SATUAN</th>
                     <th class="col-amount">JUMLAH</th>
@@ -363,7 +365,14 @@
                 @foreach($regularLines as $idx => $line)
                 <tr>
                     <td class="text-center">{{ $idx + 1 }}</td>
-                    <td>{{ $line->description }}</td>
+                    <td>
+                        @php
+                            $description = $line->description;
+                            // Prepend "Penjualan Kendaraan" and remove brackets [ ]
+                            $formattedDescription = 'Penjualan Kendaraan ' . str_replace(['[', ']'], '', $description);
+                        @endphp
+                        {{ $formattedDescription }}
+                    </td>
                     @if($showUnitColumn)
                     <td class="text-center">
                         {{ $line->license_plate ?? '' }}
@@ -429,7 +438,7 @@
                             @if($invoice->amount_tax > 0)
                             {{-- WITH TAX: Show PPN row --}}
                             <tr class="ppn-row">
-                                <td style="text-align: right;">PPN 11.00 %</td>
+                                <td style="text-align: right;">PPN</td>
                                 <td style="text-align: right;">{{ number_format($invoice->amount_tax, 0, ',', '.') }}</td>
                             </tr>
                             @endif
@@ -457,12 +466,13 @@
             {{-- Signature Block --}}
             <table class="signature-table" style="margin-top: 20px;">
                 <tr>
-                    <td style="width: 50%;">
+                    <td style="width: 60%;"></td>
+                    <td style="width: 20%; text-align: center;">
                         <div class="signature-name" style="margin-top: 60px;">
                             {{ strtoupper($managerName) }}
                         </div>
                     </td>
-                    <td style="width: 50%;">
+                    <td style="width: 20%; text-align: center;">
                         <div class="signature-name" style="margin-top: 60px;">
                             {{ strtoupper($spvName) }}
                         </div>

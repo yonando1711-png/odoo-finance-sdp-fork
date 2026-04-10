@@ -18,6 +18,8 @@ class PrintLogController extends Controller
             'pembayaran_2' => 'nullable|string|max:110',
             'pembayaran_3' => 'nullable|string|max:110',
             'pembayaran_4' => 'nullable|string|max:110',
+            'show_contract' => 'nullable|boolean',
+            'use_override' => 'nullable|boolean',
         ]);
 
         $lines = [];
@@ -35,6 +37,13 @@ class PrintLogController extends Controller
         );
 
         $printLog->kuitansi_pembayaran = $pembayaranText;
+        
+        // Save preferences
+        $prefs = $printLog->preferences ?? [];
+        $prefs['show_contract'] = $request->boolean('show_contract');
+        $prefs['use_override'] = $request->boolean('use_override');
+        $printLog->preferences = $prefs;
+
         $printLog->save();
 
         return response()->json([

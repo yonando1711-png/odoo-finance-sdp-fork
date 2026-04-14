@@ -53,7 +53,7 @@ class KuitansiPrintController extends Controller
         $enableWatermark = Setting::get('enable_pdf_watermark', '1');
 
         $pdf = Pdf::loadView('partials.kuitansi', compact('invoices', 'showContract', 'useOverride', 'request', 'enableWatermark'))
-            ->setPaper([0, 0, 396, 684], 'landscape'); // custom size landscape: 9.5in x 5.5in
+            ->setPaper('a5', 'landscape'); // custom size landscape: A5
             
         $pdfBase64 = base64_encode($pdf->output());
 

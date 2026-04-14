@@ -412,7 +412,7 @@ class InvoiceDriverController extends Controller
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('partials.kuitansi', [
             'invoices' => $invoices,
             'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
-        ])->setPaper([0, 0, 396, 612], 'landscape'); // half-letter landscape: 8.5in x 5.5in
+        ])->setPaper('a5', 'landscape'); // custom size landscape: A5
 
         $filename = 'kuitansi_' . str_replace('/', '_', $invoice->name) . '.pdf';
         return $pdf->stream($filename);

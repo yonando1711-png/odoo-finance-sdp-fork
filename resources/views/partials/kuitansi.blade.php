@@ -5,7 +5,7 @@
     <title>Kuitansi</title>
     <style>
         @page {
-            size: 8.5in 5.5in landscape;
+            size: a5 landscape;
             margin: 8mm 14mm;
         }
         body {
@@ -297,7 +297,7 @@
 </script>
 <style>
     @media print {
-        @page { size: A5 landscape; margin: 0; }
+        @page { size: a5 landscape; margin: 0; }
         body  { margin: 8mm 14mm; }
         .kuitansi-page { overflow: hidden; page-break-after: always; }
         .kuitansi-page:last-of-type { page-break-after: auto; }

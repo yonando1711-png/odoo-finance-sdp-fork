@@ -270,9 +270,14 @@
                 str_contains(strtolower($l->description), 'pembulatan') || 
                 str_contains(strtolower($l->description), 'rounding')
             );
+            $pphLines = $allLines->filter(fn($l) => 
+                str_contains(strtolower($l->description), 'pph 2%') || 
+                str_contains(strtolower($l->description), 'pph 2 %')
+            );
             $rentalLines = $allLines->reject(fn($l) => 
                 $discountLines->contains('id', $l->id) || 
-                $roundingLines->contains('id', $l->id)
+                $roundingLines->contains('id', $l->id) ||
+                $pphLines->contains('id', $l->id)
             )->values();
 
             $displayLines = collect();
@@ -453,13 +458,30 @@
                     @else
                         <td class="text-center">{{ $idx + 1 }}</td>
                         <td>
-                            <strong>{!! nl2br(e($line->description)) !!}</strong>
-                            @if(!$line->is_summary)
+                            @if(isset($showUsername) && $showUsername)
+                                <strong>No. Polisi/Serial: {{ $line->serial_number ?? '-' }}</strong>
+                            @else
+                                <strong>{!! nl2br(e($line->description)) !!}</strong>
                                 @if($line->serial_number)
                                     <br/><span style="color: #475569;">No. Polisi/Serial: {{ $line->serial_number }}</span>
                                 @endif
-                                @if($line->actual_start || $line->actual_end)
-                                    <br/><span style="color: #475569;">Periode: {{ $line->actual_start ? $line->actual_start->format('d/m/Y') : '-' }} s/d {{ $line->actual_end ? $line->actual_end->format('d/m/Y') : '-' }}</span>
+                            @endif
+                            @if(!$line->is_summary)
+                                @php
+                                    $periodeStart = $line->actual_start;
+                                    $periodeEnd = $line->actual_end;
+                                    if (isset($showUsername) && $showUsername) {
+                                        $subscription = \App\Models\InvoiceSubscription::where('invoice_name', $invoice->name)
+                                            ->where('so_name', $line->sale_order_id)
+                                            ->first();
+                                        if ($subscription && $subscription->period_start && $subscription->period_end) {
+                                            $periodeStart = $subscription->period_start;
+                                            $periodeEnd = $subscription->period_end;
+                                        }
+                                    }
+                                @endphp
+                                @if($periodeStart || $periodeEnd)
+                                    <br/><span style="color: #475569;">Periode: {{ $periodeStart ? $periodeStart->format('d/m/Y') : '-' }} s/d {{ $periodeEnd ? $periodeEnd->format('d/m/Y') : '-' }}</span>
                                 @endif
                                 @if(isset($showUsername) && $showUsername && $line->customer_name)
                                     <br/><span style="color: #475569;">User: {{ $line->customer_name }}</span>
@@ -567,7 +589,18 @@
             <div class="catatan-container">
                 <div class="catatan-box">
                     <span class="catatan-label">CATATAN</span>
-                    <div class="catatan-content">{!! nl2br(e($invoice->narration ?? '')) !!}</div>
+                    <div class="catatan-content">
+                        {!! nl2br(e($invoice->narration ?? '')) !!}
+                        @if(isset($pphLines) && $pphLines->isNotEmpty())
+                            @if(!empty($invoice->narration))<br/>@endif
+                            @foreach($pphLines as $pphL)
+                                @php
+                                    $pphText = preg_replace('/^.*?(PPH\s*2\s*%)/i', '$1', $pphL->description);
+                                @endphp
+                                {{ $pphText }}<br/>
+                            @endforeach
+                        @endif
+                    </div>
                 </div>
             </div>
 

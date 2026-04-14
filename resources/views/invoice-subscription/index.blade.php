@@ -333,6 +333,10 @@
     {{-- Filters & Actions --}}
     <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 mb-6 p-4">
         <form method="GET" action="{{ route('invoice-subscription.index', [], false) }}">
+            <input type="hidden" name="status" value="{{ $statusFilter }}">
+            <input type="hidden" name="sort" value="{{ $sort }}">
+            <input type="hidden" name="dir" value="{{ $dir }}">
+            <input type="hidden" name="per_page" value="{{ $perPage }}">
             
             {{-- Tabs for Status --}}
             <div class="flex space-x-1 border-b border-slate-200 dark:border-slate-700 mb-4 overflow-x-auto pb-px">

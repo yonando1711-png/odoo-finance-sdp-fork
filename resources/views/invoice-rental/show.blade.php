@@ -126,7 +126,16 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($invoice->lines as $idx => $line)
+                    @php
+                        $regularLines = $invoice->lines->reject(fn($l) => $l->quantity == 0 && $l->price_unit == 0 && !empty($l->description))->values();
+                        $noteLines = $invoice->lines->filter(fn($l) => $l->quantity == 0 && $l->price_unit == 0 && !empty($l->description))->values();
+                        $pphLines = $invoice->lines->filter(fn($l) => str_contains(strtolower($l->description), 'pph 2%') || str_contains(strtolower($l->description), 'pph 2 %'))->values();
+                    @endphp
+                    @foreach($regularLines as $idx => $line)
+                        @php
+                            // Exclude PPH from being rendered in main web view to match PDF
+                            if ($pphLines->contains('id', $line->id)) continue;
+                        @endphp
                     <tr class="border-t border-slate-100 dark:border-slate-800 {{ $idx % 2 === 0 ? '' : 'bg-slate-50/50 dark:bg-slate-900/30' }}">
                         <td class="px-4 py-3 text-xs text-slate-400">{{ $idx + 1 }}</td>
                         <td class="px-4 py-3 text-sm">{{ $line->sale_order_id ?? '-' }}<br/><span class="text-xs text-slate-400">{{ $line->customer_name }}</span></td>
@@ -167,8 +176,34 @@
                     @endforeach
                 </tbody>
             </table>
+    </div>
+
+    @if(!empty($invoice->narration) || $noteLines->isNotEmpty() || $pphLines->isNotEmpty())
+    {{-- Notes / Catatan --}}
+    <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 mt-6">
+        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+            <h3 class="text-lg font-semibold text-slate-800 dark:text-slate-100">Catatan</h3>
+        </div>
+        <div class="p-6 text-sm text-slate-600 dark:text-slate-400">
+            {!! nl2br(e($invoice->narration ?? '')) !!}
+            @if($pphLines->isNotEmpty())
+                @if(!empty($invoice->narration))<br/><br/>@endif
+                @foreach($pphLines as $pphL)
+                    @php
+                        $pphText = preg_replace('/^.*?(PPH\s*2\s*%)/i', '$1', $pphL->description);
+                    @endphp
+                    {{ $pphText }}<br/>
+                @endforeach
+            @endif
+            @if($noteLines->isNotEmpty())
+                @if(!empty($invoice->narration) || $pphLines->isNotEmpty())<br/>@endif
+                @foreach($noteLines as $noteL)
+                    {{ $noteL->clean_description }}<br/>
+                @endforeach
+            @endif
         </div>
     </div>
+    @endif
 </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

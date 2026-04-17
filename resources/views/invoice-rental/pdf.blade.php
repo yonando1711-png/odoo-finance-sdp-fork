@@ -274,10 +274,17 @@
                 str_contains(strtolower($l->description), 'pph 2%') || 
                 str_contains(strtolower($l->description), 'pph 2 %')
             );
+            $noteLines = $allLines->filter(fn($l) => 
+                $l->quantity == 0 && $l->price_unit == 0 && !empty($l->description) &&
+                !$discountLines->contains('id', $l->id) && 
+                !$roundingLines->contains('id', $l->id) &&
+                !$pphLines->contains('id', $l->id)
+            );
             $rentalLines = $allLines->reject(fn($l) => 
                 $discountLines->contains('id', $l->id) || 
                 $roundingLines->contains('id', $l->id) ||
-                $pphLines->contains('id', $l->id)
+                $pphLines->contains('id', $l->id) ||
+                $noteLines->contains('id', $l->id)
             )->values();
 
             $displayLines = collect();
@@ -480,7 +487,11 @@
                             @endphp
 
                             @if(!$line->is_summary)
-                                <span>{{ $productCode }} {{ $line->serial_number ?? '-' }}{{ $periodeStr }}</span>
+                                @if(strtolower(trim($line->clean_description)) === 'lain-lain')
+                                    <span>{{ $line->clean_description }}</span>
+                                @else
+                                    <span>{{ $productCode }} {{ $line->serial_number ?? '-' }}{{ $periodeStr }}</span>
+                                @endif
                                 @if(isset($showUsername) && $showUsername && $line->customer_name)
                                     <br/><span style="color: #475569;">User: {{ $line->customer_name }}</span>
                                 @endif
@@ -618,6 +629,12 @@
                                     $pphText = preg_replace('/^.*?(PPH\s*2\s*%)/i', '$1', $pphL->description);
                                 @endphp
                                 {{ $pphText }}<br/>
+                            @endforeach
+                        @endif
+                        @if(isset($noteLines) && $noteLines->isNotEmpty())
+                            @if(!empty($invoice->narration) || (isset($pphLines) && $pphLines->isNotEmpty()))<br/>@endif
+                            @foreach($noteLines as $noteL)
+                                {{ $noteL->clean_description }}<br/>
                             @endforeach
                         @endif
                     </div>

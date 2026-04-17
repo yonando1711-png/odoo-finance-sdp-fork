@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
-@section('title', 'Invoice Driver')
-@section('subtitle', 'Invoice Driver entries from Odoo')
+@section('title', 'Invoice')
+@section('subtitle', 'Invoice entries from Odoo')
 
 @section('content')
 <div x-data="{
@@ -188,7 +188,7 @@
 
             {{-- Sync Panel --}}
             <div x-show="syncOpen" x-cloak x-transition class="mt-3 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
-                <h3 class="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-3">Sync Invoice Driver from Odoo</h3>
+                <h3 class="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-3">Sync Invoice from Odoo</h3>
                 <div class="flex flex-wrap items-end gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Date From</label>
@@ -344,7 +344,7 @@
                         <td :colspan="visibleColumnCount" class="px-4 py-12 text-center">
                             <div class="text-slate-400">
                                 <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                <p class="text-lg font-medium">No invoice driver entries found</p>
+                                <p class="text-lg font-medium">No invoice entries found</p>
                                 <p class="text-sm mt-1">Use the <strong>Sync Odoo</strong> button above to import data.</p>
                             </div>
                         </td>

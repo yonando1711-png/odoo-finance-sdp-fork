@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', $invoice->name)
-@section('subtitle', 'Invoice Driver Detail')
+@section('subtitle', 'Invoice Detail')
 
 @section('content')
 <div class="max-w-5xl mx-auto">

@@ -461,7 +461,7 @@
                             @php
                                 // Extract product code from description (text inside first [...])
                                 preg_match('/\[([^\]]+)\]/', $line->description ?? '', $codeMatch);
-                                $productCode = $codeMatch[1] ?? null;
+                                $productCode = $codeMatch[1] ?? '';
 
                                 // Always look up billing period from InvoiceSubscription
                                 $periodeStart = $line->actual_start;
@@ -473,23 +473,19 @@
                                     $periodeStart = $subscription->period_start;
                                     $periodeEnd   = $subscription->period_end;
                                 }
+
+                                $periodeStr = ($periodeStart || $periodeEnd) 
+                                    ? ' Periode: ' . ($periodeStart ? $periodeStart->format('d/m/Y') : '-') . ' s/d ' . ($periodeEnd ? $periodeEnd->format('d/m/Y') : '-')
+                                    : '';
                             @endphp
-                            @if(isset($showUsername) && $showUsername)
-                                {{-- Code - Serial on first line, description on second --}}
-                                <strong>No. Polisi/Serial: {{ $productCode ? $productCode . ' - ' : '' }}{{ $line->serial_number ?? '-' }}</strong>
-                            @else
-                                @if($line->serial_number)
-                                    <strong>No. Polisi/Serial: {{ $line->serial_number }}</strong><br/>
-                                @endif
-                                <span>{!! nl2br(e($line->clean_description)) !!}</span>
-                            @endif
+
                             @if(!$line->is_summary)
-                                @if($periodeStart || $periodeEnd)
-                                    <br/><span style="color: #475569;">Periode: {{ $periodeStart ? $periodeStart->format('d/m/Y') : '-' }} s/d {{ $periodeEnd ? $periodeEnd->format('d/m/Y') : '-' }}</span>
-                                @endif
+                                <span>{{ $productCode }} {{ $line->serial_number ?? '-' }}{{ $periodeStr }}</span>
                                 @if(isset($showUsername) && $showUsername && $line->customer_name)
                                     <br/><span style="color: #475569;">User: {{ $line->customer_name }}</span>
                                 @endif
+                            @else
+                                <span>{!! nl2br(e($line->clean_description)) !!}</span>
                             @endif
                         </td>
                     @endif
@@ -502,8 +498,8 @@
                                     'hours' => 'Jam',
                                     'day' => 'Hari',
                                     'days' => 'Hari',
-                                    'month' => 'Bulan',
-                                    'months' => 'Bulan',
+                                    'month' => 'Bln',
+                                    'months' => 'Bln',
                                     'year' => 'Tahun',
                                     'years' => 'Tahun',
                                     'unit' => 'Unit',

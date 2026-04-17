@@ -863,8 +863,8 @@ class OdooService
                 'invoice_line_ids/sale_order_id/name',                       // 9: Sale order id name
                 'invoice_line_ids/name',                                  // 10: Line description
                 'invoice_line_ids/serial_ids/name',                       // 11: Serial number
-                'invoice_line_ids/sale_order_id/actual_start_rental',        // 12: Actual start rental
-                'invoice_line_ids/sale_order_id/actual_end_rental',          // 13: Actual end rental
+                'invoice_line_ids/start_rental_period',                      // 12: Actual start rental
+                'invoice_line_ids/end_rental_period',                        // 13: Actual end rental
                 'invoice_line_ids/sale_order_id/rental_uom',                 // 14: Rental uom
                 'invoice_line_ids/quantity',                               // 15: Quantity
                 'invoice_line_ids/price_unit',                             // 16: Price unit

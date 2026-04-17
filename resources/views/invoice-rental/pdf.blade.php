@@ -121,11 +121,11 @@
             vertical-align: top;
             word-wrap: break-word;
         }
-        .lines-table .col-no { width: 6%; text-align: center; }
-        .lines-table .col-desc { width: 40%; }
-        .lines-table .col-unit { width: 14%; text-align: center; }
-        .lines-table .col-price { width: 20%; text-align: right; }
-        .lines-table .col-amount { width: 20%; text-align: right; }
+        .lines-table .col-no { width: 5%; text-align: center; }
+        .lines-table .col-desc { width: 55%; }
+        .lines-table .col-unit { width: 10%; text-align: center; }
+        .lines-table .col-price { width: 15%; text-align: right; }
+        .lines-table .col-amount { width: 15%; text-align: right; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
 
@@ -456,6 +456,22 @@
                 </tr>
             </thead>
             <tbody>
+                @if(isset($printMode) && $printMode === 'detail')
+                <tr>
+                    <td></td>
+                    <td style="padding-bottom: 2px;">
+                        Pembayaran sewa Kendaraan
+                        <table style="width: 100%; margin-top: 4px; border-collapse: collapse;">
+                            <tr>
+                                <th style="width: 35%; text-align: left; text-decoration: underline; font-weight: bold; padding: 0;">Type</th>
+                                <th style="width: 25%; text-align: center; text-decoration: underline; font-weight: bold; padding: 0;">No-Polisi</th>
+                                <th style="width: 40%; text-align: center; text-decoration: underline; font-weight: bold; padding: 0;">Periode-Tagihan-Sewa</th>
+                            </tr>
+                        </table>
+                    </td>
+                    <td colspan="3"></td>
+                </tr>
+                @endif
                 @foreach($displayLines as $idx => $line)
                 <tr>
                     @if(isset($printMode) && $printMode === 'summary')
@@ -470,30 +486,36 @@
                                 preg_match('/\[([^\]]+)\]/', $line->description ?? '', $codeMatch);
                                 $productCode = $codeMatch[1] ?? '';
 
-                                // Always look up billing period from InvoiceSubscription
                                 $periodeStart = $line->actual_start;
                                 $periodeEnd   = $line->actual_end;
-                                $subscription = \App\Models\InvoiceSubscription::where('invoice_name', $invoice->name)
-                                    ->where('so_name', $line->sale_order_id)
-                                    ->first();
-                                if ($subscription && $subscription->period_start && $subscription->period_end) {
-                                    $periodeStart = $subscription->period_start;
-                                    $periodeEnd   = $subscription->period_end;
-                                }
+
 
                                 $periodeStr = ($periodeStart || $periodeEnd) 
-                                    ? ' Periode: ' . ($periodeStart ? $periodeStart->format('d/m/Y') : '-') . ' s/d ' . ($periodeEnd ? $periodeEnd->format('d/m/Y') : '-')
-                                    : '';
+                                    ? ($periodeStart ? $periodeStart->format('d/m/Y') : '-') . ' s/d ' . ($periodeEnd ? $periodeEnd->format('d/m/Y') : '-')
+                                    : '-';
                             @endphp
 
                             @if(!$line->is_summary)
                                 @if(strtolower(trim($line->clean_description)) === 'lain-lain')
                                     <span>{{ $line->clean_description }}</span>
+                                @elseif(isset($printMode) && $printMode === 'detail')
+                                    <table style="width: 100%; border-collapse: collapse;">
+                                        <tr>
+                                            <td style="width: 35%; text-align: left; padding: 0; vertical-align: top;">{{ $productCode }}</td>
+                                            <td style="width: 25%; text-align: center; padding: 0; vertical-align: top;">{{ $line->serial_number ?? '-' }}</td>
+                                            <td style="width: 40%; text-align: center; padding: 0; vertical-align: top;">{{ $periodeStr }}</td>
+                                        </tr>
+                                    </table>
                                 @else
-                                    <span>{{ $productCode }} {{ $line->serial_number ?? '-' }}{{ $periodeStr }}</span>
+                                    @php
+                                        $inlinePeriode = ($periodeStart || $periodeEnd) 
+                                            ? ' Periode: ' . ($periodeStart ? $periodeStart->format('d/m/Y') : '-') . ' s/d ' . ($periodeEnd ? $periodeEnd->format('d/m/Y') : '-')
+                                            : '';
+                                    @endphp
+                                    <span>{{ $productCode }} {{ $line->serial_number ?? '-' }}{{ $inlinePeriode }}</span>
                                 @endif
-                                @if(isset($showUsername) && $showUsername && $line->customer_name)
-                                    <br/><span style="color: #475569;">User: {{ $line->customer_name }}</span>
+                                @if(isset($showUsername) && $showUsername && $line->customer_name && strtolower(trim($line->clean_description)) !== 'lain-lain')
+                                    <div style="color: #475569; font-style: italic; margin-top: 2px;">{{ $line->customer_name }}</div>
                                 @endif
                             @else
                                 <span>{!! nl2br(e($line->clean_description)) !!}</span>

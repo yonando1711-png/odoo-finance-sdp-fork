@@ -302,22 +302,15 @@
                         $periodStr = ' Periode ' . $earliestStart->format('d/m/Y') . ' - ' . $latestEnd->format('d/m/Y');
                     }
                     
-                    $detailTexts = [];
-                    foreach($rentalLines as $rl) {
-                        $desc = trim($rl->description);
-                        if (!empty($desc)) {
-                            $detailTexts[] = $desc;
-                        }
-                    }
-                    
-                    if (!empty($detailTexts)) {
-                        $lastLine = end($detailTexts);
-                        $summaryDesc = $lastLine;
+                    // Use note lines (qty=0, price=0 description lines from Odoo) as the summary description
+                    if ($noteLines->isNotEmpty()) {
+                        $summaryDesc = $noteLines->pluck('description')->map(fn($d) => trim($d))->filter()->implode("\n");
+                    } elseif (!empty($invoice->narration)) {
+                        $summaryDesc = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $invoice->narration));
                     } else {
-                        // Include untaxed amount reference in description if needed
+                        // Fallback to generic description
                         $summaryDesc = 'Sewa ' . number_format($totalQty, 0) . ' Unit Kendaraan' . $periodStr;
                     }
-                    
                     $summaryAmount = $invoice->amount_untaxed; // Use the actual untaxed amount from Odoo
                     
                     $displayLines->push((object)[
@@ -647,22 +640,42 @@
                 <div class="catatan-box">
                     <span class="catatan-label">CATATAN</span>
                     <div class="catatan-content">
-                        {!! nl2br(e($invoice->narration ?? '')) !!}
-                        @if(isset($pphLines) && $pphLines->isNotEmpty())
-                            @if(!empty($invoice->narration))<br/>@endif
-                            @foreach($pphLines as $pphL)
-                                @php
+                        @php
+                            $catatanContent = [];
+                            
+                            // Process Narration
+                            if (!empty($invoice->narration)) {
+                                $narration = trim($invoice->narration);
+                                if (!empty($showUsername) && !empty($invoice->partner_name) && stripos($narration, trim($invoice->partner_name)) !== false) {
+                                    $narration = trim(str_ireplace(trim($invoice->partner_name), '', $narration));
+                                }
+                                if (!empty($narration)) {
+                                    $catatanContent[] = nl2br(e($narration));
+                                }
+                            }
+                            
+                            // Process PPH Lines
+                            if (isset($pphLines) && $pphLines->isNotEmpty()) {
+                                foreach($pphLines as $pphL) {
                                     $pphText = preg_replace('/^.*?(PPH\s*2\s*%)/i', '$1', $pphL->description);
-                                @endphp
-                                {{ $pphText }}<br/>
-                            @endforeach
-                        @endif
-                        @if(isset($noteLines) && $noteLines->isNotEmpty())
-                            @if(!empty($invoice->narration) || (isset($pphLines) && $pphLines->isNotEmpty()))<br/>@endif
-                            @foreach($noteLines as $noteL)
-                                {!! nl2br(e($noteL->clean_description)) !!}<br/>
-                            @endforeach
-                        @endif
+                                    $catatanContent[] = e($pphText);
+                                }
+                            }
+                            
+                            // Process Note Lines
+                            if (isset($noteLines) && $noteLines->isNotEmpty()) {
+                                foreach($noteLines as $noteL) {
+                                    $noteText = trim($noteL->clean_description);
+                                    if (!empty($showUsername) && !empty($invoice->partner_name) && stripos($noteText, trim($invoice->partner_name)) !== false) {
+                                        $noteText = trim(str_ireplace(trim($invoice->partner_name), '', $noteText));
+                                    }
+                                    if (!empty($noteText)) {
+                                        $catatanContent[] = nl2br(e($noteText));
+                                    }
+                                }
+                            }
+                        @endphp
+                        {!! implode('<br/>', $catatanContent) !!}
                     </div>
                 </div>
             </div>

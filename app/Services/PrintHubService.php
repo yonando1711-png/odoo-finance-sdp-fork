@@ -20,6 +20,17 @@ class PrintHubService
     }
 
     /**
+     * Get a pre-configured HTTP client with SSL verification disabled (local dev)
+     */
+    protected function http(): \Illuminate\Http\Client\PendingRequest
+    {
+        return Http::withHeaders([
+            'X-Api-Key' => $this->apiKey,
+            'Accept' => 'application/json',
+        ])->withoutVerifying()->timeout($this->timeout);
+    }
+
+    /**
      * Get list of printers from the hub
      */
     public function getPrinters(): array
@@ -157,10 +168,7 @@ class PrintHubService
         try {
             $payload = array_merge(['schema_name' => $name], $data);
             
-            $response = Http::withHeaders([
-                'X-Api-Key' => $this->apiKey,
-                'Accept' => 'application/json',
-            ])->timeout($this->timeout)->post("{$this->url}/api/v1/schema", $payload);
+            $response = $this->http()->post("{$this->url}/api/v1/schema", $payload);
 
             if ($response->successful()) {
                 return [
@@ -189,10 +197,7 @@ class PrintHubService
         }
 
         try {
-            $response = Http::withHeaders([
-                'X-Api-Key' => $this->apiKey,
-                'Accept' => 'application/json',
-            ])->timeout($this->timeout)->get("{$this->url}/api/v1/test");
+            $response = $this->http()->get("{$this->url}/api/v1/test");
 
             if ($response->successful()) {
                 return [
@@ -270,10 +275,7 @@ class PrintHubService
         }
 
         try {
-            $response = Http::withHeaders([
-                'X-Api-Key' => $this->apiKey,
-                'Accept' => 'application/json',
-            ])->timeout($this->timeout)->get("{$this->url}/api/v1/queues");
+            $response = $this->http()->get("{$this->url}/api/v1/queues");
 
             if ($response->successful()) {
                 return [

@@ -291,7 +291,13 @@
                                 </td>
                                 <td style="width: 40%;">
                                     <div class="invoice-title">INVOICE</div>
-                                    <div class="page-label">Hal : <span class="page-number-counter"></span></div>
+                                    <div class="page-label">Hal : 
+                                        @if(isset($printMode) && $printMode === 'summary')
+                                            1
+                                        @else
+                                            <span class="page-number-counter"></span>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                         </table>
@@ -352,49 +358,100 @@
                     </td>
                 </tr>
                 <tr style="border-top: 2px solid #1e293b;">
-                    <th class="col-no">NO.</th>
-                    <th class="{{ $showUnitColumn ? 'col-desc' : 'col-desc-wide' }}">KETERANGAN</th>
-                    @if($showUnitColumn)
-                    <th class="col-unit">NOPOL</th>
+                    @if(isset($printMode) && $printMode === 'summary')
+                        <th colspan="{{ $showUnitColumn ? 5 : 4 }}" style="border-bottom: 2px solid #1e293b; background-color: white; height: 2px; padding: 0;"></th>
+                    @else
+                        <th class="col-no">NO.</th>
+                        <th class="{{ $showUnitColumn ? 'col-desc' : 'col-desc-wide' }}">KETERANGAN</th>
+                        @if($showUnitColumn)
+                        <th class="col-unit">NOPOL</th>
+                        @endif
+                        <th class="col-price">HARGA SATUAN</th>
+                        <th class="col-amount">JUMLAH</th>
                     @endif
-                    <th class="col-price">HARGA SATUAN</th>
-                    <th class="col-amount">JUMLAH</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($regularLines as $idx => $line)
+                @php
+                    $allLines = $invoice->lines;
+                    $noteLines = $allLines->filter(fn($l) => 
+                        $l->quantity == 0 && $l->price_unit == 0 && !empty($l->description)
+                    );
+                    $regularLines = $allLines->filter(fn($l) => $l->quantity != 0 || $l->price_unit != 0)->values();
+
+                    $displayLines = collect();
+                    if (isset($printMode) && $printMode === 'summary') {
+                        if ($noteLines->isNotEmpty()) {
+                            $summaryDesc = $noteLines->pluck('description')->map(fn($d) => trim($d))->filter()->implode("\n");
+                        } elseif (!empty($invoice->narration)) {
+                            $summaryDesc = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $invoice->narration));
+                        } else {
+                            $summaryDesc = $regularLines->pluck('description')->map(fn($d) => trim($d))->filter()->implode("\n");
+                        }
+
+                        $displayLines->push((object)[
+                            'description' => $summaryDesc,
+                            'quantity' => 0,
+                            'price_unit' => 0,
+                            'amount' => $invoice->amount_untaxed,
+                            'is_summary' => true
+                        ]);
+                    } else {
+                        foreach($regularLines as $l) {
+                            $l->amount = $l->quantity * $l->price_unit;
+                            $l->is_summary = false;
+                            $displayLines->push($l);
+                        }
+                    }
+                @endphp
+                @foreach($displayLines as $idx => $line)
                 <tr>
-                    <td class="text-center">{{ $idx + 1 }}</td>
-                    <td>
-                        @php
-                            $description = $line->clean_description;
-                            // Prepend "Penjualan Kendaraan"
-                            $formattedDescription = 'Penjualan Kendaraan ' . $description;
-                        @endphp
-                        {{ $formattedDescription }}
-                    </td>
+                    @if(isset($printMode) && $printMode === 'summary')
+                        <td colspan="2">
+                            <strong>{!! nl2br(e($line->description)) !!}</strong>
+                        </td>
+                    @else
+                        <td class="text-center">{{ $idx + 1 }}</td>
+                        <td>
+                            @php
+                                $description = $line->clean_description;
+                                $formattedDescription = 'Penjualan Kendaraan ' . $description;
+                            @endphp
+                            {{ $formattedDescription }}
+                        </td>
+                    @endif
                     @if($showUnitColumn)
                     <td class="text-center">
-                        {{ $line->license_plate ?? '' }}
+                        @if(!isset($printMode) || $printMode !== 'summary')
+                            {{ $line->license_plate ?? '' }}
+                        @endif
                     </td>
                     @endif
                     <td class="text-right">
-                        @php
-                            $unitPrice = ($line->duration_price > 0) ? $line->duration_price : $line->price_unit;
-                        @endphp
-                        @if($unitPrice != 0)
-                            {{ number_format($unitPrice, 0, ',', '.') }}
+                        @if(!isset($printMode) || $printMode !== 'summary')
+                            @php
+                                $unitPrice = ($line->duration_price > 0) ? $line->duration_price : $line->price_unit;
+                            @endphp
+                            @if($unitPrice != 0)
+                                {{ number_format($unitPrice, 0, ',', '.') }}
+                            @endif
                         @endif
                     </td>
                     <td class="text-right">
-                        @if($line->quantity != 0 && $line->price_unit != 0)
-                            {{ number_format($line->quantity * $line->price_unit, 0, ',', '.') }}
+                        @if(isset($printMode) && $printMode === 'summary')
+                            @if($line->amount != 0)
+                                {{ number_format($line->amount, 0, ',', '.') }}
+                            @endif
+                        @else
+                            @if($line->quantity != 0 && $line->price_unit != 0)
+                                {{ number_format($line->quantity * $line->price_unit, 0, ',', '.') }}
+                            @endif
                         @endif
                     </td>
                 </tr>
                 @endforeach
                 {{-- Empty rows to fill space --}}
-                @for($i = count($regularLines); $i < 5; $i++)
+                @for($i = count($displayLines); $i < 5; $i++)
                 <tr><td colspan="{{ $showUnitColumn ? 5 : 4 }}" style="height: 18px;"></td></tr>
                 @endfor
             </tbody>

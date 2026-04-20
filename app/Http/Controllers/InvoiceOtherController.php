@@ -220,10 +220,13 @@ class InvoiceOtherController extends Controller
     /**
      * Print a single invoice other entry to PDF
      */
-    public function printPdf(InvoiceOther $invoice)
+    public function printPdf(Request $request, InvoiceOther $invoice)
     {
         $invoice->load('lines');
         $invoices = collect([$invoice]);
+
+        $printMode = $request->query('print_mode', 'detail');
+        $showUsername = $request->query('show_username', '0') === '1';
 
         // Track print count (wrap in try-catch for production safety)
         try {
@@ -241,6 +244,8 @@ class InvoiceOtherController extends Controller
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-other.pdf', [
             'invoices' => $invoices,
+            'printMode' => $printMode,
+            'showUsername' => $showUsername,
             'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
         ])->setPaper('a4', 'portrait');
 
@@ -262,6 +267,9 @@ class InvoiceOtherController extends Controller
             'selected_ids.*' => 'integer|exists:invoice_others,id'
         ]);
 
+        $printMode = $request->query('print_mode', 'detail');
+        $showUsername = $request->query('show_username', '0') === '1';
+
         $invoices = InvoiceOther::with('lines')
             ->whereIn('id', $request->selected_ids)
             ->orderBy('invoice_date', 'desc')
@@ -281,8 +289,12 @@ class InvoiceOtherController extends Controller
             }
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-other.pdf', compact('invoices'))
-                ->setPaper('a4', 'portrait');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-other.pdf', [
+            'invoices' => $invoices,
+            'printMode' => $printMode,
+            'showUsername' => $showUsername,
+            'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
+        ])->setPaper('a4', 'portrait');
 
         $filename = count($invoices) === 1 
             ? 'invoice_other_' . str_replace('/', '_', $invoices[0]->name) 
@@ -297,10 +309,13 @@ class InvoiceOtherController extends Controller
     /**
      * Print a single invoice other entry to HTML
      */
-    public function printHtml(InvoiceOther $invoice)
+    public function printHtml(Request $request, InvoiceOther $invoice)
     {
         $invoice->load('lines');
         $invoices = collect([$invoice]);
+
+        $printMode = $request->query('print_mode', 'detail');
+        $showUsername = $request->query('show_username', '0') === '1';
 
         // Track print count (wrap in try-catch for production safety)
         try {
@@ -318,6 +333,8 @@ class InvoiceOtherController extends Controller
 
         return view('invoice-other.pdf', [
             'invoices' => $invoices,
+            'printMode' => $printMode,
+            'showUsername' => $showUsername,
             'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
             'isHtml' => true,
         ]);
@@ -332,6 +349,9 @@ class InvoiceOtherController extends Controller
             'selected_ids' => 'required|array',
             'selected_ids.*' => 'integer|exists:invoice_others,id'
         ]);
+
+        $printMode = $request->query('print_mode', 'detail');
+        $showUsername = $request->query('show_username', '0') === '1';
 
         $invoices = InvoiceOther::with('lines')
             ->whereIn('id', $request->selected_ids)
@@ -354,6 +374,9 @@ class InvoiceOtherController extends Controller
 
         return view('invoice-other.pdf', [
             'invoices' => $invoices,
+            'printMode' => $printMode,
+            'showUsername' => $showUsername,
+            'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
             'isHtml' => true,
         ]);
     }

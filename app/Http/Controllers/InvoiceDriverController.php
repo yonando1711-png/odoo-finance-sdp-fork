@@ -204,8 +204,11 @@ class InvoiceDriverController extends Controller
     /**
      * Print a single invoice driver entry to PDF
      */
-    public function printPdf(InvoiceDriver $invoice)
+    public function printPdf(Request $request, InvoiceDriver $invoice)
     {
+        $printMode = $request->query('print_mode', 'detail');
+        $showUsername = $request->query('show_username', '0') === '1';
+
         $invoice->load('lines');
         $invoices = collect([$invoice]);
 
@@ -226,7 +229,11 @@ class InvoiceDriverController extends Controller
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-driver.pdf', [
             'invoices' => $invoices,
+            'printMode' => $printMode,
+            'showUsername' => $showUsername,
             'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
+            'defaultManager' => Setting::get('default_bc_manager', ''),
+            'defaultSpv' => Setting::get('default_bc_spv', ''),
         ])->setPaper('a4', 'portrait');
 
         $filename = 'invoice_driver_' . str_replace('/', '_', $invoice->name);
@@ -247,6 +254,9 @@ class InvoiceDriverController extends Controller
             'selected_ids.*' => 'integer|exists:invoice_drivers,id'
         ]);
 
+        $printMode = $request->query('print_mode', 'detail');
+        $showUsername = $request->query('show_username', '0') === '1';
+
         $invoices = InvoiceDriver::with('lines')
             ->whereIn('id', $request->selected_ids)
             ->orderBy('invoice_date', 'desc')
@@ -266,8 +276,14 @@ class InvoiceDriverController extends Controller
             }
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-driver.pdf', compact('invoices'))
-                ->setPaper('a4', 'portrait');
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-driver.pdf', [
+            'invoices' => $invoices,
+            'printMode' => $printMode,
+            'showUsername' => $showUsername,
+            'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
+            'defaultManager' => Setting::get('default_bc_manager', ''),
+            'defaultSpv' => Setting::get('default_bc_spv', ''),
+        ])->setPaper('a4', 'portrait');
 
         $filename = count($invoices) === 1 
             ? 'invoice_driver_' . str_replace('/', '_', $invoices[0]->name) 
@@ -282,8 +298,11 @@ class InvoiceDriverController extends Controller
     /**
      * Print a single invoice driver entry to HTML
      */
-    public function printHtml(InvoiceDriver $invoice)
+    public function printHtml(Request $request, InvoiceDriver $invoice)
     {
+        $printMode = $request->query('print_mode', 'detail');
+        $showUsername = $request->query('show_username', '0') === '1';
+
         $invoice->load('lines');
         $invoices = collect([$invoice]);
 
@@ -302,7 +321,11 @@ class InvoiceDriverController extends Controller
 
         return view('invoice-driver.pdf', [
             'invoices' => $invoices,
+            'printMode' => $printMode,
+            'showUsername' => $showUsername,
             'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
+            'defaultManager' => Setting::get('default_bc_manager', ''),
+            'defaultSpv' => Setting::get('default_bc_spv', ''),
             'isHtml' => true,
         ]);
     }
@@ -316,6 +339,9 @@ class InvoiceDriverController extends Controller
             'selected_ids' => 'required|array',
             'selected_ids.*' => 'integer|exists:invoice_drivers,id'
         ]);
+
+        $printMode = $request->query('print_mode', 'detail');
+        $showUsername = $request->query('show_username', '0') === '1';
 
         $invoices = InvoiceDriver::with('lines')
             ->whereIn('id', $request->selected_ids)
@@ -338,6 +364,11 @@ class InvoiceDriverController extends Controller
 
         return view('invoice-driver.pdf', [
             'invoices' => $invoices,
+            'printMode' => $printMode,
+            'showUsername' => $showUsername,
+            'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
+            'defaultManager' => Setting::get('default_bc_manager', ''),
+            'defaultSpv' => Setting::get('default_bc_spv', ''),
             'isHtml' => true,
         ]);
     }

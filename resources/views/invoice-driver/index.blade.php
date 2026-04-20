@@ -4,6 +4,7 @@
 @section('subtitle', 'Invoice entries from Odoo')
 
 @section('content')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <div x-data="{
     syncOpen: false,
     syncing: false,
@@ -323,9 +324,9 @@
                                 <button type="button" onclick="printInvoiceToHub('{{ $invoice->name }}', 'invoice_driver')" title="Print to Hub" class="text-slate-400 hover:text-emerald-600 transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                                 </button>
-                                <a href="{{ route('invoice-driver.print', $invoice) }}" target="_blank" title="Print PDF" class="text-slate-400 hover:text-indigo-600 transition-colors">
+                                <button type="button" onclick="printInvoice('{{ $invoice->name }}', '{{ route('invoice-driver.print', $invoice) }}')" title="Print PDF" class="text-slate-400 hover:text-indigo-600 transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                </a>
+                                </button>
                                 @include('partials.kuitansi-modal', ['invoice' => $invoice, 'isMainButton' => true])
                             </div>
                         </td>
@@ -379,6 +380,38 @@
 </div>
 
 <script>
+    function printInvoice(name, url) {
+        Swal.fire({
+            title: 'Pilih Jenis Cetakan',
+            input: 'radio',
+            inputOptions: {
+                'detail': 'Invoice with detail',
+                'summary': 'Invoice with summary only'
+            },
+            inputValue: 'detail',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Print',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+            inputValidator: (value) => {
+                if (!value) {
+                    return 'Anda harus memilih salah satu!';
+                }
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                let printUrl = url;
+                if (result.value === 'summary') {
+                    printUrl += '?print_mode=summary&show_username=0';
+                } else {
+                    printUrl += '?print_mode=detail&show_username=0';
+                }
+                window.open(printUrl, '_blank');
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
         const selectAll = document.getElementById('selectAllCheckbox');
         const checkboxes = document.querySelectorAll('.entry-checkbox');
@@ -415,8 +448,38 @@
 
         if (bulkForm) {
             bulkForm.addEventListener('submit', function(e) {
+                e.preventDefault();
                 const isHtml = e.submitter && e.submitter.dataset.printType === 'html';
-                bulkForm.action = isHtml ? "{{ route('invoice-driver.print-selected-html') }}" : "{{ route('invoice-driver.print-selected') }}";
+                const baseActionUrl = isHtml ? "{{ route('invoice-driver.print-selected-html') }}" : "{{ route('invoice-driver.print-selected') }}";
+
+                Swal.fire({
+                    title: 'Pilih Jenis Cetakan (Bulk)',
+                    input: 'radio',
+                    inputOptions: {
+                        'detail': 'Invoice with detail',
+                        'summary': 'Invoice with summary only'
+                    },
+                    inputValue: 'detail',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Print Selected',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    inputValidator: (value) => {
+                        if (!value) return 'Anda harus memilih salah satu!';
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let actionUrl = baseActionUrl;
+                        if (result.value === 'summary') {
+                            actionUrl += '?print_mode=summary&show_username=0';
+                        } else {
+                            actionUrl += '?print_mode=detail&show_username=0';
+                        }
+                        bulkForm.action = actionUrl;
+                        bulkForm.submit();
+                    }
+                });
             });
         }
 
@@ -425,7 +488,29 @@
                 const ids = getSelectedIds();
                 if (ids.length === 0) return;
                 const docType = btn.dataset.docType || 'invoice_driver';
-                printBulkToHub(docType, ids);
+
+                Swal.fire({
+                    title: 'Pilih Jenis Cetakan (Bulk Hub)',
+                    input: 'radio',
+                    inputOptions: {
+                        'detail': 'Invoice with detail',
+                        'summary': 'Invoice with summary only'
+                    },
+                    inputValue: 'detail',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Print to Hub',
+                    cancelButtonText: 'Batal',
+                    reverseButtons: true,
+                    inputValidator: (value) => {
+                        if (!value) return 'Anda harus memilih salah satu!';
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const printMode = result.value;
+                        printBulkToHub(docType, ids, printMode, 0);
+                    }
+                });
             });
         });
 

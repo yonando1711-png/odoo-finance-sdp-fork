@@ -209,10 +209,13 @@ class InvoiceVehicleController extends Controller
     /**
      * Print a single invoice vehicle entry to PDF
      */
-    public function printPdf(InvoiceVehicle $invoice)
+    public function printPdf(Request $request, InvoiceVehicle $invoice)
     {
         $invoice->load('lines');
         $invoices = collect([$invoice]);
+
+        $printMode = $request->query('print_mode', 'detail');
+        $showUsername = $request->query('show_username', '0') === '1';
 
         // Track print count
         try {
@@ -230,6 +233,8 @@ class InvoiceVehicleController extends Controller
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-vehicle.pdf', [
             'invoices' => $invoices,
+            'printMode' => $printMode,
+            'showUsername' => $showUsername,
             'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
         ])->setPaper('a4', 'portrait');
 
@@ -251,6 +256,9 @@ class InvoiceVehicleController extends Controller
             'selected_ids.*' => 'integer|exists:invoice_vehicles,id'
         ]);
 
+        $printMode = $request->query('print_mode', 'detail');
+        $showUsername = $request->query('show_username', '0') === '1';
+
         $invoices = InvoiceVehicle::with('lines')
             ->whereIn('id', $request->selected_ids)
             ->orderBy('invoice_date', 'desc')
@@ -272,6 +280,8 @@ class InvoiceVehicleController extends Controller
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-vehicle.pdf', [
             'invoices' => $invoices,
+            'printMode' => $printMode,
+            'showUsername' => $showUsername,
             'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
         ])->setPaper('a4', 'portrait');
 
@@ -288,10 +298,13 @@ class InvoiceVehicleController extends Controller
     /**
      * Print a single invoice vehicle entry to HTML
      */
-    public function printHtml(InvoiceVehicle $invoice)
+    public function printHtml(Request $request, InvoiceVehicle $invoice)
     {
         $invoice->load('lines');
         $invoices = collect([$invoice]);
+
+        $printMode = $request->query('print_mode', 'detail');
+        $showUsername = $request->query('show_username', '0') === '1';
 
         // Track print count
         try {
@@ -309,6 +322,8 @@ class InvoiceVehicleController extends Controller
 
         return view('invoice-vehicle.pdf', [
             'invoices' => $invoices,
+            'printMode' => $printMode,
+            'showUsername' => $showUsername,
             'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
             'isHtml' => true,
         ]);
@@ -323,6 +338,9 @@ class InvoiceVehicleController extends Controller
             'selected_ids' => 'required|array',
             'selected_ids.*' => 'integer|exists:invoice_vehicles,id'
         ]);
+
+        $printMode = $request->query('print_mode', 'detail');
+        $showUsername = $request->query('show_username', '0') === '1';
 
         $invoices = InvoiceVehicle::with('lines')
             ->whereIn('id', $request->selected_ids)
@@ -345,6 +363,8 @@ class InvoiceVehicleController extends Controller
 
         return view('invoice-vehicle.pdf', [
             'invoices' => $invoices,
+            'printMode' => $printMode,
+            'showUsername' => $showUsername,
             'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
             'isHtml' => true,
         ]);

@@ -14,6 +14,7 @@ class OdooService
 
     public function __construct()
     {
+        set_time_limit(0); // Prevent maximum execution time errors when fetching large data from Odoo
         $config = Setting::getOdooConfig();
         $this->url = rtrim($config['url'] ?? '', '/');
         $this->db = $config['db'] ?? '';
@@ -1162,7 +1163,8 @@ class OdooService
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => ['Content-Type: text/xml; charset=utf-8'],
             CURLOPT_TIMEOUT => 120,
-            CURLOPT_SSL_VERIFYPEER => true,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => 0,
         ]);
         
         $response = curl_exec($ch);

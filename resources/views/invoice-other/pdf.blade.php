@@ -196,21 +196,26 @@
         }
 
         /* Notes / Catatan */
-        .catatan-section {
+        .catatan-container {
             margin-top: 10px;
-            border-top: 1px solid #94a3b8;
-            padding-top: 6px;
+            width: 55%;
+        }
+        .catatan-box {
+            border: 1px solid #1e293b;
+            padding: 8px;
+            min-height: 40px;
         }
         .catatan-label {
             font-weight: bold;
-            font-size: 10px;
+            font-size: 9px;
             text-decoration: underline;
+            display: block;
+            margin-bottom: 4px;
         }
         .catatan-content {
-            font-size: 9px;
-            color: #334155;
-            white-space: pre-line;
-            margin-top: 3px;
+            font-size: 10px;
+            color: #1e293b;
+            font-family: inherit;
         }
 
         /* Signatures */
@@ -517,9 +522,32 @@
                 <em>{{ ucwords(\App\Helpers\Terbilang::convert($invoice->amount_total)) }} Rupiah #</em>
             </div>
 
-            <div class="catatan-section">
-                <span class="catatan-label">CATATAN</span>
-                <div class="catatan-content">{!! nl2br(e($invoice->narration ?? '')) !!}</div>
+            <div class="catatan-container">
+                <div class="catatan-box">
+                    <span class="catatan-label">CATATAN</span>
+                    <div class="catatan-content">
+                        @php
+                            $catatanContent = [];
+                            $isSummary = isset($printMode) && $printMode === 'summary';
+
+                            // Process Narration
+                            if (!$isSummary && !empty($invoice->narration)) {
+                                $catatanContent[] = nl2br(e($invoice->narration));
+                            }
+
+                            // Process Note Lines (qty=0, price=0 lines from Odoo)
+                            if (!$isSummary && isset($noteLines) && $noteLines->isNotEmpty()) {
+                                foreach ($noteLines as $noteL) {
+                                    $noteText = trim($noteL->clean_description);
+                                    if (!empty($noteText)) {
+                                        $catatanContent[] = nl2br(e($noteText));
+                                    }
+                                }
+                            }
+                        @endphp
+                        {!! implode('<br/>', $catatanContent) !!}
+                    </div>
+                </div>
             </div>
 
             {{-- Signature Block --}}

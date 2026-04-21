@@ -364,7 +364,13 @@
                 </tr>
                 <tr style="border-top: 2px solid #1e293b;">
                     @if(isset($printMode) && $printMode === 'summary')
-                        <th colspan="{{ $showUnitColumn ? 5 : 4 }}" style="border-bottom: 2px solid #1e293b; background-color: white; height: 2px; padding: 0;"></th>
+                        <th class="col-no">NO.</th>
+                        <th class="{{ $showUnitColumn ? 'col-desc' : 'col-desc-wide' }}">KETERANGAN</th>
+                        @if($showUnitColumn)
+                        <th class="col-unit"></th>
+                        @endif
+                        <th class="col-price"></th>
+                        <th class="col-amount">JUMLAH</th>
                     @else
                         <th class="col-no">NO.</th>
                         <th class="{{ $showUnitColumn ? 'col-desc' : 'col-desc-wide' }}">KETERANGAN</th>
@@ -412,7 +418,8 @@
                 @foreach($displayLines as $idx => $line)
                 <tr>
                     @if(isset($printMode) && $printMode === 'summary')
-                        <td colspan="2">
+                        <td class="text-center">{{ $idx + 1 }}</td>
+                        <td>
                             <strong>{!! nl2br(e($line->description)) !!}</strong>
                         </td>
                     @else

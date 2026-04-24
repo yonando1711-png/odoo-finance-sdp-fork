@@ -267,8 +267,13 @@
                 $l->price_unit < 0
             );
             $roundingLines = $allLines->filter(fn($l) => 
-                str_contains(strtolower($l->description), 'pembulatan') || 
-                str_contains(strtolower($l->description), 'rounding')
+                !$discountLines->contains('id', $l->id) && (
+                    str_contains(strtolower($l->description), 'pembulatan') || 
+                    str_contains(strtolower($l->description), 'rounding') ||
+                    str_contains(strtolower($l->description), '(inv)') ||
+                    str_contains(strtolower($l->description), 'driver') ||
+                    str_contains(strtolower($l->description), 'lain-lain')
+                )
             );
             $pphLines = $allLines->filter(fn($l) => 
                 str_contains(strtolower($l->description), 'pph 2%') || 
@@ -365,6 +370,9 @@
             $rentalSubtotal = $invoice->amount_untaxed;
             $discountTotal = $discountLines->sum(fn($l) => $l->quantity * $l->price_unit ?: $l->price_unit);
             $roundingTotal = $roundingLines->sum(fn($l) => $l->quantity * $l->price_unit ?: $l->price_unit);
+            if (!isset($printMode) || $printMode !== 'summary') {
+                $rentalSubtotal = $rentalSubtotal - $discountTotal - $roundingTotal;
+            }
 
             $refParts = $invoice->ref ? explode(' - ', $invoice->ref) : [];
             $isSubscription = str_starts_with($invoice->name, 'INVRS'); // kept for other logic if needed
@@ -651,6 +659,13 @@
                                 <tr>
                                     <td style="text-align: right;">Lain - lain</td>
                                     <td style="text-align: right;">{{ number_format($roundingTotal, 0, ',', '.') }}</td>
+                                </tr>
+                                @endif
+
+                                @if(isset($printMode) && $printMode === 'detail')
+                                <tr>
+                                    <td style="text-align: right; font-weight: bold;">Subtotal</td>
+                                    <td style="text-align: right; font-weight: bold; border-top: 1px solid #000;">{{ number_format($invoice->amount_untaxed, 0, ',', '.') }}</td>
                                 </tr>
                                 @endif
                             @endif

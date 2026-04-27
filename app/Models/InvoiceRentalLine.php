@@ -23,8 +23,8 @@ class InvoiceRentalLine extends Model
     ];
 
     protected $casts = [
-        'actual_start' => 'string',
-        'actual_end' => 'string',
+        'actual_start' => 'datetime',
+        'actual_end' => 'datetime',
         'quantity' => 'decimal:2',
         'rental_qty' => 'decimal:2',
         'price_unit' => 'decimal:2',

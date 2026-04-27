@@ -36,8 +36,8 @@ class InvoiceSubscription extends Model
     ];
 
     protected $casts = [
-        'actual_start_rental' => 'string',
-        'actual_end_rental'   => 'string',
+        'actual_start_rental' => 'datetime',
+        'actual_end_rental'   => 'datetime',
         'period_start'        => 'date',
         'period_end'          => 'date',
         'invoice_date'        => 'date',

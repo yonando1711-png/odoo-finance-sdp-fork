@@ -947,9 +947,12 @@ class OdooService
                         $customerName = !empty($row[17]) ? $row[17] : ($currentEntry['partner_name'] ?? '');
                         $productName = $row[31] ?? '';
 
-                        // Pull exact time from Rental Order if available, otherwise fallback to move line date
-                        $actualStart = !empty($row[32]) ? $row[32] : ($row[12] ?? '');
-                        $actualEnd = !empty($row[33]) ? $row[33] : ($row[13] ?? '');
+                        // Pull exact time from Rental Order only for INVRT (Retail). 
+                        // For INVRS (Subscription), use the billing period ($row[12]/[13]).
+                        if (str_starts_with($invoiceName, 'INVRT')) {
+                            $actualStart = !empty($row[32]) ? $row[32] : ($row[12] ?? '');
+                            $actualEnd = !empty($row[33]) ? $row[33] : ($row[13] ?? '');
+                        }
 
                         // Prepend product name to description if it's not already there, so we can filter by it
                         if (!empty($productName) && !str_contains(strtolower($lineDesc), strtolower($productName))) {

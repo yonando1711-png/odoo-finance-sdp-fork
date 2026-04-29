@@ -753,7 +753,11 @@ class OdooService
                 'price_unit',                                // 16: Unit price
                 'rental_uom',                                // 17: month / day
                 'invoice_id/amount_total',                   // 18: Actual invoice price
-                'duration_price',                            // 19: Duration Price
+                'lot_id',                                    // 19: Serial Number / License Plate
+                'invoice_id/ref',                             // 20: Customer Reference
+                'invoice_id/l10n_id_kode_transaksi',          // 21: Kode Transaksi
+                'invoice_id/invoice_date_due',                // 22: Due Date
+                'invoice_id/invoice_payments_widget',         // 23: TANGGAL BAYAR (Widget)
             ];
 
             $entries    = [];
@@ -811,9 +815,13 @@ class OdooService
                         'invoice_state'       => $invoiceState,
                         'payment_state'       => $row[14] ?? null,
                         'price_unit'          => $priceUnit,
-                        'duration_price'      => (float)($row[19] ?? 0),
                         'invoice_amount'      => $invoiceAmount,
                         'rental_uom'          => $row[17] ?? '',
+                        'license_plate'       => $row[19] ?? null,
+                        'customer_ref'        => $row[20] ?? null,
+                        'transaction_code'    => $row[21] ?? null,
+                        'due_date'            => $row[22] ?? null,
+                        'payment_date'        => $this->extractLatestPaymentDate($row[23] ?? null),
                     ];
                 }
             }
@@ -1203,5 +1211,31 @@ class OdooService
         }
         
         return $response;
+    }
+
+    /**
+     * Extract the latest payment date from Odoo's invoice_payments_widget
+     */
+    private function extractLatestPaymentDate($widget): ?string
+    {
+        if (!$widget) return null;
+
+        // Widget can be a JSON string or an already parsed array (depending on RPC behavior)
+        $data = is_string($widget) ? json_decode($widget, true) : $widget;
+
+        if (!isset($data['content']) || !is_array($data['content'])) {
+            return null;
+        }
+
+        $latestDate = null;
+        foreach ($data['content'] as $payment) {
+            if (isset($payment['date'])) {
+                if ($latestDate === null || $payment['date'] > $latestDate) {
+                    $latestDate = (string)$payment['date'];
+                }
+            }
+        }
+
+        return $latestDate;
     }
 }

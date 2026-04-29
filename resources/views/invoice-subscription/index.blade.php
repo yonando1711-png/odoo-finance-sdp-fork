@@ -547,9 +547,9 @@
                         @foreach($tablePrefs['columns'] as $index => $col)
                             <th x-show="columns[{{ $index }}].visible" 
                                 :style="{ width: columns[{{ $index }}].width + 'px' }"
-                                class="relative px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400 sticky top-0 bg-slate-50 dark:bg-slate-900 z-40 group">
+                                class="relative px-3 py-3 text-{{ $col['align'] ?? 'left' }} font-medium text-slate-600 dark:text-slate-400 sticky top-0 bg-slate-50 dark:bg-slate-900 z-40 group">
                                 
-                                <div class="flex items-center gap-1">
+                                <div class="flex items-center {{ ($col['align'] ?? 'left') === 'center' ? 'justify-center' : (($col['align'] ?? 'left') === 'right' ? 'justify-end' : '') }} gap-1">
                                     {{-- Drag handle --}}
                                     <div class="sort-handle cursor-move opacity-0 group-hover:opacity-100 transition-opacity text-slate-400">
                                         <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M7 15h2V17H7V15M15 15h2V17h-2V15M11 15h2V17h-2V15M7 11h2V13H7V11M15 11h2V13h-2V11M11 11h2V13h-2V11M7 7h2V9H7V7M15 7h2V9h-2V7M11 7h2V9h-2V7Z"/></svg>
@@ -606,17 +606,15 @@
                                 <input type="checkbox" :value="{{ $rec->id }}" x-model="selectedIds" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer">
                             </td>
                             @foreach($tablePrefs['columns'] as $index => $col)
-                                <td x-show="columns[{{ $index }}].visible" class="px-3 py-3 text-xs">
+                                <td x-show="columns[{{ $index }}].visible" class="px-3 py-3 text-{{ $col['align'] ?? 'left' }} text-xs">
                                     @if($col['id'] === 'so_name')
-                                        <div class="font-mono font-semibold text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                                            {{ $rec->so_name }}
-                                        </div>
+                                        <span class="font-mono text-slate-600 dark:text-slate-400">{{ $rec->so_name }}</span>
                                     @elseif($col['id'] === 'partner_name')
-                                        {{ $rec->partner_name }}
+                                        <div class="font-semibold text-slate-900 dark:text-white whitespace-normal break-words">{{ $rec->partner_name }}</div>
                                     @elseif($col['id'] === 'rental_status')
-                                        @if($rec->rental_status === 'Pickedup')
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">Pickedup</span>
-                                        @elseif($rec->rental_status === 'Reserved')
+                                        @if(strtolower($rec->rental_status) === 'pickedup')
+                                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">Pickedup</span>
+                                        @elseif(strtolower($rec->rental_status) === 'reserved')
                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">Reserved</span>
                                         @else
                                             <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300">{{ $rec->rental_status }}</span>
@@ -626,31 +624,41 @@
                                     @elseif($col['id'] === 'period_type')
                                         {{ $rec->period_type }}
                                     @elseif($col['id'] === 'product_name')
-                                        <div class="truncate max-w-[200px]" title="{{ $rec->clean_product_name }}">{{ $rec->clean_product_name }}</div>
+                                        <div class="whitespace-normal break-words leading-tight" title="{{ $rec->clean_product_name }}">{{ $rec->clean_product_name }}</div>
+                                    @elseif($col['id'] === 'license_plate')
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300">{{ $rec->license_plate ?: '-' }}</span>
                                     @elseif($col['id'] === 'period_start')
-                                        <div class="text-slate-500 whitespace-nowrap">
+                                        <div class="text-slate-500 whitespace-nowrap text-[11px]">
                                             {{ $rec->period_start ? $rec->period_start->format('Y-m-d') : '-' }} to {{ $rec->period_end ? $rec->period_end->format('Y-m-d') : '-' }}
                                         </div>
                                     @elseif($col['id'] === 'period_end')
-                                        <span class="text-slate-500 whitespace-nowrap">{{ $rec->period_end ? $rec->period_end->format('Y-m-d') : '-' }}</span>
+                                        <span class="text-slate-500 whitespace-nowrap text-[11px]">{{ $rec->period_end ? $rec->period_end->format('Y-m-d') : '-' }}</span>
                                     @elseif($col['id'] === 'actual_start_rental')
-                                        <span class="text-slate-500 whitespace-nowrap">{{ $rec->actual_start_rental ? \Carbon\Carbon::parse($rec->actual_start_rental)->format('Y-m-d') : '-' }}</span>
+                                        <span class="text-slate-500 whitespace-nowrap text-[11px]">{{ $rec->actual_start_rental ? \Carbon\Carbon::parse($rec->actual_start_rental)->format('Y-m-d') : '-' }}</span>
                                     @elseif($col['id'] === 'actual_end_rental')
-                                        <span class="text-slate-500 whitespace-nowrap">{{ $rec->actual_end_rental ? \Carbon\Carbon::parse($rec->actual_end_rental)->format('Y-m-d') : '-' }}</span>
-                                    @elseif($col['id'] === 'invoice_date')
-                                        <span class="font-mono {{ $rec->is_overdue ? 'text-red-600 dark:text-red-400 font-bold' : 'text-slate-600 dark:text-slate-300' }}">
-                                            {{ $rec->invoice_date ? $rec->invoice_date->format('Y-m-d') : '-' }}
-                                        </span>
-                                    @elseif($col['id'] === 'invoice_name')
-                                        <div class="font-mono font-semibold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
-                                            @if(empty($rec->invoice_name))
-                                                <span class="text-slate-400 font-normal">-</span>
+                                        <span class="text-slate-500 whitespace-nowrap text-[11px]">{{ $rec->actual_end_rental ? \Carbon\Carbon::parse($rec->actual_end_rental)->format('Y-m-d') : '-' }}</span>
+                                    @elseif($col['id'] === 'invoice_date' || $col['id'] === 'due_date' || $col['id'] === 'payment_date')
+                                        <span class="font-mono text-[11px] {{ ($col['id'] !== 'payment_date' && $rec->is_overdue) ? 'text-red-600 dark:text-red-400 font-bold' : 'text-slate-600 dark:text-slate-300' }} whitespace-nowrap">
+                                            @if($col['id'] === 'invoice_date')
+                                                {{ $rec->invoice_date ? $rec->invoice_date->format('Y-m-d') : '-' }}
+                                            @elseif($col['id'] === 'due_date')
+                                                {{ $rec->due_date ? $rec->due_date->format('Y-m-d') : '-' }}
                                             @else
-                                                <span title="{{ $rec->invoice_ref }}">{{ $rec->invoice_name }}</span>
+                                                {{ $rec->payment_date ? $rec->payment_date->format('Y-m-d') : '-' }}
+                                            @endif
+                                        </span>
+                                    @elseif($col['id'] === 'invoice_name' || $col['id'] === 'invoice_ref' || $col['id'] === 'customer_ref' || $col['id'] === 'transaction_code')
+                                        <div class="{{ $col['id'] === 'transaction_code' ? '' : 'whitespace-nowrap' }}">
+                                            @if($col['id'] === 'invoice_name')
+                                                <span class="font-mono font-semibold text-emerald-600 dark:text-emerald-400" title="{{ $rec->invoice_ref }}">{{ $rec->invoice_name ?: '-' }}</span>
+                                            @elseif($col['id'] === 'invoice_ref')
+                                                <div class="truncate max-w-[140px] font-mono text-slate-500" title="{{ $rec->invoice_ref }}">{{ $rec->invoice_ref ?: '-' }}</div>
+                                            @elseif($col['id'] === 'transaction_code')
+                                                <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 whitespace-normal break-words leading-tight">{{ $rec->transaction_code ?: '-' }}</span>
+                                            @else
+                                                <div class="whitespace-normal break-words font-medium text-slate-700 dark:text-slate-300">{{ $rec->customer_ref ?: '-' }}</div>
                                             @endif
                                         </div>
-                                    @elseif($col['id'] === 'invoice_ref')
-                                        <span class="font-mono text-slate-500">{{ $rec->invoice_ref ?: '-' }}</span>
                                     @elseif($col['id'] === 'invoice_state')
                                         <span class="capitalize">{{ $rec->invoice_state ?: '-' }}</span>
                                     @elseif($col['id'] === 'payment_state')

@@ -346,6 +346,7 @@ class OdooService
                 'rental_period_id/rental_order_id/rental_contract_id/name', // 21: Path B: Contract from Period
                 'invoice_date_due',                      // 22: Due date
                 'invoice_line_ids/duration_price',       // 23: Duration Price
+                'partner_id/.id',                        // 24: Partner ID for address enrichment
             ];
 
             $entries = [];
@@ -388,6 +389,7 @@ class OdooService
                             'narration' => $row[17] ?? '',
                             'partner_npwp' => $row[18] ?? '',
                             'contract_ref' => !empty($row[19]) ? $row[19] : (!empty($row[20]) ? $row[20] : ($row[21] ?? '')),
+                            'partner_id_odoo' => $row[24] ?? null,
                             'lines' => [],
                         ];
                     }
@@ -421,6 +423,8 @@ class OdooService
                     $entries[] = $currentEntry;
                 }
             }
+
+            $this->enrichAddresses($entries);
 
             return [
                 'success' => true,
@@ -479,6 +483,7 @@ class OdooService
                 'rental_period_id/rental_order_id/rental_contract_id/name', // 21: Path B: Contract from Period
                 'invoice_date_due',                      // 22: Due date
                 'invoice_line_ids/duration_price',       // 23: Duration Price
+                'partner_id/.id',                        // 24: Partner ID for address enrichment
             ];
 
             $entries = [];
@@ -520,6 +525,7 @@ class OdooService
                             'narration' => $row[17] ?? '',
                             'partner_npwp' => $row[18] ?? '',
                             'contract_ref' => !empty($row[19]) ? $row[19] : (!empty($row[20]) ? $row[20] : ($row[21] ?? '')),
+                            'partner_id_odoo' => $row[24] ?? null,
                             'lines' => [],
                         ];
                     }
@@ -551,6 +557,8 @@ class OdooService
                     $entries[] = $currentEntry;
                 }
             }
+
+            $this->enrichAddresses($entries);
 
             return [
                 'success' => true,
@@ -609,6 +617,7 @@ class OdooService
                 'rental_period_id/rental_order_id/rental_contract_id/name', // 23: Path B: Contract from Period
                 'invoice_date_due',                      // 24: Due date
                 'invoice_line_ids/duration_price',       // 25: Duration Price
+                'partner_id/.id',                        // 26: Partner ID for address enrichment
             ];
 
             $entries = [];
@@ -650,6 +659,7 @@ class OdooService
                             'partner_npwp' => $row[19] ?? '',
                             'narration' => $row[20] ?? '',
                             'contract_ref' => !empty($row[21]) ? $row[21] : (!empty($row[22]) ? $row[22] : ($row[23] ?? '')),
+                            'partner_id_odoo' => $row[26] ?? null,
                             'lines' => [],
                         ];
                     }
@@ -693,6 +703,8 @@ class OdooService
                     $entries[] = $currentEntry;
                 }
             }
+
+            $this->enrichAddresses($entries);
 
             return [
                 'success' => true,
@@ -758,6 +770,10 @@ class OdooService
                 'invoice_id/l10n_id_kode_transaksi',          // 21: Kode Transaksi
                 'invoice_id/invoice_date_due',                // 22: Due Date
                 'invoice_id/invoice_payments_widget',         // 23: TANGGAL BAYAR (Widget)
+                'rental_order_id/partner_id/contact_address',            // 24: Address (multiline)
+                'rental_order_id/partner_id/contact_address_complete',   // 25: Address (single line)
+                'rental_order_id/partner_id/vat',                        // 26: NPWP
+                'rental_order_id/partner_id/.id',                        // 27: Partner ID for enrichment
             ];
 
             $entries    = [];
@@ -822,9 +838,15 @@ class OdooService
                         'transaction_code'    => $row[21] ?? null,
                         'due_date'            => $row[22] ?? null,
                         'payment_date'        => $this->extractLatestPaymentDate($row[23] ?? null),
+                        'partner_address'     => $row[24] ?? '',
+                        'partner_address_complete' => $row[25] ?? '',
+                        'partner_npwp'        => $row[26] ?? '',
+                        'partner_id_odoo'     => $row[27] ?? null,
                     ];
                 }
             }
+
+            $this->enrichAddresses($entries);
 
             return [
                 'success' => true,
@@ -897,6 +919,7 @@ class OdooService
                 'invoice_line_ids/product_id/name',                       // 31: Product Name
                 'invoice_line_ids/sale_order_id/actual_start_rental',     // 32: Actual Start (with time)
                 'invoice_line_ids/sale_order_id/actual_end_rental',       // 33: Actual End (with time)
+                'partner_id/.id',                                         // 34: Partner ID for enrichment
             ];
 
             $entries = [];
@@ -938,6 +961,7 @@ class OdooService
                             'narration' => $row[23] ?? '',
                             'contract_ref' => !empty($row[24]) ? $row[24] : ($row[25] ?? ''),
                             'partner_npwp' => $row[27] ?? '',
+                            'partner_id_odoo' => $row[34] ?? null,
                             'lines' => [],
                         ];
                     }
@@ -997,6 +1021,8 @@ class OdooService
                     $entries[] = $currentEntry;
                 }
             }
+
+            $this->enrichAddresses($entries);
 
             return [
                 'success' => true,
@@ -1237,5 +1263,69 @@ class OdooService
         }
 
         return $latestDate;
+    }
+
+    /**
+     * Enrich entries with child invoice addresses if they exist
+     */
+    protected function enrichAddresses(array &$entries): void
+    {
+        $partnerIds = [];
+        foreach ($entries as $entry) {
+            if (!empty($entry['partner_id_odoo'])) {
+                // partner_id_odoo might be an ID or an array [id, name] depending on export behavior
+                $id = is_array($entry['partner_id_odoo']) ? $entry['partner_id_odoo'][0] : $entry['partner_id_odoo'];
+                if (is_numeric($id)) {
+                    $partnerIds[] = (int)$id;
+                }
+            }
+        }
+        $partnerIds = array_values(array_unique($partnerIds));
+
+        if (empty($partnerIds)) return;
+
+        // Fetch all child contacts of type 'invoice' for these partners
+        $invoiceContacts = $this->execute('res.partner', 'search_read', [
+            [['parent_id', 'in', $partnerIds], ['type', '=', 'invoice']],
+            ['parent_id', 'contact_address', 'contact_address_complete', 'vat']
+        ]);
+
+        if (empty($invoiceContacts)) return;
+
+        // Map parent_id => data
+        $addressMap = [];
+        foreach ($invoiceContacts as $contact) {
+            $parentId = is_array($contact['parent_id']) ? $contact['parent_id'][0] : $contact['parent_id'];
+            
+            $addr = $contact['contact_address'] ?? '';
+            $addrComplete = $contact['contact_address_complete'] ?? '';
+            $vat = $contact['vat'] ?? '';
+
+            // Only use if not empty
+            if (!empty($addr) || !empty($addrComplete)) {
+                // If there are multiple invoice addresses, we take the first one found
+                if (!isset($addressMap[$parentId])) {
+                    $addressMap[$parentId] = [
+                        'address' => $addr,
+                        'address_complete' => $addrComplete,
+                        'vat' => $vat
+                    ];
+                }
+            }
+        }
+
+        // Apply override
+        foreach ($entries as &$entry) {
+            $rawId = $entry['partner_id_odoo'] ?? null;
+            $pid = is_array($rawId) ? $rawId[0] : $rawId;
+            
+            if ($pid && isset($addressMap[$pid])) {
+                $entry['partner_address'] = $addressMap[$pid]['address'];
+                $entry['partner_address_complete'] = $addressMap[$pid]['address_complete'];
+                if (!empty($addressMap[$pid]['vat'])) {
+                    $entry['partner_npwp'] = $addressMap[$pid]['vat'];
+                }
+            }
+        }
     }
 }

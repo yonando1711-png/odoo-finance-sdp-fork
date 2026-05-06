@@ -261,12 +261,21 @@
 
             // Categorize lines
             $allLines = $invoice->lines;
+
+            // Extract pure note lines first (qty=0 and price=0)
+            $noteLines = $allLines->filter(fn($l) => 
+                $l->quantity == 0 && $l->price_unit == 0 && !empty($l->description)
+            );
+
             $discountLines = $allLines->filter(fn($l) => 
-                str_contains(strtolower($l->description), 'discount') || 
-                str_contains(strtolower($l->description), 'potongan') ||
-                $l->price_unit < 0
+                !$noteLines->contains('id', $l->id) && (
+                    str_contains(strtolower($l->description), 'discount') || 
+                    str_contains(strtolower($l->description), 'potongan') ||
+                    $l->price_unit < 0
+                )
             );
             $roundingLines = $allLines->filter(fn($l) => 
+                !$noteLines->contains('id', $l->id) &&
                 !$discountLines->contains('id', $l->id) && (
                     str_contains(strtolower($l->description), 'pembulatan') || 
                     str_contains(strtolower($l->description), 'rounding') ||
@@ -276,14 +285,10 @@
                 )
             );
             $pphLines = $allLines->filter(fn($l) => 
-                str_contains(strtolower($l->description), 'pph 2%') || 
-                str_contains(strtolower($l->description), 'pph 2 %')
-            );
-            $noteLines = $allLines->filter(fn($l) => 
-                $l->quantity == 0 && $l->price_unit == 0 && !empty($l->description) &&
-                !$discountLines->contains('id', $l->id) && 
-                !$roundingLines->contains('id', $l->id) &&
-                !$pphLines->contains('id', $l->id)
+                !$noteLines->contains('id', $l->id) && (
+                    str_contains(strtolower($l->description), 'pph 2%') || 
+                    str_contains(strtolower($l->description), 'pph 2 %')
+                )
             );
             
             // Extract DPP Lainnya for specific customers

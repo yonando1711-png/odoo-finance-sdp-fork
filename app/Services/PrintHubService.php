@@ -46,7 +46,7 @@ class PrintHubService
             ])->timeout($this->timeout)->get("{$this->url}/api/v1/agents/online");
 
             if ($response->successful()) {
-                $agents = $response->json('agents', []);
+                $agents = $response->json('data.agents', []);
                 $printers = [];
                 foreach ($agents as $agent) {
                     foreach ($agent['printers'] as $printer) {
@@ -101,14 +101,14 @@ class PrintHubService
             if ($response->successful()) {
                 return [
                     'success' => true,
-                    'job_id' => $response->json('job_id'),
+                    'job_id' => $response->json('data.job_id'),
                     'message' => 'Print job sent successfully.'
                 ];
             }
 
             return [
                 'success' => false,
-                'message' => 'Hub Error: ' . ($response->json('message') ?? $response->status())
+                'message' => 'Hub Error: ' . ($response->json('error.message') ?? $response->status())
             ];
         } catch (\Exception $e) {
             Log::error("PrintHub Error (printPdf): " . $e->getMessage());
@@ -141,14 +141,14 @@ class PrintHubService
             if ($response->successful()) {
                 return [
                     'success' => true,
-                    'job_id' => $response->json('job_id'),
+                    'job_id' => $response->json('data.job_id'),
                     'message' => 'Raw print job sent successfully.'
                 ];
             }
 
             return [
                 'success' => false,
-                'message' => 'Hub Error: ' . ($response->json('message') ?? $response->status())
+                'message' => 'Hub Error: ' . ($response->json('error.message') ?? $response->status())
             ];
         } catch (\Exception $e) {
             Log::error("PrintHub Error (printRaw): " . $e->getMessage());
@@ -179,7 +179,7 @@ class PrintHubService
 
             return [
                 'success' => false,
-                'message' => 'Hub Error: ' . ($response->json('message') ?? $response->status())
+                'message' => 'Hub Error: ' . ($response->json('error.message') ?? $response->status())
             ];
         } catch (\Exception $e) {
             Log::error("PrintHub Error (registerSchema): " . $e->getMessage());
@@ -202,9 +202,9 @@ class PrintHubService
             if ($response->successful()) {
                 return [
                     'success' => true,
-                    'app_name' => $response->json('app_name'),
-                    'agents' => $response->json('agents'),
-                    'message' => $response->json('message')
+                    'app_name' => $response->json('data.app_name'),
+                    'agents' => $response->json('data.agents'),
+                    'message' => $response->json('data.message')
                 ];
             }
 
@@ -250,14 +250,14 @@ class PrintHubService
             if ($response->successful()) {
                 return [
                     'success' => true,
-                    'job_id' => $response->json('job_id'),
+                    'job_id' => $response->json('data.job_id'),
                     'message' => 'Print job sent successfully via queue.'
                 ];
             }
 
             return [
                 'success' => false,
-                'message' => 'Hub Error: ' . ($response->json('error') ?? $response->status())
+                'message' => 'Hub Error: ' . ($response->json('error.message') ?? $response->status())
             ];
         } catch (\Exception $e) {
             Log::error("PrintHub Error (printQueue): " . $e->getMessage());
@@ -280,7 +280,7 @@ class PrintHubService
             if ($response->successful()) {
                 return [
                     'success' => true,
-                    'queues' => $response->json('queues', [])
+                    'queues' => $response->json('data.queues', [])
                 ];
             }
 
@@ -309,7 +309,7 @@ class PrintHubService
             if ($response->successful()) {
                 return [
                     'success' => true,
-                    'agents' => $response->json('agents', [])
+                    'agents' => $response->json('data.agents', [])
                 ];
             }
 

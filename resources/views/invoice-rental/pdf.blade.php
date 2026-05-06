@@ -374,9 +374,19 @@
 
             $rentalSubtotal = $invoice->amount_untaxed;
             $discountTotal = $discountLines->sum(fn($l) => $l->quantity * $l->price_unit ?: $l->price_unit);
-            $roundingTotal = $roundingLines->sum(fn($l) => $l->quantity * $l->price_unit ?: $l->price_unit);
+            
+            // Group rounding lines by display label
+            $roundingGroups = $roundingLines->groupBy(function($l) {
+                $desc = strtolower($l->description);
+                if (str_contains($desc, 'driver')) return 'Biaya Driver';
+                if (str_contains($desc, 'discount')) return 'Discount';
+                return 'Lain - lain';
+            })->map(function($group) {
+                return $group->sum(fn($l) => $l->quantity * $l->price_unit ?: $l->price_unit);
+            });
+
             if (!isset($printMode) || $printMode !== 'summary') {
-                $rentalSubtotal = $rentalSubtotal - $discountTotal - $roundingTotal;
+                $rentalSubtotal = $rentalSubtotal - $discountTotal - $roundingLines->sum(fn($l) => $l->quantity * $l->price_unit ?: $l->price_unit);
             }
 
             $refParts = $invoice->ref ? explode(' - ', $invoice->ref) : [];
@@ -679,14 +689,18 @@
                                     <td style="text-align: right; color: #ef4444;">{{ number_format($discountTotal, 0, ',', '.') }}</td>
                                 </tr>
                                 @endif
-                                @if($roundingTotal != 0)
-                                <tr>
-                                    <td style="text-align: right;">Lain - lain</td>
-                                    <td style="text-align: right;">{{ number_format($roundingTotal, 0, ',', '.') }}</td>
-                                </tr>
+                                @if(isset($roundingGroups) && $roundingGroups->isNotEmpty())
+                                    @foreach($roundingGroups as $label => $amount)
+                                        @if($amount != 0)
+                                        <tr>
+                                            <td style="text-align: right;">{{ $label }}</td>
+                                            <td style="text-align: right;">{{ number_format($amount, 0, ',', '.') }}</td>
+                                        </tr>
+                                        @endif
+                                    @endforeach
                                 @endif
 
-                                @if(isset($printMode) && $printMode === 'detail' && ($discountTotal != 0 || $roundingTotal != 0))
+                                @if(isset($printMode) && $printMode === 'detail' && ($discountTotal != 0 || $roundingLines->isNotEmpty()))
                                 <tr>
                                     <td style="text-align: right; font-weight: bold;">Subtotal</td>
                                     <td style="text-align: right; font-weight: bold; border-top: 1px solid #000;">{{ number_format($invoice->amount_untaxed, 0, ',', '.') }}</td>

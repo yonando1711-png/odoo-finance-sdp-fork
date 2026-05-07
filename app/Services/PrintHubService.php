@@ -28,7 +28,9 @@ class PrintHubService
         return Http::withHeaders([
             'X-Api-Key' => $this->apiKey,
             'Accept'     => 'application/json',
-        ])->withoutVerifying()->timeout($this->timeout);
+        ])->withoutVerifying()
+          ->withOptions(['force_ip_resolve' => 'v4'])
+          ->timeout($this->timeout);
     }
 
     // ──────────────────────────────────────────────

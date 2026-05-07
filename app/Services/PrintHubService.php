@@ -321,7 +321,7 @@ class PrintHubService
 
             return [
                 'success' => false,
-                'message' => 'Hub returned error: ' . ($response->json('error') ?? $response->status()),
+                'message' => 'Hub returned error: ' . ($response->json('error.message') ?? $response->status()),
             ];
         } catch (\Exception $e) {
             Log::error("PrintHub Error (testConnection): " . $e->getMessage());

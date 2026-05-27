@@ -20,16 +20,56 @@ class PrintHubService
     }
 
     /**
-     * Get a pre-configured HTTP client with SSL verification disabled (local dev).
+     * Get a pre-configured HTTP client.
+     * SSL verification is only disabled in non-production environments.
      * All internal HTTP calls go through this method for consistency.
      */
     protected function http(): \Illuminate\Http\Client\PendingRequest
     {
-        return Http::withHeaders([
+        $request = Http::withHeaders([
             'X-Api-Key' => $this->apiKey,
             'Accept'     => 'application/json',
-        ])->withoutVerifying()
-          ->timeout($this->timeout);
+        ])->timeout($this->timeout);
+
+        // Only skip SSL verification in local/non-production environments
+        if (app()->environment('local', 'testing')) {
+            $request->withoutVerifying();
+        }
+
+        return $request;
+    }
+
+    /**
+     * Execute an HTTP call with retry and exponential backoff.
+     *
+     * @param  callable $fn         The HTTP call to execute (must return array with 'success' key)
+     * @param  int      $maxAttempts Maximum number of attempts (default: 3)
+     * @return array
+     */
+    protected function retryHttp(callable $fn, int $maxAttempts = 3): array
+    {
+        $attempt   = 0;
+        $lastError = ['success' => false, 'message' => 'Max retries exceeded'];
+
+        while ($attempt < $maxAttempts) {
+            try {
+                $result = $fn();
+                if (($result['success'] ?? false)) {
+                    return $result;
+                }
+                $lastError = $result;
+            } catch (\Exception $e) {
+                Log::warning("PrintHub retry attempt " . ($attempt + 1) . "/{$maxAttempts}: " . $e->getMessage());
+                $lastError = ['success' => false, 'message' => $e->getMessage()];
+            }
+
+            $attempt++;
+            if ($attempt < $maxAttempts) {
+                usleep(500_000 * $attempt); // 0.5s, 1s, 1.5s backoff
+            }
+        }
+
+        return $lastError;
     }
 
     // ──────────────────────────────────────────────
@@ -150,7 +190,7 @@ class PrintHubService
             return ['success' => false, 'message' => 'Print Hub URL not configured.'];
         }
 
-        try {
+        return $this->retryHttp(function () use ($queue, $pdfBase64, $agentId, $printer, $profile, $extra) {
             $payload = array_merge([
                 'queue'           => $queue,
                 'document_base64' => $pdfBase64,
@@ -175,10 +215,7 @@ class PrintHubService
                 'success' => false,
                 'message' => 'Hub Error: ' . ($response->json('error.message') ?? $response->status()),
             ];
-        } catch (\Exception $e) {
-            Log::error("PrintHub Error (printQueue): " . $e->getMessage());
-            return ['success' => false, 'message' => 'Printing failed: ' . $e->getMessage()];
-        }
+        });
     }
 
     /**
@@ -192,7 +229,7 @@ class PrintHubService
             return ['success' => false, 'message' => 'Print Hub URL not configured.'];
         }
 
-        try {
+        return $this->retryHttp(function () use ($printerName, $pdfBase64, $options, $profile) {
             $targetProfile = $profile ?: Setting::get('print_hub_default_profile');
 
             $payload = array_filter([
@@ -217,10 +254,7 @@ class PrintHubService
                 'success' => false,
                 'message' => 'Hub Error: ' . ($response->json('error.message') ?? $response->status()),
             ];
-        } catch (\Exception $e) {
-            Log::error("PrintHub Error (printPdf): " . $e->getMessage());
-            return ['success' => false, 'message' => 'Printing failed: ' . $e->getMessage()];
-        }
+        });
     }
 
     /**
@@ -232,7 +266,7 @@ class PrintHubService
             return ['success' => false, 'message' => 'Print Hub URL not configured.'];
         }
 
-        try {
+        return $this->retryHttp(function () use ($printerName, $data, $options) {
             $payload = array_filter([
                 'printer'         => $printerName,
                 'document_base64' => base64_encode($data),
@@ -254,10 +288,7 @@ class PrintHubService
                 'success' => false,
                 'message' => 'Hub Error: ' . ($response->json('error.message') ?? $response->status()),
             ];
-        } catch (\Exception $e) {
-            Log::error("PrintHub Error (printRaw): " . $e->getMessage());
-            return ['success' => false, 'message' => 'Raw printing failed: ' . $e->getMessage()];
-        }
+        });
     }
 
     // ──────────────────────────────────────────────

@@ -79,7 +79,7 @@
         .info-label {
             font-weight: bold;
             color: #1c3254;
-            width: 110px;
+            width: 75px;
         }
         .info-colon {
             width: 10px;
@@ -208,13 +208,14 @@
         /* Footer */
         .footer {
             position: fixed;
-            bottom: 0;
+            bottom: -20px;
             left: 0;
             right: 0;
-            font-size: 7px;
-            color: #94a3b8;
-            border-top: 1px solid #e2e8f0;
+            font-size: 11px;
+            color: #1e293b;
+            border-top: 2px solid #000;
             padding-top: 5px;
+            text-align: center;
         }
 
         /* Ketentuan */
@@ -241,6 +242,7 @@
     </style>
 </head>
 <body>
+    <div class="footer">SDP/FR/BC/02, Rev.01</div>
     @foreach($invoices as $invoice)
     <div class="invoice-page" style="{{ $loop->last ? 'page-break-after: auto;' : 'page-break-after: always;' }}">
         <script type="text/php">
@@ -425,7 +427,7 @@
                         {{-- Invoice Info (Repeated) --}}
                         <table class="info-section">
                             <tr>
-                                <td style="width: 65%; vertical-align: top; padding: 0;">
+                                <td style="width: 55%; vertical-align: top; padding: 0;">
                                     <table style="width: 100%; border-spacing: 0;">
                                         <tr>
                                             <td colspan="3" style="padding-bottom: 5px; padding-left: 0;">
@@ -444,7 +446,7 @@
                                         </tr>
                                     </table>
                                 </td>
-                                <td style="width: 35%; vertical-align: top;">
+                                <td style="width: 45%; vertical-align: top;">
                                     <table style="width: 100%;">
                                         <tr>
                                             <td class="info-label">Nomor</td>

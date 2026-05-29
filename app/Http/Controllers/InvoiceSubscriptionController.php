@@ -100,11 +100,18 @@ class InvoiceSubscriptionController extends Controller
         // ── Status filter ──
         $statusFilter = $request->input('status', 'all');
         if ($statusFilter !== 'all') {
+            $today = now()->toDateString();
             // Use raw where conditions (mirrors the scope logic)
             match ($statusFilter) {
                 'not_invoiced' => $query->where(function ($q) {
                     $q->whereNull('invoice_name')->orWhere('invoice_name', '');
                 }),
+                'not_invoiced_overdue' => $query->where(function ($q) use ($today) {
+                    $q->whereNull('invoice_name')->orWhere('invoice_name', '');
+                })->where('invoice_date', '<', $today),
+                'not_invoiced_upcoming' => $query->where(function ($q) use ($today) {
+                    $q->whereNull('invoice_name')->orWhere('invoice_name', '');
+                })->where('invoice_date', '>=', $today),
                 'draft'   => $query->whereRaw("LOWER(invoice_state) = 'draft'"),
                 'paid'    => $query->whereRaw("LOWER(payment_state) = 'paid'"),
                 'unpaid'  => $query->whereRaw("LOWER(invoice_state) = 'posted'")
@@ -161,11 +168,12 @@ class InvoiceSubscriptionController extends Controller
         $stats = $statsQuery->selectRaw("
                 count(*) as total,
                 count(CASE WHEN invoice_name IS NULL OR invoice_name = '' THEN 1 END) as not_invoiced,
-                count(CASE WHEN (invoice_name IS NULL OR invoice_name = '') AND invoice_date < ? THEN 1 END) as overdue,
+                count(CASE WHEN (invoice_name IS NULL OR invoice_name = '') AND invoice_date < ? THEN 1 END) as not_invoiced_overdue,
+                count(CASE WHEN (invoice_name IS NULL OR invoice_name = '') AND invoice_date >= ? THEN 1 END) as not_invoiced_upcoming,
                 count(CASE WHEN LOWER(invoice_state) = 'draft' THEN 1 END) as draft,
                 count(CASE WHEN LOWER(payment_state) = 'paid' THEN 1 END) as paid,
                 count(CASE WHEN LOWER(invoice_state) = 'posted' AND LOWER(COALESCE(payment_state,'')) != 'paid' THEN 1 END) as unpaid
-            ", [now()->toDateString()])
+            ", [now()->toDateString(), now()->toDateString()])
             ->first()
             ->toArray();
 
@@ -333,10 +341,17 @@ class InvoiceSubscriptionController extends Controller
 
             if ($request->filled('status') && $request->status !== 'all') {
                 $status = $request->status;
+                $today = now()->toDateString();
                 match ($status) {
                     'not_invoiced' => $query->where(function ($q) {
                                             $q->whereNull('invoice_name')->orWhere('invoice_name', '');
                                         }),
+                    'not_invoiced_overdue' => $query->where(function ($q) use ($today) {
+                                            $q->whereNull('invoice_name')->orWhere('invoice_name', '');
+                                        })->where('invoice_date', '<', $today),
+                    'not_invoiced_upcoming' => $query->where(function ($q) use ($today) {
+                                            $q->whereNull('invoice_name')->orWhere('invoice_name', '');
+                                        })->where('invoice_date', '>=', $today),
                     'draft'        => $query->whereRaw("LOWER(invoice_state) = 'draft'"),
                     'paid'         => $query->whereRaw("LOWER(payment_state) = 'paid'"),
                     'unpaid'       => $query->whereRaw("LOWER(invoice_state) = 'posted'")
@@ -366,19 +381,30 @@ class InvoiceSubscriptionController extends Controller
 
         $records = $query->get();
 
+        $statusStr = $request->input('status', 'all');
+        $statusName = match($statusStr) {
+            'not_invoiced' => 'Not_Invoiced',
+            'not_invoiced_overdue' => 'Not_Invoiced_Overdue',
+            'not_invoiced_upcoming' => 'Not_Invoiced_Upcoming',
+            'draft' => 'Draft',
+            'paid' => 'Paid',
+            'unpaid' => 'Unpaid',
+            default => 'All_Status',
+        };
+
         if ($format === 'excel') {
-            return $this->exportExcel($records, $visibleColumns);
+            return $this->exportExcel($records, $visibleColumns, $statusName);
         }
 
-        return $this->exportCsv($records, $visibleColumns);
+        return $this->exportCsv($records, $visibleColumns, $statusName);
     }
 
     /**
      * Export to Excel (as HTML table).
      */
-    private function exportExcel($records, $columns)
+    private function exportExcel($records, $columns, $statusName = 'export')
     {
-        $filename = 'export_subscription_' . now()->format('YmdHis') . '.xls';
+        $filename = "{$statusName}_" . now()->format('YmdHis') . '.xls';
         
         $html = '<table border="1">';
         $html .= '<thead><tr>';
@@ -409,9 +435,9 @@ class InvoiceSubscriptionController extends Controller
     /**
      * Export to CSV.
      */
-    private function exportCsv($records, $columns)
+    private function exportCsv($records, $columns, $statusName = 'export')
     {
-        $filename = 'export_subscription_' . now()->format('YmdHis') . '.csv';
+        $filename = "{$statusName}_" . now()->format('YmdHis') . '.csv';
         
         $callback = function() use ($records, $columns) {
             $file = fopen('php://output', 'w');
@@ -465,7 +491,7 @@ class InvoiceSubscriptionController extends Controller
     {
         if (!$row->invoice_name) {
             $isOverdue = $row->invoice_date < now()->toDateString();
-            return $isOverdue ? 'Not Invoiced (Overdue)' : 'Not Invoiced';
+            return $isOverdue ? 'Not Invoiced (Overdue)' : 'Not Invoiced (Upcoming)';
         }
         
         $state = strtolower($row->invoice_state ?? '');

@@ -381,11 +381,6 @@
                     @endif
                 </tr>
             </thead>
-            <tfoot>
-                <tr>
-                    <td colspan="{{ $showUnitColumn ? 5 : 4 }}" style="border: none; padding: 0; height: 50px;"></td>
-                </tr>
-            </tfoot>
             <tbody>
                 @php
                     $allLines = $invoice->lines;
@@ -595,6 +590,11 @@
                     </td>
                 </tr>
             </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="{{ $showUnitColumn ? 5 : 4 }}" style="border: none; padding: 0; height: 50px;"></td>
+                </tr>
+            </tfoot>
         </table>
     </div>
     @endforeach

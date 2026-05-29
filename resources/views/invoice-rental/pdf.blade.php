@@ -497,11 +497,6 @@
                     @endif
                 </tr>
             </thead>
-            <tfoot>
-                <tr>
-                    <td colspan="5" style="border: none; padding: 0; height: 50px;"></td>
-                </tr>
-            </tfoot>
             <tbody>
                 @if(isset($printMode) && $printMode === 'detail')
                 <tr>
@@ -801,6 +796,11 @@
                     </td>
                 </tr>
             </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="5" style="border: none; padding: 0; height: 50px;"></td>
+                </tr>
+            </tfoot>
         </table>
     </div>@endforeach
 

@@ -80,7 +80,7 @@
         .info-label {
             font-weight: bold;
             color: #1c3254;
-            width: 110px;
+            width: 75px;
         }
         .info-colon {
             width: 10px;
@@ -238,10 +238,22 @@
         .ketentuan-content {
             color: #334155;
         }
+        /* Footer */
+        .footer {
+            position: fixed;
+            bottom: -20px;
+            left: 0;
+            right: 0;
+            font-size: 11px;
+            color: #1e293b;
+            border-top: 2px solid #000;
+            padding-top: 5px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-
+    <div class="footer">SDP/FR/BC/02, Rev.01</div>
 
     @foreach($invoices as $invoice)
     @php

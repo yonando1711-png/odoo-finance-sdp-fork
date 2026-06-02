@@ -665,13 +665,18 @@ class InvoiceSubscriptionController extends Controller
 
                 $kodeTransaksi = $subscriptionCodes[$inv->name] ?? null;
 
+                $jumlah = $inv->amount_untaxed;
+                if ($lainLainAmount !== null) {
+                    $jumlah -= $lainLainAmount;
+                }
+
                 $allInvoices->push((object)[
                     'customer' => $inv->partner_name,
                     'tgl_invoice' => $inv->invoice_date ? $inv->invoice_date->format('d/m/Y') : '',
                     'no_invoice' => $inv->name,
                     'no_npwp' => $inv->partner_npwp,
                     'kode_transaksi' => $kodeTransaksi,
-                    'jumlah' => $inv->amount_untaxed,
+                    'jumlah' => $jumlah,
                     'lain_lain_amount' => $lainLainAmount,
                     'lain_lain_ket' => $lainLainKet,
                     'sub_total' => $inv->amount_untaxed,

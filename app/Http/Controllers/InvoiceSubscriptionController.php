@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\InvoiceSubscription;
+use App\Models\InvoiceRental;
+use App\Models\InvoiceDriver;
+use App\Models\InvoiceOther;
+use App\Models\InvoiceVehicle;
 use App\Models\ImportLog;
 use App\Services\OdooService;
 use App\Services\SyncService;
@@ -502,5 +506,196 @@ class InvoiceSubscriptionController extends Controller
         if ($state === 'posted') return 'Posted/Unpaid';
         
         return $row->invoice_state ?? 'Unknown';
+    }
+
+    /**
+     * Generate the consolidated Accounting Report for all invoices.
+     */
+    public function accountingReport(Request $request)
+    {
+        $dateFrom = $request->input('date_from') ?: \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d');
+        $dateTo = $request->input('date_to') ?: \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d');
+
+        $records = $this->getAccountingReportData($dateFrom, $dateTo);
+
+        return view('invoice-subscription.accounting-report', compact('records', 'dateFrom', 'dateTo'));
+    }
+
+    /**
+     * Export the Accounting Report to Excel or CSV.
+     */
+    public function exportAccountingReport(Request $request)
+    {
+        $dateFrom = $request->input('date_from') ?: \Carbon\Carbon::now()->startOfMonth()->format('Y-m-d');
+        $dateTo = $request->input('date_to') ?: \Carbon\Carbon::now()->endOfMonth()->format('Y-m-d');
+        $format = $request->input('format', 'excel');
+
+        $records = $this->getAccountingReportData($dateFrom, $dateTo);
+
+        $filename = 'Accounting_Report_' . $dateFrom . '_to_' . $dateTo;
+
+        if ($format === 'excel') {
+            $html = '<table border="1">
+                <thead>
+                    <tr>
+                        <th style="background-color: #f2f2f2;">No.</th>
+                        <th style="background-color: #f2f2f2;">Customer</th>
+                        <th style="background-color: #f2f2f2;">Tgl Invoice</th>
+                        <th style="background-color: #f2f2f2;">No Invoice</th>
+                        <th style="background-color: #f2f2f2;">No NPWP</th>
+                        <th style="background-color: #f2f2f2;">Kode Transaksi</th>
+                        <th style="background-color: #f2f2f2;">Jumlah</th>
+                        <th style="background-color: #f2f2f2;">Product Lain - Lain</th>
+                        <th style="background-color: #f2f2f2;">Deskripsi</th>
+                        <th style="background-color: #f2f2f2;">Sub Total</th>
+                        <th style="background-color: #f2f2f2;">PPN</th>
+                        <th style="background-color: #f2f2f2;">Total</th>
+                        <th style="background-color: #f2f2f2;">Keterangan</th>
+                    </tr>
+                </thead>
+                <tbody>';
+
+            $no = 1;
+            foreach ($records as $row) {
+                $html .= '<tr>
+                    <td>' . $no++ . '</td>
+                    <td>' . e($row->customer) . '</td>
+                    <td>' . e($row->tgl_invoice) . '</td>
+                    <td>' . e($row->no_invoice) . '</td>
+                    <td>' . e($row->no_npwp) . '</td>
+                    <td>' . e($row->kode_transaksi) . '</td>
+                    <td style="text-align: right;">' . $row->jumlah . '</td>
+                    <td style="text-align: right;">' . $row->lain_lain_amount . '</td>
+                    <td>' . e($row->lain_lain_ket) . '</td>
+                    <td style="text-align: right;">' . $row->sub_total . '</td>
+                    <td style="text-align: right;">' . $row->ppn . '</td>
+                    <td style="text-align: right;">' . $row->total . '</td>
+                    <td></td>
+                </tr>';
+            }
+            $html .= '</tbody></table>';
+
+            return response($html, 200, [
+                "Content-type"        => "application/vnd.ms-excel",
+                "Content-Disposition" => "attachment; filename={$filename}.xls",
+                "Pragma"              => "no-cache",
+                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+                "Expires"             => "0"
+            ]);
+        }
+
+        // CSV export
+        $callback = function() use ($records) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, [
+                'No.', 'Customer', 'Tgl Invoice', 'No Invoice', 'No NPWP', 'Kode Transaksi',
+                'Jumlah', 'Product Lain - Lain', 'Deskripsi', 'Sub Total', 'PPN', 'Total', 'Keterangan'
+            ]);
+            $no = 1;
+            foreach ($records as $row) {
+                fputcsv($file, [
+                    $no++,
+                    $row->customer,
+                    $row->tgl_invoice,
+                    $row->no_invoice,
+                    $row->no_npwp,
+                    $row->kode_transaksi,
+                    $row->jumlah,
+                    $row->lain_lain_amount,
+                    $row->lain_lain_ket,
+                    $row->sub_total,
+                    $row->ppn,
+                    $row->total,
+                    ''
+                ]);
+            }
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, [
+            "Content-type"        => "text/csv",
+            "Content-Disposition" => "attachment; filename={$filename}.csv",
+            "Pragma"              => "no-cache",
+            "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
+            "Expires"             => "0"
+        ]);
+    }
+
+    /**
+     * Helper to fetch and consolidate data for Accounting Report
+     */
+    private function getAccountingReportData($dateFrom, $dateTo)
+    {
+        $rentals = InvoiceRental::with('lines')->whereBetween('invoice_date', [$dateFrom, $dateTo])->get();
+        $drivers = InvoiceDriver::with('lines')->whereBetween('invoice_date', [$dateFrom, $dateTo])->get();
+        $others = InvoiceOther::with('lines')->whereBetween('invoice_date', [$dateFrom, $dateTo])->get();
+        $vehicles = InvoiceVehicle::with('lines')->whereBetween('invoice_date', [$dateFrom, $dateTo])->get();
+
+        // Preload subscription codes for quick lookup
+        $subscriptionCodes = InvoiceSubscription::whereNotNull('transaction_code')
+            ->pluck('transaction_code', 'invoice_name')
+            ->toArray();
+
+        $allInvoices = collect();
+
+        $processInvoices = function($invoices) use ($allInvoices, $subscriptionCodes) {
+            foreach ($invoices as $inv) {
+                $lainLainAmount = null;
+                $lainLainKet = null;
+                
+                foreach ($inv->lines as $line) {
+                    $desc = strtolower($line->description ?? '');
+                    if (str_contains($desc, 'lain-lain') || str_contains($desc, '(inv)')) {
+                        $amt = ($line->quantity != 0 ? $line->quantity : 1) * $line->price_unit;
+                        // Some price_unit might just be the flat amount if quantity is 0
+                        if ($line->quantity == 0 && $line->price_unit == 0) {
+                             // pure description line
+                             continue;
+                        }
+                        
+                        if ($lainLainAmount === null) {
+                            $lainLainAmount = $amt;
+                            $lainLainKet = trim($line->description);
+                        } else {
+                            $lainLainAmount += $amt;
+                            $lainLainKet .= "\n" . trim($line->description);
+                        }
+                    }
+                }
+
+                $kodeTransaksi = $subscriptionCodes[$inv->name] ?? null;
+
+                $jumlah = $inv->amount_untaxed;
+                if ($lainLainAmount !== null) {
+                    $jumlah -= $lainLainAmount;
+                }
+
+                $allInvoices->push((object)[
+                    'customer' => $inv->partner_name,
+                    'tgl_invoice' => $inv->invoice_date ? $inv->invoice_date->format('d/m/Y') : '',
+                    'no_invoice' => $inv->name,
+                    'no_npwp' => $inv->partner_npwp,
+                    'kode_transaksi' => $kodeTransaksi,
+                    'jumlah' => $jumlah,
+                    'lain_lain_amount' => $lainLainAmount,
+                    'lain_lain_ket' => $lainLainKet,
+                    'sub_total' => $inv->amount_untaxed,
+                    'ppn' => $inv->amount_tax,
+                    'total' => $inv->amount_total,
+                    'raw_date' => $inv->invoice_date,
+                    'raw_name' => $inv->name,
+                ]);
+            }
+        };
+
+        $processInvoices($rentals);
+        $processInvoices($drivers);
+        $processInvoices($others);
+        $processInvoices($vehicles);
+
+        return $allInvoices->sortBy([
+            ['raw_date', 'asc'],
+            ['raw_name', 'asc'],
+        ])->values();
     }
 }

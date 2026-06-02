@@ -131,6 +131,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/preferences', [InvoiceSubscriptionController::class, 'updatePreferences'])->name('preferences.update');
         Route::post('/preferences/reset', [InvoiceSubscriptionController::class, 'resetPreferences'])->name('preferences.reset');
         Route::post('/export', [InvoiceSubscriptionController::class, 'export'])->name('export');
+        Route::get('/accounting-report', [InvoiceSubscriptionController::class, 'accountingReport'])->name('accounting-report');
+        Route::post('/accounting-report/export', [InvoiceSubscriptionController::class, 'exportAccountingReport'])->name('accounting-report.export');
     });
 
     // Kuitansi Override Route (accessible by authenticated users printing Kuitansi)

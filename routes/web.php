@@ -13,6 +13,7 @@ use App\Http\Controllers\InvoiceRentalController;
 use App\Http\Controllers\InvoiceProformaController;
 use App\Http\Controllers\InvoiceVehicleController;
 use App\Http\Controllers\InvoiceSubscriptionController;
+use App\Http\Controllers\UninvoicedRentalController;
 use App\Http\Controllers\PrintLogController;
 use App\Http\Controllers\Admin\PrintLogController as AdminPrintLogController;
 // use App\Http\Controllers\Admin\PrintLogController;
@@ -147,6 +148,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/export', [InvoiceSubscriptionController::class, 'export'])->name('export');
         Route::get('/accounting-report', [InvoiceSubscriptionController::class, 'accountingReport'])->name('accounting-report');
         Route::post('/accounting-report/export', [InvoiceSubscriptionController::class, 'exportAccountingReport'])->name('accounting-report.export');
+    });
+
+    // Uninvoiced Rentals
+    Route::group(['prefix' => 'uninvoiced-rentals', 'as' => 'uninvoiced-rentals.', 'middleware' => 'role:invoice'], function () {
+        Route::get('/', [UninvoicedRentalController::class, 'index'])->name('index');
+        Route::post('/sync-init', [UninvoicedRentalController::class, 'syncInit'])->name('sync-init');
+        Route::post('/sync-chunk', [UninvoicedRentalController::class, 'syncChunk'])->name('sync-chunk');
+        Route::post('/export', [UninvoicedRentalController::class, 'export'])->name('export');
     });
 
     // Kuitansi Override Route (accessible by authenticated users printing Kuitansi)

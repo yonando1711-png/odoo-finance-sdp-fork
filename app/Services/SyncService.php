@@ -7,6 +7,7 @@ use App\Models\InvoiceOther;
 use App\Models\InvoiceRental;
 use App\Models\InvoiceVehicle;
 use App\Models\InvoiceSubscription;
+use App\Models\UninvoicedRental;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use Illuminate\Support\Facades\DB;
@@ -309,6 +310,56 @@ class SyncService
             InvoiceSubscription::updateOrCreate(
                 ['period_odoo_id' => $entry['period_odoo_id']],
                 $data
+            );
+            $count++;
+        }
+        return $count;
+    }
+
+    /**
+     * Save Uninvoiced Rental entries
+     * 
+     * @param array $entries      The records to save
+     * @param bool  $truncateFirst  If true, wipe the table first (Deep Re-Sync).
+     */
+    public function saveUninvoicedRentals(array $entries, bool $truncateFirst = false): int
+    {
+        if ($truncateFirst) {
+            // Deep Re-Sync: wipe the table to ensure a clean state
+            UninvoicedRental::truncate();
+        }
+
+        $count = 0;
+        foreach ($entries as $entry) {
+            // we update or create by nomor_so since it's grouped by SO
+            UninvoicedRental::updateOrCreate(
+                ['nomor_so' => $entry['nomor_so']],
+                [
+                    'kode_cust' => $entry['kode_cust'],
+                    'nomor_po' => $entry['nomor_po'],
+                    'nomor_kontrak' => $entry['nomor_kontrak'],
+                    'nama_user' => $entry['nama_user'],
+                    'nopol' => $entry['nopol'],
+                    'model' => $entry['model'],
+                    'tahun_mobil' => $entry['tahun_mobil'],
+                    'start' => $entry['start'],
+                    'end' => $entry['end'],
+                    'tanggal_periode_belum_cetak' => $entry['tanggal_periode_belum_cetak'],
+                    'price_di_so' => $entry['price_di_so'],
+                    'invoice_period' => $entry['invoice_period'],
+                    'payment_terms' => $entry['payment_terms'],
+                    'area_pemakaian_unit' => $entry['area_pemakaian_unit'],
+                    'chassis' => $entry['chassis'],
+                    'invoice_pic' => $entry['invoice_pic'],
+                    'first_invoice_date' => $entry['first_invoice_date'],
+                    'rental_method' => $entry['rental_method'],
+                    'recipient_bank' => $entry['recipient_bank'],
+                    'tax_id' => $entry['tax_id'],
+                    'id_tku' => $entry['id_tku'],
+                    'kode_transaksi' => $entry['kode_transaksi'],
+                    'address' => $entry['address'],
+                    'tax_address' => $entry['tax_address'],
+                ]
             );
             $count++;
         }

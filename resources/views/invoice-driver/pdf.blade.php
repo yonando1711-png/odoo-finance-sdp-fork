@@ -488,7 +488,7 @@
                             <td class="text-right">
                                 @if(!isset($printMode) || $printMode !== 'summary')
                                     @php
-                                        $unitPrice = ($line->duration_price > 0) ? $line->duration_price : $line->price_unit;
+                                        $unitPrice = $line->price_unit;
                                     @endphp
                                     @if($unitPrice != 0)
                                         {{ number_format($unitPrice, 0, ',', '.') }}

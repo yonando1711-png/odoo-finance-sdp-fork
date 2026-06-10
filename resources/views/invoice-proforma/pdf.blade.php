@@ -324,7 +324,7 @@
             )->values();
 
             $displayLines = collect();
-            if (isset($printMode) && $printMode === 'summary' && (str_starts_with($invoice->name, 'INVRS') || str_starts_with($invoice->name, 'INVRT'))) {
+            if (isset($printMode) && $printMode === 'summary') {
                 // Summary Mode: Group all rental lines
                 if ($rentalLines->isNotEmpty()) {
                     $totalQty = $rentalLines->sum('quantity');

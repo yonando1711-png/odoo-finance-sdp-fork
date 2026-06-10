@@ -32,6 +32,11 @@ class UninvoicedRentalController extends Controller
             });
         }
 
+        // Filter by Invoice Period
+        if ($request->filled('invoice_period')) {
+            $query->where('invoice_period', $request->invoice_period);
+        }
+
         // Sorting
         $allowedSorts = ['kode_cust', 'nomor_so', 'nama_user', 'nopol', 'tanggal_periode_belum_cetak'];
         if (!in_array($sort, $allowedSorts)) {
@@ -121,7 +126,25 @@ class UninvoicedRentalController extends Controller
      */
     public function export(Request $request)
     {
-        $rentals = UninvoicedRental::orderBy('tanggal_periode_belum_cetak', 'desc')->get();
+        $query = UninvoicedRental::query();
+
+        // Apply filters to export
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('nomor_so', 'like', "%{$search}%")
+                  ->orWhere('nama_user', 'like', "%{$search}%")
+                  ->orWhere('kode_cust', 'like', "%{$search}%")
+                  ->orWhere('nopol', 'like', "%{$search}%")
+                  ->orWhere('chassis', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('invoice_period')) {
+            $query->where('invoice_period', $request->invoice_period);
+        }
+
+        $rentals = $query->orderBy('tanggal_periode_belum_cetak', 'desc')->get();
         $format = $request->input('format', 'csv');
 
         $columns = [

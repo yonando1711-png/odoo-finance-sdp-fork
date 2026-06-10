@@ -20,10 +20,25 @@
                        class="block w-full pl-10 pr-3 py-2 border border-slate-300 dark:border-slate-600 rounded-lg leading-5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
                        placeholder="Search SO, Customer, Nopol...">
             </div>
+            <div class="relative w-full sm:w-40">
+                <select name="invoice_period" class="block w-full pl-3 pr-8 py-2 border border-slate-300 dark:border-slate-600 rounded-lg leading-5 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm appearance-none cursor-pointer">
+                    <option value="">All Periods</option>
+                    <option value="Monthly" {{ request('invoice_period') == 'Monthly' ? 'selected' : '' }}>Monthly</option>
+                    <option value="Quarterly" {{ request('invoice_period') == 'Quarterly' ? 'selected' : '' }}>Quarterly</option>
+                    <option value="Semester" {{ request('invoice_period') == 'Semester' ? 'selected' : '' }}>Semester</option>
+                    <option value="Yearly" {{ request('invoice_period') == 'Yearly' ? 'selected' : '' }}>Yearly</option>
+                    <option value="Bimonthly" {{ request('invoice_period') == 'Bimonthly' ? 'selected' : '' }}>Bimonthly</option>
+                    <option value="Four-monthly" {{ request('invoice_period') == 'Four-monthly' ? 'selected' : '' }}>Four-monthly</option>
+                    <option value="Seven-monthly" {{ request('invoice_period') == 'Seven-monthly' ? 'selected' : '' }}>Seven-monthly</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-500">
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </div>
+            </div>
             <button type="submit" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-lg text-sm font-medium transition-colors border border-slate-300 dark:border-slate-600">
                 Filter
             </button>
-            @if(request()->hasAny(['search']))
+            @if(request()->hasAny(['search', 'invoice_period']) && (request('search') || request('invoice_period')))
                 <a href="{{ route('uninvoiced-rentals.index') }}" class="px-4 py-2 text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium">Clear</a>
             @endif
         </form>
@@ -32,6 +47,8 @@
             {{-- Export Button --}}
             <form method="POST" action="{{ route('uninvoiced-rentals.export') }}" class="flex items-center w-full sm:w-auto shadow-sm rounded-lg overflow-hidden">
                 @csrf
+                <input type="hidden" name="search" value="{{ request('search') }}">
+                <input type="hidden" name="invoice_period" value="{{ request('invoice_period') }}">
                 <div class="relative flex items-center bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 transition-colors border-r border-slate-700/50">
                     <select name="format" class="appearance-none bg-transparent text-white text-sm font-medium pl-4 pr-8 py-2 outline-none cursor-pointer">
                         <option value="csv" class="text-slate-900">CSV</option>

@@ -338,6 +338,7 @@ class SyncService
                     'kode_cust' => $entry['kode_cust'],
                     'nomor_po' => $entry['nomor_po'],
                     'nomor_kontrak' => $entry['nomor_kontrak'],
+                    'kontrak_ref' => $entry['kontrak_ref'] ?? '',
                     'nama_user' => $entry['nama_user'],
                     'nopol' => $entry['nopol'],
                     'model' => $entry['model'],

@@ -28,7 +28,8 @@ class UninvoicedRentalController extends Controller
                   ->orWhere('nama_user', 'like', "%{$search}%")
                   ->orWhere('kode_cust', 'like', "%{$search}%")
                   ->orWhere('nopol', 'like', "%{$search}%")
-                  ->orWhere('chassis', 'like', "%{$search}%");
+                  ->orWhere('chassis', 'like', "%{$search}%")
+                  ->orWhere('kontrak_ref', 'like', "%{$search}%");
             });
         }
 
@@ -38,7 +39,7 @@ class UninvoicedRentalController extends Controller
         }
 
         // Sorting
-        $allowedSorts = ['kode_cust', 'nomor_so', 'nama_user', 'nopol', 'tanggal_periode_belum_cetak'];
+        $allowedSorts = ['kode_cust', 'nomor_so', 'nama_user', 'nopol', 'tanggal_periode_belum_cetak', 'kontrak_ref'];
         if (!in_array($sort, $allowedSorts)) {
             $sort = 'tanggal_periode_belum_cetak';
         }
@@ -136,7 +137,8 @@ class UninvoicedRentalController extends Controller
                   ->orWhere('nama_user', 'like', "%{$search}%")
                   ->orWhere('kode_cust', 'like', "%{$search}%")
                   ->orWhere('nopol', 'like', "%{$search}%")
-                  ->orWhere('chassis', 'like', "%{$search}%");
+                  ->orWhere('chassis', 'like', "%{$search}%")
+                  ->orWhere('kontrak_ref', 'like', "%{$search}%");
             });
         }
 
@@ -148,7 +150,7 @@ class UninvoicedRentalController extends Controller
         $format = $request->input('format', 'csv');
 
         $columns = [
-            'Kode Cust', 'Nomor SO', 'Nomor PO', 'Nomor Kontrak', 'Nama user', 'Nopol',
+            'Kode Cust', 'Nomor SO', 'Nomor PO', 'Nomor Kontrak', 'Kontrak Ref', 'Nama user', 'Nopol',
             'Model', 'Tahun Mobil', 'Start', 'End', 'Tanggal periode belum cetak',
             'Price di SO', 'Invoice Period', 'Payment Terms', 'Area pemakaian uunit',
             'Chassis', 'Invoice PIC', 'First Invoice date', 'Rental Method',
@@ -170,6 +172,7 @@ class UninvoicedRentalController extends Controller
                 $html .= '<td style="mso-number-format:\'\@\';">' . htmlspecialchars((string)$rental->nomor_so) . '</td>';
                 $html .= '<td style="mso-number-format:\'\@\';">' . htmlspecialchars((string)$rental->nomor_po) . '</td>';
                 $html .= '<td style="mso-number-format:\'\@\';">' . htmlspecialchars((string)$rental->nomor_kontrak) . '</td>';
+                $html .= '<td style="mso-number-format:\'\@\';">' . htmlspecialchars((string)$rental->kontrak_ref) . '</td>';
                 $html .= '<td>' . htmlspecialchars((string)$rental->nama_user) . '</td>';
                 $html .= '<td>' . htmlspecialchars((string)$rental->nopol) . '</td>';
                 $html .= '<td>' . htmlspecialchars((string)$rental->model) . '</td>';
@@ -224,6 +227,7 @@ class UninvoicedRentalController extends Controller
                     $rental->nomor_so,
                     $rental->nomor_po,
                     $rental->nomor_kontrak,
+                    $rental->kontrak_ref,
                     $rental->nama_user,
                     $rental->nopol,
                     $rental->model,

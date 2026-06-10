@@ -16,6 +16,7 @@ class UninvoicedRental extends Model
         'nomor_so',
         'nomor_po',
         'nomor_kontrak',
+        'kontrak_ref',
         'nama_user',
         'nopol',
         'model',

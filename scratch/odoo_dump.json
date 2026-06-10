@@ -1,0 +1,969 @@
+{
+    "sale_order": {
+        "id": 22035,
+        "campaign_id": false,
+        "source_id": false,
+        "medium_id": false,
+        "activity_ids": [],
+        "activity_state": false,
+        "activity_user_id": false,
+        "activity_type_id": false,
+        "activity_type_icon": false,
+        "activity_date_deadline": false,
+        "my_activity_date_deadline": false,
+        "activity_summary": false,
+        "activity_exception_decoration": false,
+        "activity_exception_icon": false,
+        "activity_calendar_event_id": false,
+        "message_is_follower": false,
+        "message_follower_ids": [
+            566803,
+            566804,
+            595126
+        ],
+        "message_partner_ids": [
+            5335,
+            5324,
+            9695
+        ],
+        "message_ids": [
+            2062993,
+            1975089,
+            1822393,
+            1748845,
+            1655933,
+            1291908,
+            1200281,
+            1134846,
+            1134841
+        ],
+        "has_message": true,
+        "message_needaction": false,
+        "message_needaction_counter": 0,
+        "message_has_error": false,
+        "message_has_error_counter": 0,
+        "message_attachment_count": 0,
+        "website_message_ids": [
+            1134846
+        ],
+        "message_has_sms_error": false,
+        "access_url": "\/my\/orders\/22035",
+        "access_token": false,
+        "access_warning": "",
+        "name": "R\/2025\/03966",
+        "company_id": [
+            1,
+            "PT Surya Darma Perkasa"
+        ],
+        "partner_id": [
+            9695,
+            "[AZBILBERCA] PT. AZBIL BERCA INDONESIA"
+        ],
+        "state": "sale",
+        "locked": true,
+        "client_order_ref": "250102040802 \/\/ PO 60003900",
+        "create_date": "2025-11-14 06:40:38",
+        "commitment_date": false,
+        "date_order": "2025-11-20 06:21:35",
+        "origin": "3762-0707\/CL\/XI\/2025 B",
+        "reference": false,
+        "require_signature": true,
+        "require_payment": false,
+        "prepayment_percent": 1,
+        "signature": false,
+        "signed_by": false,
+        "signed_on": false,
+        "validity_date": "2025-12-14",
+        "journal_id": false,
+        "note": false,
+        "partner_invoice_id": [
+            9696,
+            "PT. AZBIL BERCA INDONESIA, EKA BERNARD"
+        ],
+        "partner_shipping_id": [
+            9695,
+            "[AZBILBERCA] PT. AZBIL BERCA INDONESIA"
+        ],
+        "fiscal_position_id": false,
+        "payment_term_id": [
+            4,
+            "30 Days"
+        ],
+        "pricelist_id": [
+            1,
+            "Default IDR pricelist (IDR)"
+        ],
+        "currency_id": [
+            12,
+            "IDR"
+        ],
+        "currency_rate": 1,
+        "user_id": [
+            330,
+            "Fuji"
+        ],
+        "team_id": [
+            38,
+            "FJ - FJ - Andreas"
+        ],
+        "order_line": [
+            19136
+        ],
+        "amount_untaxed": 135000000,
+        "amount_tax": 14850000,
+        "amount_total": 149850000,
+        "amount_to_invoice": 116550000,
+        "amount_invoiced": 33300000,
+        "invoice_count": 8,
+        "invoice_ids": [
+            725112,
+            703395,
+            686407,
+            643704,
+            614350,
+            614090,
+            593868,
+            585330
+        ],
+        "invoice_status": "to invoice",
+        "transaction_ids": [],
+        "authorized_transaction_ids": [],
+        "amount_paid": 0,
+        "analytic_account_id": false,
+        "tag_ids": [
+            34,
+            46
+        ],
+        "amount_undiscounted": 135000000,
+        "country_code": "ID",
+        "expected_date": "2025-11-20 06:21:35",
+        "is_expired": false,
+        "partner_credit_warning": "",
+        "tax_calculation_rounding_method": "round_globally",
+        "tax_country_id": [
+            100,
+            "Indonesia"
+        ],
+        "tax_totals": {
+            "amount_untaxed": 135000000,
+            "amount_total": 149850000,
+            "formatted_amount_total": "Rp\u00a0149,850,000",
+            "formatted_amount_untaxed": "Rp\u00a0135,000,000",
+            "groups_by_subtotal": {
+                "Untaxed Amount": [
+                    {
+                        "group_key": 5,
+                        "tax_group_id": 5,
+                        "tax_group_name": "PPN",
+                        "tax_group_amount": 14850000,
+                        "tax_group_base_amount": 135000000,
+                        "formatted_tax_group_amount": "Rp\u00a014,850,000",
+                        "formatted_tax_group_base_amount": "Rp\u00a0135,000,000"
+                    }
+                ]
+            },
+            "subtotals": [
+                {
+                    "name": "Untaxed Amount",
+                    "amount": 135000000,
+                    "formatted_amount": "Rp\u00a0135,000,000"
+                }
+            ],
+            "subtotals_order": [
+                "Untaxed Amount"
+            ],
+            "display_tax_base": false
+        },
+        "terms_type": "plain",
+        "type_name": "Sales Order",
+        "show_update_fpos": false,
+        "has_active_pricelist": true,
+        "show_update_pricelist": false,
+        "display_name": "R\/2025\/03966",
+        "create_uid": [
+            341,
+            "SA Officer"
+        ],
+        "write_uid": [
+            328,
+            "IT-Team"
+        ],
+        "write_date": "2026-06-09 06:58:00",
+        "opportunity_id": false,
+        "sale_order_template_id": false,
+        "sale_order_option_ids": [],
+        "purchase_order_count": 0,
+        "is_rental_order": true,
+        "has_rented_products": true,
+        "rental_start_date": "2025-11-16 17:00:00",
+        "rental_return_date": "2028-11-15 17:00:00",
+        "duration_days": 1095,
+        "remaining_hours": 0,
+        "show_update_duration": false,
+        "rental_status": "return",
+        "next_action_date": "2028-11-15 17:00:00",
+        "has_pickable_lines": false,
+        "has_returnable_lines": true,
+        "is_late": false,
+        "incoterm": false,
+        "incoterm_location": false,
+        "picking_policy": "direct",
+        "warehouse_id": [
+            40,
+            "JAKARTA"
+        ],
+        "picking_ids": [
+            15000,
+            17198,
+            17761,
+            19701,
+            15001,
+            19702,
+            17762,
+            17199
+        ],
+        "delivery_count": 8,
+        "delivery_status": "partial",
+        "procurement_group_id": [
+            12810,
+            "R\/2025\/03966"
+        ],
+        "effective_date": false,
+        "json_popover": "{\"popoverTemplate\": \"sale_stock.DelayAlertWidget\", \"late_elements\": []}",
+        "show_json_popover": false,
+        "blanket_order_id": false,
+        "repair_order_ids": [],
+        "repair_count": 0,
+        "expense_ids": [],
+        "expense_count": 0,
+        "rental_qty": 1095,
+        "rental_uom": "days",
+        "rental_contract_id": [
+            54,
+            "C\/2025\/00054"
+        ],
+        "planning_hours_planned": 0,
+        "planning_hours_to_plan": 0,
+        "planning_first_sale_line_id": false,
+        "planning_initial_date": "2026-06-09",
+        "rental_type": "subscription",
+        "is_include_driver": false,
+        "related_partner_ids": [
+            9695,
+            9697
+        ],
+        "sale_invoice_period_id": [
+            1,
+            "Monthly"
+        ],
+        "invoice_period_ids": [
+            198232,
+            198233,
+            198234,
+            198235,
+            198236,
+            198237,
+            198238,
+            198239,
+            198240,
+            198241,
+            198242,
+            198243,
+            198244,
+            198245,
+            198246,
+            198247,
+            198248,
+            198249,
+            198250,
+            198251,
+            198252,
+            198253,
+            198254,
+            198255,
+            198256,
+            198257,
+            198258,
+            198259,
+            198260,
+            198261,
+            198262,
+            198263,
+            198264,
+            198265,
+            198266,
+            198267
+        ],
+        "duration_months": 36,
+        "area_id": [
+            1,
+            "JKT - JAKARTA"
+        ],
+        "use_duration_price": true,
+        "duration_uom_type": "daily",
+        "is_invoice_cut_off_year": false,
+        "rental_method": "full_month",
+        "first_invoice_date": "2025-11-17",
+        "actual_start_rental": "2025-11-16 17:00:00",
+        "actual_end_rental": "2028-11-15 17:00:00",
+        "product_movement_ids": [
+            4978,
+            5451,
+            5564,
+            5878
+        ],
+        "is_group_billing_rental_view": false,
+        "is_group_sale_rental_view": false,
+        "is_group_admin_rental_view": true,
+        "has_returnable_switch": true,
+        "has_pickable_switch": false,
+        "is_terminate": false,
+        "previous_so_id": false,
+        "is_force_close": false,
+        "is_extended": false,
+        "initial_end_date": false,
+        "is_tender": false,
+        "invoice_real_date": false,
+        "customer_name": "PT  AZBIL BERCA INDONESIA",
+        "superseded_so_id": false,
+        "is_switch_customer": false,
+        "previous_customer_id": false
+    },
+    "rental_period_invoice": {
+        "id": 198240,
+        "rental_order_id": [
+            22035,
+            "R\/2025\/03966"
+        ],
+        "product_id": [
+            14599,
+            "[TYT-AVZE13-AT-B] TOYOTA ALL NEW AVANZA 1.3 E CVT BENSIN"
+        ],
+        "name": "[TYT-AVZE13-AT-B] TOYOTA ALL NEW AVANZA 1.3 E CVT BENSIN (Rental)",
+        "currency_id": [
+            12,
+            "IDR"
+        ],
+        "invoice_date": "2026-07-17",
+        "price_unit": 3750000,
+        "invoice_id": false,
+        "start_rental_period_date": "2026-07-17",
+        "end_rental_period_date": "2026-08-16",
+        "total_day": 0,
+        "is_cut_off_year": false,
+        "is_rental_extended": false,
+        "display_name": "[R\/2025\/03966] - 2026-07-17",
+        "create_uid": [
+            341,
+            "SA Officer"
+        ],
+        "create_date": "2025-11-20 06:21:35",
+        "write_uid": [
+            341,
+            "SA Officer"
+        ],
+        "write_date": "2025-11-20 06:21:35",
+        "rental_order_line_id": [
+            19136,
+            "R\/2025\/03966 - [TYT-AVZE13-AT-B] TOYOTA ALL NEW AVANZA 1.3 E CVT BENSIN (Rental) (AZBILBERCA)"
+        ],
+        "area_id": [
+            1,
+            "JKT - JAKARTA"
+        ],
+        "tax_ids": [
+            1
+        ],
+        "customer_id": [
+            9695,
+            "[AZBILBERCA] PT. AZBIL BERCA INDONESIA"
+        ],
+        "parent_id": false,
+        "serial_ids": [],
+        "rental_qty": 1,
+        "rental_uom": "month",
+        "is_auto_merged": false,
+        "lot_id": [
+            20909,
+            "B1083HZN"
+        ]
+    },
+    "stock_lot": {
+        "id": 20909,
+        "activity_ids": [],
+        "activity_state": false,
+        "activity_user_id": false,
+        "activity_type_id": false,
+        "activity_type_icon": false,
+        "activity_date_deadline": false,
+        "my_activity_date_deadline": false,
+        "activity_summary": false,
+        "activity_exception_decoration": false,
+        "activity_exception_icon": false,
+        "activity_calendar_event_id": false,
+        "message_is_follower": false,
+        "message_follower_ids": [],
+        "message_partner_ids": [],
+        "message_ids": [
+            2157476,
+            1743453,
+            1721595,
+            1677830,
+            1370479,
+            1361607,
+            1309740,
+            1296591,
+            1296589,
+            1208999,
+            1200279,
+            1196300
+        ],
+        "has_message": true,
+        "message_needaction": false,
+        "message_needaction_counter": 0,
+        "message_has_error": false,
+        "message_has_error_counter": 0,
+        "message_attachment_count": 0,
+        "website_message_ids": [],
+        "message_has_sms_error": false,
+        "name": "B1083HZN",
+        "ref": "MHKAA1BY2SJ007402",
+        "product_id": [
+            9056,
+            "[TYT-AVZE13-AT-B] TOYOTA ALL NEW AVANZA 1.3 E CVT BENSIN"
+        ],
+        "product_uom_id": [
+            1,
+            "Units"
+        ],
+        "quant_ids": [
+            49688,
+            56816
+        ],
+        "product_qty": 1,
+        "note": false,
+        "display_complete": true,
+        "company_id": [
+            1,
+            "PT Surya Darma Perkasa"
+        ],
+        "delivery_ids": [
+            19701,
+            17198
+        ],
+        "delivery_count": 2,
+        "last_delivery_partner_id": [
+            9695,
+            "[AZBILBERCA] PT. AZBIL BERCA INDONESIA"
+        ],
+        "lot_properties": [],
+        "location_id": [
+            17,
+            "Partners\/Customers\/Rental"
+        ],
+        "display_name": "B1083HZN",
+        "create_uid": [
+            343,
+            "Anna"
+        ],
+        "create_date": "2025-11-18 03:43:33",
+        "write_uid": [
+            352,
+            "Rangga "
+        ],
+        "write_date": "2026-06-03 06:15:53",
+        "use_expiration_date": false,
+        "expiration_date": false,
+        "use_date": false,
+        "removal_date": false,
+        "alert_date": false,
+        "product_expiry_alert": false,
+        "product_expiry_reminded": false,
+        "purchase_order_ids": [
+            1849
+        ],
+        "purchase_order_count": 1,
+        "sale_order_ids": [],
+        "sale_order_count": 0,
+        "repair_line_ids": [],
+        "repair_part_count": 0,
+        "in_repair_count": 2,
+        "repaired_count": 0,
+        "rental_id": [
+            22035,
+            "R\/2025\/03966"
+        ],
+        "service_history_ids": [],
+        "vehicle_odometer_count": 6,
+        "vehicle_odometer_ids": [
+            33476,
+            32592,
+            29792,
+            29274,
+            28084,
+            27565
+        ],
+        "is_car": true,
+        "engine_number": "1NR G311910",
+        "bpkb_number": "AA-01544976",
+        "kir_number": false,
+        "last_km": 503,
+        "stnk_expired_date": "2026-12-05",
+        "kir_expired_date": false,
+        "color_id": [
+            47,
+            "SILVER - SILVER"
+        ],
+        "vehicle_condition": "JAKARTA",
+        "date_last_change": false,
+        "purchase_date": "2025-11-17",
+        "receive_date": "2025-12-10",
+        "last_warranty_date": false,
+        "insurance_partner_id": [
+            10177,
+            "[INS0018] PT. BCA INSURANCE"
+        ],
+        "insurance_number": false,
+        "last_insurance_date": false,
+        "exclude_repair": false,
+        "is_cop": false,
+        "warning_month_interval": 6,
+        "warning_date": "2025-12-16",
+        "reminder_interval": 0,
+        "insurance_type": false,
+        "vehicle_year": "2025",
+        "user_name": "RATNO",
+        "user_contact": "085697659530",
+        "historical_serial_ids": [
+            1053,
+            1215
+        ],
+        "historical_tire_ids": [
+            2432,
+            2433,
+            2434,
+            2435,
+            2436
+        ],
+        "historical_accumulator_ids": [
+            718
+        ],
+        "is_vendor_rent": false,
+        "is_on_hand": false,
+        "is_in_stock": false,
+        "reserved": true,
+        "original_reserved": true,
+        "receive_from": false,
+        "receive_status": "no_transaction",
+        "x_studio_partnercust": "[AZBILBERCA] PT. AZBIL BERCA INDONESIA",
+        "x_studio_end_rent": "2028-11-15 17:00:00",
+        "x_studio_orig": false,
+        "x_studio_related_field_7i9_1jf5ourt4": "B1083HZN"
+    },
+    "res_partner": {
+        "id": 9695,
+        "message_is_follower": false,
+        "message_follower_ids": [
+            448384,
+            448385
+        ],
+        "message_partner_ids": [
+            5335,
+            5324
+        ],
+        "message_ids": [
+            2041794,
+            2025431,
+            2002375,
+            756325
+        ],
+        "has_message": true,
+        "message_needaction": false,
+        "message_needaction_counter": 0,
+        "message_has_error": false,
+        "message_has_error_counter": 0,
+        "message_attachment_count": 0,
+        "website_message_ids": [],
+        "message_has_sms_error": false,
+        "email_normalized": "b.eka.jy@id.azbil.com",
+        "is_blacklisted": false,
+        "message_bounce": 0,
+        "activity_ids": [],
+        "activity_state": false,
+        "activity_user_id": false,
+        "activity_type_id": false,
+        "activity_type_icon": false,
+        "activity_date_deadline": false,
+        "my_activity_date_deadline": false,
+        "activity_summary": false,
+        "activity_exception_decoration": false,
+        "activity_exception_icon": false,
+        "activity_calendar_event_id": false,
+        "image_1920": false,
+        "image_1024": false,
+        "image_512": false,
+        "image_256": false,
+        "image_128": false,
+        "avatar_1920": "iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAABERJREFUeNrs3WFLIlsAgOE2cxNFEEEQSYSo\/\/9v+hiIMAwIgyKJFOmVuHQvnlMeZ9rFqef5OOzZOembo9N45tdut7uAmEsPAeJAHIgDcSAOxIE4EAfiQBwgDsSBOBAH4kAciANxIA7EAeJAHIiDP+DqTOax2Wxms9nLy4unpNVqjcfjZrPpleNf8\/lcGe+\/J\/tHw2HlP6vVShbvzuT3xHsOxIE4EAfiQByIA3EgDsSBOEAcpLuq0VyHw2G\/3z\/YOH9zdOx4PO52uwcb8zwviiJl15PJpNPpHGzMsmyxWHwyajQa9Xq9chP2ynGa6+vrcGO73U4ZG5bx0caosIy9o5dcRP9B4oTFgTgQB+JAHIjDQ4A4OFmdToIVRbFerw82bjablLFZloVnHcL\/7SN5njcajVOHL5fL0hMWx2lWb8qN\/fxUZkqXf3+nDiuIA3EgDsSBj7J10e12W61W+BEm5cNhlbGlh1fcqThO0O\/3w+sq2u32dDo9OnY0GoUnKhLHXrxdKxTd\/vnTXGXCDit\/T1gG4kAciANxIA7EgTj+uO12m7gxFD0hkb5o3+vra+LGr5rwOfi12+3OYR4PDw9+U991Op3JZOKVA4cVxIE4EAfigKg6Xc8RXYBltVrNZrOjY6OrrxRFked5yq7v7+\/Dr70cXfslOuHFYpFlmVeOr57r5WXixuiZg3BjdDWYqOgyLEevEYnO7RzusuOwgjgQB+JAHIgDcdTA0WsvCP2gxVuiXz5L3PVsNisxPDrhGt0k1cU+58jFPnjPgTgQB+KAb7B4y\/6jbMqHw16vF12H9OnpKWXX5YZXmbA4ThNdC2X\/9KQ81qPRKNz49CZl1+WGV5mwwwriQByIA3EgDg8B4uBbxxFdayXxhjrRUwvpN+OJns84erqiyoTPges5zpHrOXBYQRyIA3FAvf5k32g0opdHpHwnJTo28e\/1pYdXmbA4TnNzcxNeHpG4eMvt7W14tU7i2L27u7twNY6jy7BUmbDDylf8AGmLt0SXTEkce\/HBOi3llmFJ36k4EAfiQByIA3HAj44jet4p\/b44FYfXVJ1OgmVZ9vv374ONz8\/PKWOn02l4riJxbOnhVSYsjtO8vCk3tuLt48sNrzJhhxXEgTgQB+Lgx6vTp5XBYNButw82rtfr+XxebuxyuVwsFim7Hg6H4c1ZiqL4\/KsrFXcqjhPsH+joPXUSw4puT3ye+v1+dPvncXw04brE4bCCOBAH4kAciANxUDN1Os8RXfYkcS2U+XwePR+VuOuiKKInwUpM2M14Tmbxlv+zeAvecyAOxIE4QByIA3EgDsSBOBAH4kAciANxQMTVj\/ppo99qTLfdbvM8r\/V6LOKIGwwGH32rMV2z2Xx8fHRY+W7Ca0hLCO+CIA68IQVxIA7EgTgQB+JAHIgDcSAOEAfiQByIA3EgDsSBOBAH4kAcIA7EgTgQB+Lg7PwjwACr6NgnkBwNeAAAAABJRU5ErkJggg==",
+        "avatar_1024": "iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAABERJREFUeNrs3WFLIlsAgOE2cxNFEEEQSYSo\/\/9v+hiIMAwIgyKJFOmVuHQvnlMeZ9rFqef5OOzZOembo9N45tdut7uAmEsPAeJAHIgDcSAOxIE4EAfiQBwgDsSBOBAH4kAciANxIA7EAeJAHIiDP+DqTOax2Wxms9nLy4unpNVqjcfjZrPpleNf8\/lcGe+\/J\/tHw2HlP6vVShbvzuT3xHsOxIE4EAfiQByIA3EgDsSBOEAcpLuq0VyHw2G\/3z\/YOH9zdOx4PO52uwcb8zwviiJl15PJpNPpHGzMsmyxWHwyajQa9Xq9chP2ynGa6+vrcGO73U4ZG5bx0caosIy9o5dcRP9B4oTFgTgQB+JAHIjDQ4A4OFmdToIVRbFerw82bjablLFZloVnHcL\/7SN5njcajVOHL5fL0hMWx2lWb8qN\/fxUZkqXf3+nDiuIA3EgDsSBj7J10e12W61W+BEm5cNhlbGlh1fcqThO0O\/3w+sq2u32dDo9OnY0GoUnKhLHXrxdKxTd\/vnTXGXCDit\/T1gG4kAciANxIA7EgTj+uO12m7gxFD0hkb5o3+vra+LGr5rwOfi12+3OYR4PDw9+U991Op3JZOKVA4cVxIE4EAfigKg6Xc8RXYBltVrNZrOjY6OrrxRFked5yq7v7+\/Dr70cXfslOuHFYpFlmVeOr57r5WXixuiZg3BjdDWYqOgyLEevEYnO7RzusuOwgjgQB+JAHIgDcdTA0WsvCP2gxVuiXz5L3PVsNisxPDrhGt0k1cU+58jFPnjPgTgQB+KAb7B4y\/6jbMqHw16vF12H9OnpKWXX5YZXmbA4ThNdC2X\/9KQ81qPRKNz49CZl1+WGV5mwwwriQByIA3EgDg8B4uBbxxFdayXxhjrRUwvpN+OJns84erqiyoTPges5zpHrOXBYQRyIA3FAvf5k32g0opdHpHwnJTo28e\/1pYdXmbA4TnNzcxNeHpG4eMvt7W14tU7i2L27u7twNY6jy7BUmbDDylf8AGmLt0SXTEkce\/HBOi3llmFJ36k4EAfiQByIA3HAj44jet4p\/b44FYfXVJ1OgmVZ9vv374ONz8\/PKWOn02l4riJxbOnhVSYsjtO8vCk3tuLt48sNrzJhhxXEgTgQB+Lgx6vTp5XBYNButw82rtfr+XxebuxyuVwsFim7Hg6H4c1ZiqL4\/KsrFXcqjhPsH+joPXUSw4puT3ye+v1+dPvncXw04brE4bCCOBAH4kAciANxUDN1Os8RXfYkcS2U+XwePR+VuOuiKKInwUpM2M14Tmbxlv+zeAvecyAOxIE4QByIA3EgDsSBOBAH4kAciANxQMTVj\/ppo99qTLfdbvM8r\/V6LOKIGwwGH32rMV2z2Xx8fHRY+W7Ca0hLCO+CIA68IQVxIA7EgTgQB+JAHIgDcSAOEAfiQByIA3EgDsSBOBAH4kAcIA7EgTgQB+Lg7PwjwACr6NgnkBwNeAAAAABJRU5ErkJggg==",
+        "avatar_512": "iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAABERJREFUeNrs3WFLIlsAgOE2cxNFEEEQSYSo\/\/9v+hiIMAwIgyKJFOmVuHQvnlMeZ9rFqef5OOzZOembo9N45tdut7uAmEsPAeJAHIgDcSAOxIE4EAfiQBwgDsSBOBAH4kAciANxIA7EAeJAHIiDP+DqTOax2Wxms9nLy4unpNVqjcfjZrPpleNf8\/lcGe+\/J\/tHw2HlP6vVShbvzuT3xHsOxIE4EAfiQByIA3EgDsSBOEAcpLuq0VyHw2G\/3z\/YOH9zdOx4PO52uwcb8zwviiJl15PJpNPpHGzMsmyxWHwyajQa9Xq9chP2ynGa6+vrcGO73U4ZG5bx0caosIy9o5dcRP9B4oTFgTgQB+JAHIjDQ4A4OFmdToIVRbFerw82bjablLFZloVnHcL\/7SN5njcajVOHL5fL0hMWx2lWb8qN\/fxUZkqXf3+nDiuIA3EgDsSBj7J10e12W61W+BEm5cNhlbGlh1fcqThO0O\/3w+sq2u32dDo9OnY0GoUnKhLHXrxdKxTd\/vnTXGXCDit\/T1gG4kAciANxIA7EgTj+uO12m7gxFD0hkb5o3+vra+LGr5rwOfi12+3OYR4PDw9+U991Op3JZOKVA4cVxIE4EAfigKg6Xc8RXYBltVrNZrOjY6OrrxRFked5yq7v7+\/Dr70cXfslOuHFYpFlmVeOr57r5WXixuiZg3BjdDWYqOgyLEevEYnO7RzusuOwgjgQB+JAHIgDcdTA0WsvCP2gxVuiXz5L3PVsNisxPDrhGt0k1cU+58jFPnjPgTgQB+KAb7B4y\/6jbMqHw16vF12H9OnpKWXX5YZXmbA4ThNdC2X\/9KQ81qPRKNz49CZl1+WGV5mwwwriQByIA3EgDg8B4uBbxxFdayXxhjrRUwvpN+OJns84erqiyoTPges5zpHrOXBYQRyIA3FAvf5k32g0opdHpHwnJTo28e\/1pYdXmbA4TnNzcxNeHpG4eMvt7W14tU7i2L27u7twNY6jy7BUmbDDylf8AGmLt0SXTEkce\/HBOi3llmFJ36k4EAfiQByIA3HAj44jet4p\/b44FYfXVJ1OgmVZ9vv374ONz8\/PKWOn02l4riJxbOnhVSYsjtO8vCk3tuLt48sNrzJhhxXEgTgQB+Lgx6vTp5XBYNButw82rtfr+XxebuxyuVwsFim7Hg6H4c1ZiqL4\/KsrFXcqjhPsH+joPXUSw4puT3ye+v1+dPvncXw04brE4bCCOBAH4kAciANxUDN1Os8RXfYkcS2U+XwePR+VuOuiKKInwUpM2M14Tmbxlv+zeAvecyAOxIE4QByIA3EgDsSBOBAH4kAciANxQMTVj\/ppo99qTLfdbvM8r\/V6LOKIGwwGH32rMV2z2Xx8fHRY+W7Ca0hLCO+CIA68IQVxIA7EgTgQB+JAHIgDcSAOEAfiQByIA3EgDsSBOBAH4kAcIA7EgTgQB+Lg7PwjwACr6NgnkBwNeAAAAABJRU5ErkJggg==",
+        "avatar_256": "iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAABERJREFUeNrs3WFLIlsAgOE2cxNFEEEQSYSo\/\/9v+hiIMAwIgyKJFOmVuHQvnlMeZ9rFqef5OOzZOembo9N45tdut7uAmEsPAeJAHIgDcSAOxIE4EAfiQBwgDsSBOBAH4kAciANxIA7EAeJAHIiDP+DqTOax2Wxms9nLy4unpNVqjcfjZrPpleNf8\/lcGe+\/J\/tHw2HlP6vVShbvzuT3xHsOxIE4EAfiQByIA3EgDsSBOEAcpLuq0VyHw2G\/3z\/YOH9zdOx4PO52uwcb8zwviiJl15PJpNPpHGzMsmyxWHwyajQa9Xq9chP2ynGa6+vrcGO73U4ZG5bx0caosIy9o5dcRP9B4oTFgTgQB+JAHIjDQ4A4OFmdToIVRbFerw82bjablLFZloVnHcL\/7SN5njcajVOHL5fL0hMWx2lWb8qN\/fxUZkqXf3+nDiuIA3EgDsSBj7J10e12W61W+BEm5cNhlbGlh1fcqThO0O\/3w+sq2u32dDo9OnY0GoUnKhLHXrxdKxTd\/vnTXGXCDit\/T1gG4kAciANxIA7EgTj+uO12m7gxFD0hkb5o3+vra+LGr5rwOfi12+3OYR4PDw9+U991Op3JZOKVA4cVxIE4EAfigKg6Xc8RXYBltVrNZrOjY6OrrxRFked5yq7v7+\/Dr70cXfslOuHFYpFlmVeOr57r5WXixuiZg3BjdDWYqOgyLEevEYnO7RzusuOwgjgQB+JAHIgDcdTA0WsvCP2gxVuiXz5L3PVsNisxPDrhGt0k1cU+58jFPnjPgTgQB+KAb7B4y\/6jbMqHw16vF12H9OnpKWXX5YZXmbA4ThNdC2X\/9KQ81qPRKNz49CZl1+WGV5mwwwriQByIA3EgDg8B4uBbxxFdayXxhjrRUwvpN+OJns84erqiyoTPges5zpHrOXBYQRyIA3FAvf5k32g0opdHpHwnJTo28e\/1pYdXmbA4TnNzcxNeHpG4eMvt7W14tU7i2L27u7twNY6jy7BUmbDDylf8AGmLt0SXTEkce\/HBOi3llmFJ36k4EAfiQByIA3HAj44jet4p\/b44FYfXVJ1OgmVZ9vv374ONz8\/PKWOn02l4riJxbOnhVSYsjtO8vCk3tuLt48sNrzJhhxXEgTgQB+Lgx6vTp5XBYNButw82rtfr+XxebuxyuVwsFim7Hg6H4c1ZiqL4\/KsrFXcqjhPsH+joPXUSw4puT3ye+v1+dPvncXw04brE4bCCOBAH4kAciANxUDN1Os8RXfYkcS2U+XwePR+VuOuiKKInwUpM2M14Tmbxlv+zeAvecyAOxIE4QByIA3EgDsSBOBAH4kAciANxQMTVj\/ppo99qTLfdbvM8r\/V6LOKIGwwGH32rMV2z2Xx8fHRY+W7Ca0hLCO+CIA68IQVxIA7EgTgQB+JAHIgDcSAOEAfiQByIA3EgDsSBOBAH4kAcIA7EgTgQB+Lg7PwjwACr6NgnkBwNeAAAAABJRU5ErkJggg==",
+        "avatar_128": "iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAABERJREFUeNrs3WFLIlsAgOE2cxNFEEEQSYSo\/\/9v+hiIMAwIgyKJFOmVuHQvnlMeZ9rFqef5OOzZOembo9N45tdut7uAmEsPAeJAHIgDcSAOxIE4EAfiQBwgDsSBOBAH4kAciANxIA7EAeJAHIiDP+DqTOax2Wxms9nLy4unpNVqjcfjZrPpleNf8\/lcGe+\/J\/tHw2HlP6vVShbvzuT3xHsOxIE4EAfiQByIA3EgDsSBOEAcpLuq0VyHw2G\/3z\/YOH9zdOx4PO52uwcb8zwviiJl15PJpNPpHGzMsmyxWHwyajQa9Xq9chP2ynGa6+vrcGO73U4ZG5bx0caosIy9o5dcRP9B4oTFgTgQB+JAHIjDQ4A4OFmdToIVRbFerw82bjablLFZloVnHcL\/7SN5njcajVOHL5fL0hMWx2lWb8qN\/fxUZkqXf3+nDiuIA3EgDsSBj7J10e12W61W+BEm5cNhlbGlh1fcqThO0O\/3w+sq2u32dDo9OnY0GoUnKhLHXrxdKxTd\/vnTXGXCDit\/T1gG4kAciANxIA7EgTj+uO12m7gxFD0hkb5o3+vra+LGr5rwOfi12+3OYR4PDw9+U991Op3JZOKVA4cVxIE4EAfigKg6Xc8RXYBltVrNZrOjY6OrrxRFked5yq7v7+\/Dr70cXfslOuHFYpFlmVeOr57r5WXixuiZg3BjdDWYqOgyLEevEYnO7RzusuOwgjgQB+JAHIgDcdTA0WsvCP2gxVuiXz5L3PVsNisxPDrhGt0k1cU+58jFPnjPgTgQB+KAb7B4y\/6jbMqHw16vF12H9OnpKWXX5YZXmbA4ThNdC2X\/9KQ81qPRKNz49CZl1+WGV5mwwwriQByIA3EgDg8B4uBbxxFdayXxhjrRUwvpN+OJns84erqiyoTPges5zpHrOXBYQRyIA3FAvf5k32g0opdHpHwnJTo28e\/1pYdXmbA4TnNzcxNeHpG4eMvt7W14tU7i2L27u7twNY6jy7BUmbDDylf8AGmLt0SXTEkce\/HBOi3llmFJ36k4EAfiQByIA3HAj44jet4p\/b44FYfXVJ1OgmVZ9vv374ONz8\/PKWOn02l4riJxbOnhVSYsjtO8vCk3tuLt48sNrzJhhxXEgTgQB+Lgx6vTp5XBYNButw82rtfr+XxebuxyuVwsFim7Hg6H4c1ZiqL4\/KsrFXcqjhPsH+joPXUSw4puT3ye+v1+dPvncXw04brE4bCCOBAH4kAciANxUDN1Os8RXfYkcS2U+XwePR+VuOuiKKInwUpM2M14Tmbxlv+zeAvecyAOxIE4QByIA3EgDsSBOBAH4kAciANxQMTVj\/ppo99qTLfdbvM8r\/V6LOKIGwwGH32rMV2z2Xx8fHRY+W7Ca0hLCO+CIA68IQVxIA7EgTgQB+JAHIgDcSAOEAfiQByIA3EgDsSBOBAH4kAcIA7EgTgQB+Lg7PwjwACr6NgnkBwNeAAAAABJRU5ErkJggg==",
+        "name": "PT. AZBIL BERCA INDONESIA",
+        "complete_name": "PT. AZBIL BERCA INDONESIA",
+        "date": false,
+        "title": false,
+        "parent_id": false,
+        "parent_name": false,
+        "child_ids": [
+            9697,
+            9696
+        ],
+        "ref": "AZBILBERCA",
+        "lang": "en_US",
+        "active_lang_count": 1,
+        "tz": "Asia\/Jakarta",
+        "tz_offset": "+0700",
+        "user_id": [
+            330,
+            "Fuji"
+        ],
+        "vat": "0018245589059000",
+        "same_vat_partner_id": false,
+        "same_company_registry_partner_id": false,
+        "company_registry": false,
+        "bank_ids": [],
+        "website": false,
+        "comment": false,
+        "category_id": [],
+        "active": true,
+        "employee": false,
+        "function": false,
+        "type": "contact",
+        "street": "JL CIKINI RAYA GEDUNG CCM LT 5, 95, CIKINI",
+        "street2": "MENTENG, KOTA ADM. JAKARTA PUSAT",
+        "zip": "10330",
+        "city": "DKI JAKARTA",
+        "state_id": false,
+        "country_id": [
+            100,
+            "Indonesia"
+        ],
+        "country_code": "ID",
+        "partner_latitude": 0,
+        "partner_longitude": 0,
+        "email": "b.eka.jy@id.azbil.com",
+        "email_formatted": "\"PT. AZBIL BERCA INDONESIA\" <b.eka.jy@id.azbil.com>",
+        "phone": "+62 21 2305538",
+        "mobile": "+62 822-6132-3335",
+        "is_company": true,
+        "is_public": false,
+        "industry_id": false,
+        "company_type": "company",
+        "company_id": false,
+        "color": 0,
+        "user_ids": [],
+        "partner_share": true,
+        "contact_address": "PT. AZBIL BERCA INDONESIA\nJL CIKINI RAYA GEDUNG CCM LT 5, 95, CIKINI\nMENTENG, KOTA ADM. JAKARTA PUSAT\nDKI JAKARTA  10330\nIndonesia",
+        "commercial_partner_id": [
+            9695,
+            "[AZBILBERCA] PT. AZBIL BERCA INDONESIA"
+        ],
+        "commercial_company_name": "PT. AZBIL BERCA INDONESIA",
+        "company_name": false,
+        "barcode": false,
+        "self": [
+            9695,
+            "[AZBILBERCA] PT. AZBIL BERCA INDONESIA"
+        ],
+        "display_name": "[AZBILBERCA] PT. AZBIL BERCA INDONESIA",
+        "create_uid": [
+            341,
+            "SA Officer"
+        ],
+        "create_date": "2025-07-14 03:19:12",
+        "write_uid": [
+            328,
+            "IT-Team"
+        ],
+        "write_date": "2026-05-15 09:23:18",
+        "im_status": "im_partner",
+        "channel_ids": [],
+        "contact_address_inline": "PT. AZBIL BERCA INDONESIA, JL CIKINI RAYA GEDUNG CCM LT 5, 95, CIKINI, MENTENG, KOTA ADM. JAKARTA PUSAT, DKI JAKARTA  10330, Indonesia",
+        "starred_message_ids": [],
+        "contact_address_complete": "JL CIKINI RAYA GEDUNG CCM LT 5, 95, CIKINI, 10330 DKI JAKARTA, Indonesia",
+        "signup_token": false,
+        "signup_type": false,
+        "signup_expiration": false,
+        "signup_valid": false,
+        "signup_url": false,
+        "meeting_count": 0,
+        "meeting_ids": [],
+        "calendar_last_notif_ack": "2025-07-14 03:19:12",
+        "property_product_pricelist": [
+            1,
+            "Default IDR pricelist (IDR)"
+        ],
+        "team_id": false,
+        "image_medium": "iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyr5FlAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAABERJREFUeNrs3WFLIlsAgOE2cxNFEEEQSYSo\/\/9v+hiIMAwIgyKJFOmVuHQvnlMeZ9rFqef5OOzZOembo9N45tdut7uAmEsPAeJAHIgDcSAOxIE4EAfiQBwgDsSBOBAH4kAciANxIA7EAeJAHIiDP+DqTOax2Wxms9nLy4unpNVqjcfjZrPpleNf8\/lcGe+\/J\/tHw2HlP6vVShbvzuT3xHsOxIE4EAfiQByIA3EgDsSBOEAcpLuq0VyHw2G\/3z\/YOH9zdOx4PO52uwcb8zwviiJl15PJpNPpHGzMsmyxWHwyajQa9Xq9chP2ynGa6+vrcGO73U4ZG5bx0caosIy9o5dcRP9B4oTFgTgQB+JAHIjDQ4A4OFmdToIVRbFerw82bjablLFZloVnHcL\/7SN5njcajVOHL5fL0hMWx2lWb8qN\/fxUZkqXf3+nDiuIA3EgDsSBj7J10e12W61W+BEm5cNhlbGlh1fcqThO0O\/3w+sq2u32dDo9OnY0GoUnKhLHXrxdKxTd\/vnTXGXCDit\/T1gG4kAciANxIA7EgTj+uO12m7gxFD0hkb5o3+vra+LGr5rwOfi12+3OYR4PDw9+U991Op3JZOKVA4cVxIE4EAfigKg6Xc8RXYBltVrNZrOjY6OrrxRFked5yq7v7+\/Dr70cXfslOuHFYpFlmVeOr57r5WXixuiZg3BjdDWYqOgyLEevEYnO7RzusuOwgjgQB+JAHIgDcdTA0WsvCP2gxVuiXz5L3PVsNisxPDrhGt0k1cU+58jFPnjPgTgQB+KAb7B4y\/6jbMqHw16vF12H9OnpKWXX5YZXmbA4ThNdC2X\/9KQ81qPRKNz49CZl1+WGV5mwwwriQByIA3EgDg8B4uBbxxFdayXxhjrRUwvpN+OJns84erqiyoTPges5zpHrOXBYQRyIA3FAvf5k32g0opdHpHwnJTo28e\/1pYdXmbA4TnNzcxNeHpG4eMvt7W14tU7i2L27u7twNY6jy7BUmbDDylf8AGmLt0SXTEkce\/HBOi3llmFJ36k4EAfiQByIA3HAj44jet4p\/b44FYfXVJ1OgmVZ9vv374ONz8\/PKWOn02l4riJxbOnhVSYsjtO8vCk3tuLt48sNrzJhhxXEgTgQB+Lgx6vTp5XBYNButw82rtfr+XxebuxyuVwsFim7Hg6H4c1ZiqL4\/KsrFXcqjhPsH+joPXUSw4puT3ye+v1+dPvncXw04brE4bCCOBAH4kAciANxUDN1Os8RXfYkcS2U+XwePR+VuOuiKKInwUpM2M14Tmbxlv+zeAvecyAOxIE4QByIA3EgDsSBOBAH4kAciANxQMTVj\/ppo99qTLfdbvM8r\/V6LOKIGwwGH32rMV2z2Xx8fHRY+W7Ca0hLCO+CIA68IQVxIA7EgTgQB+JAHIgDcSAOEAfiQByIA3EgDsSBOBAH4kAcIA7EgTgQB+Lg7PwjwACr6NgnkBwNeAAAAABJRU5ErkJggg==",
+        "employee_ids": [],
+        "employees_count": 0,
+        "partner_gid": 0,
+        "additional_info": false,
+        "phone_sanitized": "+6282261323335",
+        "phone_sanitized_blacklisted": false,
+        "phone_blacklisted": false,
+        "mobile_blacklisted": false,
+        "phone_mobile_search": false,
+        "ocn_token": false,
+        "payment_token_ids": [],
+        "payment_token_count": 0,
+        "fiscal_country_codes": "ID",
+        "credit": 159507000,
+        "credit_to_invoice": 3092179500,
+        "credit_limit": 0,
+        "use_partner_credit_limit": false,
+        "show_credit_limit": false,
+        "days_sales_outstanding": 125.59711507048979,
+        "debit": 0,
+        "debit_limit": 0,
+        "total_invoiced": 376450000,
+        "currency_id": [
+            12,
+            "IDR"
+        ],
+        "journal_item_count": 252,
+        "property_account_payable_id": [
+            2126,
+            "211004 Hutang Purchasing"
+        ],
+        "property_account_receivable_id": [
+            1896,
+            "114000 Piutang Sewa"
+        ],
+        "property_account_position_id": false,
+        "property_payment_term_id": [
+            4,
+            "30 Days"
+        ],
+        "property_supplier_payment_term_id": false,
+        "ref_company_ids": [],
+        "has_unreconciled_entries": false,
+        "last_time_entries_checked": false,
+        "invoice_ids": [
+            725112,
+            724776,
+            722769,
+            722728,
+            722727,
+            729270,
+            726054,
+            721130,
+            714073,
+            714062,
+            714061,
+            719777,
+            703395,
+            703350,
+            702466,
+            702465,
+            703264,
+            709886,
+            710691,
+            693920,
+            693918,
+            693917,
+            699663,
+            686407,
+            686337,
+            685269,
+            684451,
+            684450,
+            691164,
+            679057,
+            644354,
+            644356,
+            664902,
+            658905,
+            644630,
+            644355,
+            644353,
+            631105,
+            620890,
+            617989,
+            598123,
+            593868,
+            593268,
+            575905,
+            585330,
+            571564,
+            570368,
+            566132,
+            544950,
+            543787,
+            520335,
+            511896,
+            510220,
+            497981,
+            481061,
+            481058
+        ],
+        "contract_ids": [],
+        "bank_account_count": 0,
+        "trust": "normal",
+        "invoice_warn": "no-message",
+        "invoice_warn_msg": false,
+        "supplier_rank": 0,
+        "customer_rank": 62,
+        "duplicated_bank_account_partners_count": 0,
+        "opportunity_ids": [],
+        "opportunity_count": 0,
+        "property_stock_customer": [
+            5,
+            "Partners\/Customers"
+        ],
+        "property_stock_supplier": [
+            4,
+            "Partners\/Vendors"
+        ],
+        "picking_warn": "no-message",
+        "picking_warn_msg": false,
+        "ubl_cii_format": false,
+        "peppol_endpoint": false,
+        "peppol_eas": false,
+        "partner_bank_id": [
+            248,
+            "0123011471 - BCA Cab. Gajah Mada - BCA"
+        ],
+        "vies_valid": false,
+        "perform_vies_validation": false,
+        "vies_vat_to_check": "",
+        "property_purchase_currency_id": false,
+        "purchase_order_count": 0,
+        "supplier_invoice_count": 0,
+        "purchase_warn": "no-message",
+        "purchase_warn_msg": false,
+        "receipt_reminder_email": false,
+        "reminder_date_before_receipt": 1,
+        "buyer_id": false,
+        "online_partner_information": false,
+        "account_represented_company_ids": [],
+        "vendor_type": false,
+        "purchase_line_ids": [],
+        "on_time_rate": -1,
+        "sale_order_count": 14,
+        "sale_order_ids": [
+            23485,
+            23484,
+            23482,
+            23483,
+            23481,
+            23198,
+            22854,
+            22670,
+            22668,
+            22548,
+            22272,
+            22035,
+            21151,
+            21150
+        ],
+        "sale_warn": "no-message",
+        "sale_warn_msg": false,
+        "followup_next_action_date": false,
+        "unreconciled_aml_ids": [
+            1594608,
+            1594611,
+            1594617,
+            1621149,
+            1621152,
+            1623759,
+            1624271,
+            1624417,
+            1646164,
+            1654872,
+            1654875,
+            1655223,
+            1674994,
+            1681574,
+            1681577,
+            1681701,
+            1687286,
+            1688510,
+            1691657,
+            1700338
+        ],
+        "unpaid_invoice_ids": [
+            725112,
+            724776,
+            722769,
+            722728,
+            722727,
+            729270,
+            726054,
+            721130,
+            714073,
+            714062,
+            714061,
+            703395,
+            703350,
+            702466,
+            702465,
+            703264,
+            710691,
+            693920,
+            693918,
+            693917
+        ],
+        "unpaid_invoices_count": 20,
+        "total_due": 159507000,
+        "total_overdue": 54612000,
+        "followup_status": "with_overdue_invoices",
+        "followup_line_id": [
+            1,
+            "15 Days"
+        ],
+        "followup_reminder_type": "automatic",
+        "followup_responsible_id": false,
+        "l10n_id_pkp": true,
+        "l10n_id_nik": false,
+        "l10n_id_tax_address": "JL. CIKINI RAYA GEDUNG CCM LT 5,95,CIKINI\nMENTENG, KOTA ADM.JAKARTA PUSAT, DKI JAKARTA 10330     ",
+        "l10n_id_tax_name": "PT. AZBIL BERCA INDONESIA",
+        "l10n_id_kode_transaksi": "04",
+        "l10n_id_tku": "000000",
+        "l10n_id_buyer_document_type": "TIN",
+        "l10n_id_buyer_document_number": false,
+        "tku_number": "0018245589059000000000",
+        "repair_location_id": [
+            9081,
+            "Partners\/Vendors\/Service"
+        ],
+        "department_selection": false,
+        "area_ids": [
+            1
+        ],
+        "hrc_forminv_invoice_pic": [
+            253,
+            "Devi"
+        ],
+        "domain_invoice_pic_ids": [
+            253,
+            251,
+            163,
+            162,
+            252,
+            254,
+            164
+        ],
+        "is_car": false,
+        "is_sparepart": false,
+        "is_accessories": false,
+        "is_public_vendor": false,
+        "is_branch_manager": false,
+        "x_studio_payment_term": [
+            4,
+            "30 Days"
+        ],
+        "x_studio_sales_team": false
+    }
+}

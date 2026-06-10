@@ -1403,4 +1403,282 @@ class OdooService
             }
         }
     }
+
+    /**
+     * Step 1: Get all SO IDs that have uninvoiced periods using read_group for maximum efficiency
+     */
+    public function getUninvoicedSoIds($dateFrom = null, $dateTo = null): array
+    {
+        $domainEmpty = [['invoice_id', '=', false]];
+        $domainDraft = [['invoice_id.state', '=', 'draft']];
+        
+        if ($dateFrom) {
+            $domainEmpty[] = ['invoice_date', '>=', $dateFrom];
+            $domainDraft[] = ['invoice_date', '>=', $dateFrom];
+        }
+        if ($dateTo) {
+            $domainEmpty[] = ['invoice_date', '<=', $dateTo];
+            $domainDraft[] = ['invoice_date', '<=', $dateTo];
+        }
+
+        try {
+            $resEmpty = $this->execute('rental.period.invoice', 'read_group', [
+                $domainEmpty,
+                ['rental_order_id', 'invoice_date:min'],
+                ['rental_order_id']
+            ]);
+            $resDraft = $this->execute('rental.period.invoice', 'read_group', [
+                $domainDraft,
+                ['rental_order_id', 'invoice_date:min'],
+                ['rental_order_id']
+            ]);
+            
+            $soIds = [];
+            foreach (array_merge($resEmpty, $resDraft) as $group) {
+                if (!empty($group['rental_order_id'][0])) {
+                    $soIds[] = $group['rental_order_id'][0];
+                }
+            }
+            
+            return array_values(array_unique($soIds));
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Step 2: Fetch full Uninvoiced Rental data for a specific chunk of SO IDs
+     */
+    public function fetchUninvoicedRentalsBySoIds(array $soIds): array
+    {
+        $domainEmpty = [
+            ['invoice_id', '=', false],
+            ['rental_order_id', 'in', $soIds]
+        ];
+        
+        $domainDraft = [
+            ['invoice_id.state', '=', 'draft'],
+            ['rental_order_id', 'in', $soIds]
+        ];
+
+        // Fetch periods
+        $periodIdsEmpty = $this->execute('rental.period.invoice', 'search', [$domainEmpty]);
+        $periodIdsDraft = $this->execute('rental.period.invoice', 'search', [$domainDraft]);
+        
+        $periodIds = array_values(array_unique(array_merge($periodIdsEmpty, $periodIdsDraft)));
+        if (empty($periodIds)) {
+            return [];
+        }
+
+        $fields = [
+            'rental_order_id',
+            'invoice_date',
+            'price_unit',
+            'rental_uom',
+            'lot_id',
+            'product_id',
+        ];
+        
+        $periods = $this->execute('rental.period.invoice', 'read', [$periodIds, $fields]);
+        
+        // Group by rental_order_id and find the earliest invoice_date
+        $grouped = [];
+        foreach ($periods as $period) {
+            $soId = $period['rental_order_id'][0] ?? null;
+            if (!$soId) continue;
+            
+            if (!isset($grouped[$soId]) || $period['invoice_date'] < $grouped[$soId]['invoice_date']) {
+                $grouped[$soId] = $period;
+            }
+        }
+        
+        $earliestPeriods = array_values($grouped);
+        $soIdsToFetch = array_keys($grouped);
+        
+        // Fetch SO Data
+        $soFields = [
+            'name',
+            'client_order_ref',
+            'rental_contract_id',
+            'customer_name',
+            'actual_start_rental',
+            'actual_end_rental',
+            'payment_term_id',
+            'area_id',
+            'partner_invoice_id',
+            'first_invoice_date',
+            'rental_method',
+            'partner_id',
+            'sale_invoice_period_id',
+            'order_line',
+        ];
+        
+        $soData = $this->execute('sale.order', 'read', [$soIdsToFetch, $soFields]);
+        $soMap = [];
+        $partnerIdsToFetch = [];
+        foreach ($soData as $so) {
+            $soMap[$so['id']] = $so;
+            if (!empty($so['partner_id'][0])) {
+                $partnerIdsToFetch[] = $so['partner_id'][0];
+            }
+        }
+        
+        $productIdsToFetch = [];
+        foreach ($earliestPeriods as $period) {
+            if (!empty($period['product_id'][0])) {
+                $productIdsToFetch[] = $period['product_id'][0];
+            }
+        }
+        
+        $partnerIdsToFetch = array_values(array_unique($partnerIdsToFetch));
+        $productIdsToFetch = array_values(array_unique($productIdsToFetch));
+        
+        // Fetch Partner Data
+        $partnerFields = [
+            'partner_bank_id',
+            'vat',
+            'l10n_id_tku',
+            'tku_number',
+            'l10n_id_kode_transaksi',
+            'contact_address',
+            'contact_address_complete',
+            'l10n_id_tax_address',
+            'ref',
+            'hrc_forminv_invoice_pic'
+        ];
+        $partnerData = [];
+        if (!empty($partnerIdsToFetch)) {
+            $partnerData = $this->execute('res.partner', 'read', [$partnerIdsToFetch, $partnerFields]);
+        }
+        $partnerMap = [];
+        foreach ($partnerData as $p) {
+            $partnerMap[$p['id']] = $p;
+        }
+        
+        // Fetch Lot Data
+        $lotIdsToFetch = [];
+        foreach ($earliestPeriods as $period) {
+            if (!empty($period['lot_id'][0])) {
+                $lotIdsToFetch[] = $period['lot_id'][0];
+            }
+        }
+        $lotIdsToFetch = array_values(array_unique($lotIdsToFetch));
+        
+        $lotFields = [
+            'name',
+            'ref',
+            'vehicle_year'
+        ];
+        $lotData = [];
+        if (!empty($lotIdsToFetch)) {
+            $lotData = $this->execute('stock.lot', 'read', [$lotIdsToFetch, $lotFields]);
+        }
+        $lotMap = [];
+        foreach ($lotData as $lot) {
+            $lotMap[$lot['id']] = $lot;
+        }
+        
+        // Fetch Product Data (if product_id is needed for Model)
+        // No longer needed, we map directly from $period['product_id'][1]
+        
+        // Fetch Contract Data
+        $contractIdsToFetch = [];
+        foreach ($soData as $so) {
+            if (!empty($so['rental_contract_id'][0])) {
+                $contractIdsToFetch[] = $so['rental_contract_id'][0];
+            }
+        }
+        $contractIdsToFetch = array_values(array_unique($contractIdsToFetch));
+        
+        $contractFields = ['reference'];
+        $contractData = [];
+        if (!empty($contractIdsToFetch)) {
+            $contractData = $this->execute('rental.contract', 'read', [$contractIdsToFetch, $contractFields]);
+        }
+        $contractMap = [];
+        foreach ($contractData as $c) {
+            $contractMap[$c['id']] = $c;
+        }
+        
+        // Fetch Order Line Data for Duration Price
+        $orderLineIdsToFetch = [];
+        foreach ($soData as $so) {
+            if (!empty($so['order_line'])) {
+                $orderLineIdsToFetch = array_merge($orderLineIdsToFetch, $so['order_line']);
+            }
+        }
+        $orderLineIdsToFetch = array_values(array_unique($orderLineIdsToFetch));
+        
+        $lineData = [];
+        if (!empty($orderLineIdsToFetch)) {
+            $lineData = $this->execute('sale.order.line', 'read', [$orderLineIdsToFetch, ['product_id', 'duration_price', 'order_id']]);
+        }
+        $durationPriceMap = [];
+        foreach ($lineData as $line) {
+            $soId = $line['order_id'][0] ?? null;
+            $productId = $line['product_id'][0] ?? null;
+            if ($soId && $productId) {
+                if (!isset($durationPriceMap[$soId])) {
+                    $durationPriceMap[$soId] = [];
+                }
+                $durationPriceMap[$soId][$productId] = $line['duration_price'] ?? 0;
+            }
+        }
+        
+        // Assemble final output
+        $results = [];
+        foreach ($earliestPeriods as $period) {
+            $soId = $period['rental_order_id'][0] ?? null;
+            $so = $soMap[$soId] ?? [];
+            
+            $partnerId = $so['partner_id'][0] ?? null;
+            $partner = $partnerMap[$partnerId] ?? [];
+            
+            $lotId = $period['lot_id'][0] ?? null;
+            $lot = $lotMap[$lotId] ?? [];
+            
+            // Extract Kode Cust (Now displaying full customer name)
+            $kodeCust = $so['partner_id'][1] ?? '';
+            
+            $results[] = [
+                'kode_cust' => $kodeCust === false ? '' : $kodeCust,
+                'nomor_so' => ($so['name'] ?? '') === false ? '' : ($so['name'] ?? ''),
+                'nomor_po' => ($so['client_order_ref'] ?? '') === false ? '' : ($so['client_order_ref'] ?? ''),
+                'nomor_kontrak' => ($so['rental_contract_id'][1] ?? '') === false ? '' : ($so['rental_contract_id'][1] ?? ''),
+                'kontrak_ref' => ($contractMap[$so['rental_contract_id'][0] ?? null]['reference'] ?? '') === false ? '' : ($contractMap[$so['rental_contract_id'][0] ?? null]['reference'] ?? ''),
+                'nama_user' => ($so['customer_name'] ?? '') === false ? '' : ($so['customer_name'] ?? ''),
+                
+                'nopol' => ($lot['name'] ?? '') === false ? '' : ($lot['name'] ?? ''),
+                'model' => (function($str) {
+                    if ($str === false) return '';
+                    if (preg_match('/\[(.*?)\]/', $str, $matches)) {
+                        return str_replace('-', '', $matches[1]);
+                    }
+                    return str_replace('-', '', $str);
+                })($period['product_id'][1] ?? ''),
+                'tahun_mobil' => ($lot['vehicle_year'] ?? '') === false ? '' : ($lot['vehicle_year'] ?? ''),
+                'chassis' => ($lot['ref'] ?? '') === false ? '' : ($lot['ref'] ?? ''),
+                
+                'start' => !empty($so['actual_start_rental']) ? \Carbon\Carbon::parse($so['actual_start_rental'], 'UTC')->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s') : '',
+                'end' => !empty($so['actual_end_rental']) ? \Carbon\Carbon::parse($so['actual_end_rental'], 'UTC')->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s') : '',
+                'tanggal_periode_belum_cetak' => ($period['invoice_date'] ?? '') === false ? '' : ($period['invoice_date'] ?? ''),
+                'price_di_so' => $durationPriceMap[$soId][$period['product_id'][0] ?? null] ?? $period['price_unit'] ?? 0,
+                'invoice_period' => ($so['sale_invoice_period_id'][1] ?? '') === false ? '' : ($so['sale_invoice_period_id'][1] ?? ''),
+                'payment_terms' => ($so['payment_term_id'][1] ?? '') === false ? '' : ($so['payment_term_id'][1] ?? ''),
+                'rental_method' => ($so['rental_method'] ?? '') === false ? '' : ucwords(str_replace('_', ' ', $so['rental_method'] ?? '')),
+                'first_invoice_date' => ($so['first_invoice_date'] ?? '') === false ? '' : ($so['first_invoice_date'] ?? ''),
+                
+                'area_pemakaian_unit' => ($so['area_id'][1] ?? '') === false ? '' : ($so['area_id'][1] ?? ''),
+                'invoice_pic' => ($partner['hrc_forminv_invoice_pic'][1] ?? '') === false ? '' : ($partner['hrc_forminv_invoice_pic'][1] ?? ''),
+                'recipient_bank' => ($partner['partner_bank_id'][1] ?? '') === false ? '' : ($partner['partner_bank_id'][1] ?? ''),
+                'tax_id' => ($partner['vat'] ?? '') === false ? '' : ($partner['vat'] ?? ''),
+                'id_tku' => ($partner['tku_number'] ?? '') === false ? '' : ($partner['tku_number'] ?? ''),
+                'kode_transaksi' => ($partner['l10n_id_kode_transaksi'] ?? '') === false ? '' : ($partner['l10n_id_kode_transaksi'] ?? ''),
+                'address' => ($partner['contact_address'] ?? '') === false ? '' : ($partner['contact_address'] ?? ''),
+                'tax_address' => ($partner['l10n_id_tax_address'] ?? '') === false ? '' : ($partner['l10n_id_tax_address'] ?? ''),
+            ];
+        }
+        
+        return $results;
+    }
 }

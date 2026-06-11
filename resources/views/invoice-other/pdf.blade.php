@@ -278,10 +278,7 @@
             !$noteLines->contains('id', $l->id) &&
             !$discountLines->contains('id', $l->id) && (
                 str_contains(strtolower($l->description), 'pembulatan') || 
-                str_contains(strtolower($l->description), 'rounding') ||
-                str_contains(strtolower($l->description), '(inv)') ||
-                str_contains(strtolower($l->description), 'driver') ||
-                str_contains(strtolower($l->description), 'lain-lain')
+                str_contains(strtolower($l->description), 'rounding')
             )
         );
         

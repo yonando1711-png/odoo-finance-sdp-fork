@@ -458,11 +458,19 @@
                         } else {
                             // Detail Mode
                             foreach($regularLines as $l) {
-                                $l->amount = $l->quantity * $l->price_unit;
+                                // INVDV Override: Set line amount to exactly the unit price, ignoring quantity
+                                $l->amount = $l->price_unit;
                                 $l->is_summary = false;
                                 $displayLines->push($l);
                             }
                         }
+
+                        // Calculate custom totals based on the new line amounts
+                        $customUntaxed = $displayLines->sum('amount');
+                        // Derive original tax rate to calculate new PPN accurately
+                        $taxRate = $invoice->amount_untaxed > 0 ? ($invoice->amount_tax / $invoice->amount_untaxed) : 0;
+                        $customTax = $customUntaxed * $taxRate;
+                        $customTotal = $customUntaxed + $customTax;
                     @endphp
                     @foreach($displayLines as $idx => $line)
                         <tr>
@@ -549,7 +557,7 @@
                                 <tr>
                                     <td style="text-align: right; font-weight: bold;">Jumlah</td>
                                     <td style="text-align: right; width: 140px;">
-                                        {{ number_format($invoice->amount_untaxed, 0, ',', '.') }}
+                                        {{ number_format($customUntaxed, 0, ',', '.') }}
                                     </td>
                                 </tr>
                                 <tr>
@@ -557,7 +565,7 @@
                                 </tr>
                                 <tr>
                                     <td style="text-align: right;">PPN</td>
-                                    <td style="text-align: right;">{{ number_format($invoice->amount_tax, 0, ',', '.') }}
+                                    <td style="text-align: right;">{{ number_format($customTax, 0, ',', '.') }}
                                     </td>
                                 </tr>
                                 <tr>
@@ -565,7 +573,7 @@
                                 </tr>
                                 <tr class="total-row">
                                     <td style="text-align: right;">Total</td>
-                                    <td style="text-align: right;">{{ number_format($invoice->amount_total, 0, ',', '.') }}
+                                    <td style="text-align: right;">{{ number_format($customTotal, 0, ',', '.') }}
                                     </td>
                                 </tr>
                             </table>
@@ -576,7 +584,7 @@
                 {{-- Terbilang --}}
                 <div class="terbilang-section">
                     <span class="terbilang-label">Terbilang :</span>
-                    <em>{{ ucwords(\App\Helpers\Terbilang::convert($invoice->amount_total)) }} Rupiah #</em>
+                    <em>{{ ucwords(\App\Helpers\Terbilang::convert($customTotal)) }} Rupiah #</em>
                 </div>
 
                 {{-- Catatan / Notes - Lines with 0 qty are notes --}}

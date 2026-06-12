@@ -1609,6 +1609,11 @@ class OdooService
             if (!$soId)
                 continue;
 
+            // Ignore periods with zero invoice price
+            if (($period['price_unit'] ?? 0) <= 0) {
+                continue;
+            }
+
             if (!isset($grouped[$soId]) || $period['invoice_date'] < $grouped[$soId]['invoice_date']) {
                 $grouped[$soId] = $period;
             }

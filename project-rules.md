@@ -3,7 +3,13 @@
 > **The AI MUST use the `view_file` tool to read this entire document from top to bottom before doing anything else in a new session.**
 This document contains persistent rules that the AI assistant must follow when working on this project.
 
-## 1. Always Create a Local Git Backup
+## 1. Workspace Awareness & Active Folder Detection
+**CRITICAL RULE:** The user may have multiple projects or tabs open. You MUST dynamically detect the active project folder by checking the `Active Document` path in the system metadata at the start of the session. 
+1. **Scope of Work**: Only apply rules, run commands, and edit files within the detected active workspace folder.
+2. **State Active Folder**: In your very first reply of a new session, you MUST explicitly output the path or name of the folder you have detected as the active workspace.
+3. **State Automations**: In your very first reply of a new session, you MUST explicitly list the Automations (e.g., "New Task Trigger", "Sign Off Command") found in this document so that you and the user are perfectly aligned on what background tasks are active.
+
+## 2. Always Create a Local Git Backup
 **CRITICAL RULE:** Before writing any new code, building a new feature, or attempting any major refactoring, you MUST run a local git commit to back up the current stable state of the project. 
 
 **Instructions for AI:**
@@ -11,7 +17,7 @@ This document contains persistent rules that the AI assistant must follow when w
 2. If there is uncommitted work (code that hasn't been locked in yet), run `git add .` and `git commit -m "Feat: <short description of the task you just finished>"` to safely lock it into Git history with a descriptive message.
 3. Only AFTER the local commit is successfully created may you begin modifying the codebase.
 4. If your new changes break the system, use Git to revert your changes back to the safe commit rather than trying to manually undo your code line-by-line.
-5. Acknowledge these rules: Every time you start a new conversation, your first message MUST include a brief confirmation that you have read and will follow these project rules.
+5. Acknowledge these rules: Every time you start a new conversation, your first message MUST include a brief confirmation that you have read the rules, stating the active workspace, and explicitly listing the automations.
 6. **Backup Before Changes**: You MUST ALWAYS create a local git commit of the current state BEFORE you make any significant changes or begin a new task. Run `git add .` and `git commit -m "Feat: <short description of previous changes>"`. Never skip this step. This ensures we can easily rollback if an experiment fails. Do not ask the user for permission to do this, just do it.
 
 ## Automations

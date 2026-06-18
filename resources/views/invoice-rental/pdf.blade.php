@@ -563,20 +563,12 @@
                                 
                                 $startStr = '-';
                                 if ($periodeStart) {
-                                    if ($isINVRT && !$isBln && $periodeStart->format('H:i') !== '00:00') {
-                                        $startStr = $periodeStart->format('d/m h:i A');
-                                    } else {
-                                        $startStr = $periodeStart->format('d/m/Y');
-                                    }
+                                    $startStr = $periodeStart->format('d/m/Y');
                                 }
 
                                 $endStr = '-';
                                 if ($periodeEnd) {
-                                    if ($isINVRT && !$isBln && $periodeEnd->format('H:i') !== '00:00') {
-                                        $endStr = $periodeEnd->format('d/m h:i A');
-                                    } else {
-                                        $endStr = $periodeEnd->format('d/m/Y');
-                                    }
+                                    $endStr = $periodeEnd->format('d/m/Y');
                                 }
 
                                 $periodeStr = ($periodeStart || $periodeEnd) 

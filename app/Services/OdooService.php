@@ -1107,6 +1107,8 @@ class OdooService
                 'invoice_line_ids/sale_order_id/name', // 25
                 'invoice_line_ids/serial_ids/name', // 26
                 'invoice_line_ids/product_id/name', // 27
+                'invoice_line_ids/start_rental_period', // 28
+                'invoice_line_ids/end_rental_period', // 29
             ];
 
             $entries = [];
@@ -1164,6 +1166,8 @@ class OdooService
                                 'sale_order_id' => $row[25] ?? '',
                                 'serial_number' => $row[26] ?? '',
                                 'product_name' => $row[27] ?? '',
+                                'actual_start' => $row[28] ?? '',
+                                'actual_end' => $row[29] ?? '',
                             ];
                         }
                     }

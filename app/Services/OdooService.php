@@ -812,13 +812,9 @@ class OdooService
                     $priceUnit = (float) ($row[16] ?? 0);
                     $invoiceAmount = (float) ($row[18] ?? 0);
 
-                    // Skip cancelled rentals
-                    if ($rentalStatus === 'cancel' || $rentalStatus === 'cancelled')
-                        continue;
-
-                    // Skip if it has an invoice, but the Invoice Price is 0.
+                    // Skip if it has an invoice, but the Invoice Price is 0 (unless it is cancelled, so we can track cancellation status for Accounting Report).
                     // If it has NO invoice (Not Invoiced), we keep it.
-                    if (!empty($invoiceName) && $invoiceAmount == 0)
+                    if (!empty($invoiceName) && $invoiceAmount == 0 && !in_array(strtolower($rentalStatus ?? ''), ['cancel', 'cancelled']) && !in_array(strtolower($invoiceState ?? ''), ['cancel', 'cancelled']))
                         continue;
 
                     // Parse numeric ID from external ID string (e.g. __export__.rental_period_invoice_1903_hash)

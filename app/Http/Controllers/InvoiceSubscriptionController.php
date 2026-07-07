@@ -720,7 +720,10 @@ class InvoiceSubscriptionController extends Controller
             ->toArray();
 
         // Preload cancelled invoices to exclude them from the report
-        $cancelledInvoices = InvoiceSubscription::whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(invoice_state)'), ['cancel', 'cancelled'])
+        $cancelledInvoices = InvoiceSubscription::where(function($q) {
+                $q->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(invoice_state)'), ['cancel', 'cancelled'])
+                  ->orWhereIn(\Illuminate\Support\Facades\DB::raw('LOWER(rental_status)'), ['cancel', 'cancelled']);
+            })
             ->whereNotNull('invoice_name')
             ->where('invoice_name', '!=', '')
             ->pluck('invoice_name')

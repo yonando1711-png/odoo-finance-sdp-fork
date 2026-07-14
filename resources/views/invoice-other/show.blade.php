@@ -158,7 +158,7 @@ function showPrintOptions() {
                     <tr class="border-t border-slate-100 dark:border-slate-800 {{ $idx % 2 === 0 ? '' : 'bg-slate-50/50 dark:bg-slate-900/30' }}">
                         <td class="px-4 py-3 text-xs text-slate-400">{{ $idx + 1 }}</td>
                         <td class="px-4 py-3 text-sm">{{ $line->clean_description }}</td>
-                        <td class="px-4 py-3 text-center font-mono text-xs">{{ $line->quantity > 0 ? number_format($line->quantity, 0) : '-' }}</td>
+                        <td class="px-4 py-3 text-center font-mono text-xs">{{ $line->quantity > 0 ? (($line->quantity == (int)$line->quantity) ? number_format($line->quantity, 0, '.', ',') : number_format($line->quantity, 2, '.', ',')) : '-' }}</td>
                         <td class="px-4 py-3 text-right font-mono text-xs">{{ $line->price_unit != 0 ? 'Rp ' . number_format($line->price_unit, 0, ',', '.') : '-' }}</td>
                         <td class="px-4 py-3 text-right font-mono text-xs font-semibold">
                             @if($line->quantity != 0 && $line->price_unit != 0)

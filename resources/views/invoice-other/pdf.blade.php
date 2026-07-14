@@ -503,7 +503,7 @@
                     <td class="text-center">
                         @if(!isset($printMode) || $printMode !== 'summary')
                             @if($line->quantity > 0 && !request('without_satuan'))
-                                {{ number_format($line->quantity, 0) }}
+                                {{ ($line->quantity == (int)$line->quantity) ? number_format($line->quantity, 0, '.', ',') : number_format($line->quantity, 2, '.', ',') }}
                             @endif
                         @endif
                     </td>

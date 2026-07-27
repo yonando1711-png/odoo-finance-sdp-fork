@@ -105,6 +105,43 @@ class UninvoicedRentalController extends Controller
             ]);
         }
     }
+    /**
+     * Initialize fast sync by fetching recently modified SO IDs and clearing them locally
+     */
+    public function syncInitFast(Request $request)
+    {
+        try {
+            $odoo = new \App\Services\OdooService();
+            $data = $odoo->getUninvoicedSoIdsFast(500);
+            
+            $soIds = $data['so_ids'] ?? [];
+            $soNames = $data['so_names'] ?? [];
+
+            if (empty($soIds)) {
+                return response()->json([
+                    'success' => true,
+                    'so_ids' => [],
+                    'message' => 'No recent uninvoiced rental periods found.'
+                ]);
+            }
+
+            // Pre-emptively delete these SOs from the local table so that if they were fully invoiced,
+            // they don't stick around after the upsert.
+            if (!empty($soNames)) {
+                \App\Models\UninvoicedRental::whereIn('nomor_so', $soNames)->delete();
+            }
+
+            return response()->json([
+                'success' => true,
+                'so_ids' => $soIds,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Fast sync initialization failed: ' . $e->getMessage()
+            ]);
+        }
+    }
 
     /**
      * Process a chunk of SO IDs

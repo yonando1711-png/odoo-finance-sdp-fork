@@ -1603,11 +1603,17 @@ class OdooService
             ['rental_order_id', 'in', $soIds]
         ];
 
+        $domainReversed = [
+            ['invoice_id.payment_state', '=', 'reversed'],
+            ['rental_order_id', 'in', $soIds]
+        ];
+
         // Fetch periods
         $periodIdsEmpty = $this->execute('rental.period.invoice', 'search', [$domainEmpty]);
         $periodIdsDraft = $this->execute('rental.period.invoice', 'search', [$domainDraft]);
+        $periodIdsReversed = $this->execute('rental.period.invoice', 'search', [$domainReversed]);
 
-        $periodIds = array_values(array_unique(array_merge($periodIdsEmpty, $periodIdsDraft)));
+        $periodIds = array_values(array_unique(array_merge($periodIdsEmpty, $periodIdsDraft, $periodIdsReversed)));
         if (empty($periodIds)) {
             return [];
         }
@@ -1626,7 +1632,7 @@ class OdooService
 
         $periods = $this->execute('rental.period.invoice', 'read', [$periodIds, $fields]);
 
-        // Group by rental_order_id and find the earliest invoice_date
+        // Group by rental_order_id and find the earliest period based on start_rental_period_date
         $grouped = [];
         foreach ($periods as $period) {
             $soId = $period['rental_order_id'][0] ?? null;
@@ -1638,7 +1644,7 @@ class OdooService
                 continue;
             }
 
-            if (!isset($grouped[$soId]) || $period['invoice_date'] < $grouped[$soId]['invoice_date']) {
+            if (!isset($grouped[$soId]) || $period['start_rental_period_date'] < $grouped[$soId]['start_rental_period_date']) {
                 $grouped[$soId] = $period;
             }
         }

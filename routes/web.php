@@ -175,6 +175,7 @@ Route::middleware('auth')->group(function () {
     Route::group(['prefix' => 'uninvoiced-rentals', 'as' => 'uninvoiced-rentals.', 'middleware' => 'role:invoice'], function () {
         Route::get('/', [UninvoicedRentalController::class, 'index'])->name('index');
         Route::post('/sync-init', [UninvoicedRentalController::class, 'syncInit'])->name('sync-init');
+        Route::post('/sync-init-fast', [UninvoicedRentalController::class, 'syncInitFast'])->name('sync-init-fast');
         Route::post('/sync-chunk', [UninvoicedRentalController::class, 'syncChunk'])->name('sync-chunk');
         Route::post('/export', [UninvoicedRentalController::class, 'export'])->name('export');
         Route::post('/auto-sync/toggle', [UninvoicedRentalController::class, 'toggleAutoSync'])->name('auto-sync.toggle');

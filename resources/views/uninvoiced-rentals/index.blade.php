@@ -77,6 +77,14 @@
                 </button>
             </div>
 
+            {{-- Fast Sync Button --}}
+            <button @click="syncDataFast" :disabled="isSyncing" 
+                    class="w-full sm:w-auto px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                <svg x-show="!isSyncing" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                <svg x-show="isSyncing" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                <span x-text="isSyncing ? 'Syncing...' : 'Fast Sync'"></span>
+            </button>
+
             {{-- Sync Button --}}
             <button @click="syncData" :disabled="isSyncing" 
                     class="w-full sm:w-auto px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2 shadow-sm disabled:opacity-50 disabled:cursor-not-allowed">
@@ -230,6 +238,82 @@
                 } catch(e) {
                     this.autoSyncEnabled = !this.autoSyncEnabled; // Revert
                     alert('Failed to update auto-sync setting.');
+                }
+            },
+            async syncDataFast() {
+                if(this.isSyncing) return;
+                this.isSyncing = true;
+                this.syncStatusText = 'Fetching recently modified Sales Orders from Odoo...';
+                this.syncPercentage = 0;
+                
+                try {
+                    // Step 1: Initialize Fast
+                    const initRes = await fetch('{{ route('uninvoiced-rentals.sync-init-fast') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                            'Accept': 'application/json'
+                        }
+                    });
+                    const initData = await initRes.json();
+                    
+                    if(!initData.success) {
+                        throw new Error(initData.message || 'Failed to initialize fast sync.');
+                    }
+                    
+                    const soIds = initData.so_ids || [];
+                    if (soIds.length === 0) {
+                        alert('No recent uninvoiced rental periods found.');
+                        this.isSyncing = false;
+                        return;
+                    }
+                    
+                    // Step 2: Chunk the IDs
+                    const chunkSize = 500;
+                    const chunks = [];
+                    for (let i = 0; i < soIds.length; i += chunkSize) {
+                        chunks.push(soIds.slice(i, i + chunkSize));
+                    }
+                    
+                    let totalSaved = 0;
+                    
+                    // Step 3: Process Chunks (always passing is_first_chunk=false so we don't wipe table)
+                    for (let i = 0; i < chunks.length; i++) {
+                        this.syncStatusText = `Fast Syncing chunk ${i + 1} of ${chunks.length} (${chunks[i].length} Sales Orders)...`;
+                        
+                        const chunkRes = await fetch('{{ route('uninvoiced-rentals.sync-chunk') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                so_ids: chunks[i],
+                                is_first_chunk: false // NEVER wipe table on fast sync
+                            })
+                        });
+                        
+                        const chunkData = await chunkRes.json();
+                        if(!chunkData.success) {
+                            throw new Error(chunkData.message || `Failed to fast sync chunk ${i + 1}`);
+                        }
+                        
+                        totalSaved += chunkData.count;
+                        this.syncPercentage = Math.round(((i + 1) / chunks.length) * 100);
+                    }
+                    
+                    this.syncStatusText = 'Fast Sync complete!';
+                    this.syncPercentage = 100;
+                    
+                    alert(`Success! Fast Synced ${totalSaved} recent uninvoiced rentals.`);
+                    window.location.reload();
+                    
+                } catch(error) {
+                    alert(`Error: ${error.message}`);
+                    console.error(error);
+                    this.isSyncing = false;
                 }
             },
 

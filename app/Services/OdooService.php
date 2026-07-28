@@ -1589,6 +1589,56 @@ class OdooService
     }
 
     /**
+     * Fast Sync: Get SO IDs and Names for recently modified rental periods
+     * Returns array: ['so_ids' => [1, 2], 'so_names' => ['R/2026/001', 'R/2026/002']]
+     */
+    public function getUninvoicedSoIdsFast($limit = 500): array
+    {
+        try {
+            // Find periods modified in the last 7 days (or just the most recently modified ones up to limit)
+            $domain = [
+                ['write_date', '>=', date('Y-m-d', strtotime('-7 days'))]
+            ];
+            
+            $res = $this->execute('rental.period.invoice', 'search_read', [
+                $domain
+            ], [
+                'fields' => ['rental_order_id'],
+                'order' => 'write_date desc',
+                'limit' => $limit
+            ]);
+
+            $soIds = [];
+            foreach ($res as $row) {
+                if (!empty($row['rental_order_id'][0])) {
+                    $soIds[] = $row['rental_order_id'][0];
+                }
+            }
+            $soIds = array_values(array_unique($soIds));
+
+            if (empty($soIds)) {
+                return ['so_ids' => [], 'so_names' => []];
+            }
+
+            // Fetch the string names for these SOs so we can delete them locally
+            $soRecords = $this->execute('sale.order', 'search_read', [
+                [['id', 'in', $soIds]]
+            ], [
+                'fields' => ['name']
+            ]);
+
+            $soNames = array_column($soRecords, 'name');
+
+            return [
+                'so_ids' => $soIds,
+                'so_names' => $soNames
+            ];
+        } catch (\Exception $e) {
+            return ['so_ids' => [], 'so_names' => []];
+        }
+    }
+
+    /**
      * Step 2: Fetch full Uninvoiced Rental data for a specific chunk of SO IDs
      */
     public function fetchUninvoicedRentalsBySoIds(array $soIds): array

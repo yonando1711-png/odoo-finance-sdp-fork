@@ -302,9 +302,9 @@
     @foreach($invoices as $invoice)
         <div class="invoice-page" style="{{ $loop->last ? 'page-break-after: auto;' : 'page-break-after: always;' }}">
             <script type="text/php">
-                $GLOBALS['invoice_starts']['{{ $invoice->proforma_number ?? $invoice->name }}'] = $pdf->get_page_number();
-                $GLOBALS['invoice_pics']['{{ $invoice->proforma_number ?? $invoice->name }}'] = '{{ $invoice->invoice_pic ? strtoupper(substr(trim($invoice->invoice_pic), 0, 3)) : "" }}';
-                $GLOBALS['invoice_prints']['{{ $invoice->proforma_number ?? $invoice->name }}'] = '{{ str_pad(($invoice->print_count ?? 0) + 1, 2, "0", STR_PAD_LEFT) }}';
+                $GLOBALS['invoice_starts']['{{ $invoice->name }}'] = $pdf->get_page_number();
+                $GLOBALS['invoice_pics']['{{ $invoice->name }}'] = '{{ $invoice->invoice_pic ? strtoupper(substr(trim($invoice->invoice_pic), 0, 3)) : "" }}';
+                $GLOBALS['invoice_prints']['{{ $invoice->name }}'] = '{{ str_pad(($invoice->print_count ?? 0) + 1, 2, "0", STR_PAD_LEFT) }}';
             </script>
             <table class="lines-table">
                 <thead>
@@ -333,7 +333,7 @@
                                         </span>
                                     </td>
                                     <td style="width: 40%;">
-                                        <div class="invoice-title">{{ str_starts_with($invoice->name, 'R') ? 'CREDIT NOTES' : (isset($invoice->proforma_number) ? 'PROFORMA INVOICE' : 'INVOICE') }}</div>
+                                        <div class="invoice-title">{{ str_starts_with($invoice->name, 'R') ? 'CREDIT NOTES' : 'INVOICE' }}</div>
                                         <div class="page-label" style="visibility: hidden;">Hal : 1</div>
                                     </td>
                                 </tr>
@@ -372,7 +372,7 @@
                                             <tr>
                                                 <td class="info-label">Nomor</td>
                                                 <td class="info-colon">:</td>
-                                                <td>{{ $invoice->proforma_number ?? $invoice->name }}</td>
+                                                <td>{{ $invoice->name }}</td>
                                             </tr>
                                             <tr>
                                                 <td class="info-label">Tanggal</td>

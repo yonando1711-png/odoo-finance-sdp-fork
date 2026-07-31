@@ -15,7 +15,6 @@
     syncProgress: 0,
     columns: {
         name: { visible: true, width: '180px', label: 'Invoice #' },
-        journal: { visible: true, width: '150px', label: 'Journal' },
         date: { visible: true, width: '110px', label: 'Date' },
         partner: { visible: true, width: '200px', label: 'Customer' },
         ref: { visible: true, width: '180px', label: 'Reference' },
@@ -336,17 +335,6 @@
                             <div @mousedown="resize('name', $event)" class="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize group-hover:bg-emerald-500/30 transition-colors"></div>
                         </th>
 
-                        {{-- Journal --}}
-                        <th x-show="columns.journal.visible" :style="{ width: columns.journal.width, minWidth: columns.journal.width }" class="group relative px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400 sticky top-0 bg-slate-50 dark:bg-slate-900 z-40">
-                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'journal_name', 'dir' => request('sort') === 'journal_name' && request('dir') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center hover:text-emerald-600 transition-colors">
-                                Journal
-                                @if(request('sort') === 'journal_name')
-                                    <svg class="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ request('dir') === 'asc' ? 'M5 15l7-7 7 7' : 'M19 9l-7 7-7-7' }}"/></svg>
-                                @endif
-                            </a>
-                            <div @mousedown="resize('journal', $event)" class="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize group-hover:bg-emerald-500/30 transition-colors"></div>
-                        </th>
-
                         {{-- Date --}}
                         <th x-show="columns.date.visible" :style="{ width: columns.date.width, minWidth: columns.date.width }" class="group relative px-3 py-3 text-left font-medium text-slate-600 dark:text-slate-400 sticky top-0 bg-slate-50 dark:bg-slate-900 z-40">
                             <a href="{{ request()->fullUrlWithQuery(['sort' => 'invoice_date', 'dir' => request('sort', 'invoice_date') === 'invoice_date' && request('dir', 'desc') === 'asc' ? 'desc' : 'asc']) }}" class="flex items-center hover:text-emerald-600 transition-colors">
@@ -445,7 +433,6 @@
 
                             </div>
                         </td>
-                        <td x-show="columns.journal.visible" class="px-3 py-2 text-xs text-slate-500 whitespace-nowrap">{{ $invoice->journal_name ?? '' }}</td>
                         <td x-show="columns.date.visible" class="px-3 py-2 text-xs text-slate-500 whitespace-nowrap">{{ $invoice->invoice_date->format('Y-m-d') }}</td>
                         <td x-show="columns.partner.visible" class="px-3 py-2 text-xs">{{ $invoice->partner_name }}</td>
                         <td x-show="columns.ref.visible" class="px-3 py-2 text-xs text-slate-500">{{ $invoice->ref ?? '' }}</td>
@@ -529,62 +516,6 @@
                             <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 hidden"></div>
                         </div>
                     </label>
-
-                    <label class="option-card p-4 border-2 rounded-xl cursor-pointer transition-all flex items-center gap-4 bg-white border-slate-100 hover:border-slate-200" data-value="driver">
-                        <input type="radio" name="print_type" value="driver" class="hidden">
-                        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-slate-800 text-sm">Invoice Driver</h4>
-                            <p class="text-[11px] text-slate-500">Print format for Driver services.</p>
-                        </div>
-                        <div class="radio-indicator w-5 h-5 rounded-full border-2 border-slate-200 flex items-center justify-center">
-                            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 hidden"></div>
-                        </div>
-                    </label>
-
-                    <label class="option-card p-4 border-2 rounded-xl cursor-pointer transition-all flex items-center gap-4 bg-white border-slate-100 hover:border-slate-200" data-value="driver_summary">
-                        <input type="radio" name="print_type" value="driver_summary" class="hidden">
-                        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-slate-800 text-sm">Invoice Driver Summary Only</h4>
-                            <p class="text-[11px] text-slate-500">Compact summary for Driver services.</p>
-                        </div>
-                        <div class="radio-indicator w-5 h-5 rounded-full border-2 border-slate-200 flex items-center justify-center">
-                            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 hidden"></div>
-                        </div>
-                    </label>
-
-                    <label class="option-card p-4 border-2 rounded-xl cursor-pointer transition-all flex items-center gap-4 bg-white border-slate-100 hover:border-slate-200" data-value="other">
-                        <input type="radio" name="print_type" value="other" class="hidden">
-                        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center text-violet-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-slate-800 text-sm">Invoice Other</h4>
-                            <p class="text-[11px] text-slate-500">Print format for Other services.</p>
-                        </div>
-                        <div class="radio-indicator w-5 h-5 rounded-full border-2 border-slate-200 flex items-center justify-center">
-                            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 hidden"></div>
-                        </div>
-                    </label>
-
-                    <label class="option-card p-4 border-2 rounded-xl cursor-pointer transition-all flex items-center gap-4 bg-white border-slate-100 hover:border-slate-200" data-value="other_summary">
-                        <input type="radio" name="print_type" value="other_summary" class="hidden">
-                        <div class="flex-shrink-0 w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center text-violet-600">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="font-bold text-slate-800 text-sm">Invoice Other Summary Only</h4>
-                            <p class="text-[11px] text-slate-500">Compact summary for Other services.</p>
-                        </div>
-                        <div class="radio-indicator w-5 h-5 rounded-full border-2 border-slate-200 flex items-center justify-center">
-                            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 hidden"></div>
-                        </div>
-                    </label>
                 </div>
             </div>
             <style>
@@ -662,18 +593,6 @@
                     } else if (value === 'summary') {
                         htmlUrl += '?print_mode=summary&show_username=0';
                         pdfUrl += '?print_mode=summary&show_username=0';
-                    } else if (value === 'driver') {
-                        htmlUrl += '?print_mode=driver&show_username=0';
-                        pdfUrl += '?print_mode=driver&show_username=0';
-                    } else if (value === 'driver_summary') {
-                        htmlUrl += '?print_mode=driver_summary&show_username=0';
-                        pdfUrl += '?print_mode=driver_summary&show_username=0';
-                    } else if (value === 'other') {
-                        htmlUrl += '?print_mode=other&show_username=0';
-                        pdfUrl += '?print_mode=other&show_username=0';
-                    } else if (value === 'other_summary') {
-                        htmlUrl += '?print_mode=other_summary&show_username=0';
-                        pdfUrl += '?print_mode=other_summary&show_username=0';
                     } else {
                         htmlUrl += '?print_mode=detail&show_username=0';
                         pdfUrl += '?print_mode=detail&show_username=0';
@@ -796,14 +715,6 @@
                                 actionUrl += '?print_mode=detail&show_username=1';
                             } else if (value === 'summary') {
                                 actionUrl += '?print_mode=summary&show_username=0';
-                            } else if (value === 'driver') {
-                                actionUrl += '?print_mode=driver&show_username=0';
-                            } else if (value === 'driver_summary') {
-                                actionUrl += '?print_mode=driver_summary&show_username=0';
-                            } else if (value === 'other') {
-                                actionUrl += '?print_mode=other&show_username=0';
-                            } else if (value === 'other_summary') {
-                                actionUrl += '?print_mode=other_summary&show_username=0';
                             } else {
                                 actionUrl += '?print_mode=detail&show_username=0';
                             }

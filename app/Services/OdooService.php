@@ -1553,14 +1553,17 @@ class OdooService
     {
         $domainEmpty = [['invoice_id', '=', false]];
         $domainDraft = [['invoice_id.state', '=', 'draft']];
+        $domainReversed = [['invoice_id.payment_state', '=', 'reversed']];
 
         if ($dateFrom) {
             $domainEmpty[] = ['invoice_date', '>=', $dateFrom];
             $domainDraft[] = ['invoice_date', '>=', $dateFrom];
+            $domainReversed[] = ['invoice_date', '>=', $dateFrom];
         }
         if ($dateTo) {
             $domainEmpty[] = ['invoice_date', '<=', $dateTo];
             $domainDraft[] = ['invoice_date', '<=', $dateTo];
+            $domainReversed[] = ['invoice_date', '<=', $dateTo];
         }
 
         try {
@@ -1574,9 +1577,14 @@ class OdooService
                 ['rental_order_id', 'invoice_date:min'],
                 ['rental_order_id']
             ]);
+            $resReversed = $this->execute('rental.period.invoice', 'read_group', [
+                $domainReversed,
+                ['rental_order_id', 'invoice_date:min'],
+                ['rental_order_id']
+            ]);
 
             $soIds = [];
-            foreach (array_merge($resEmpty, $resDraft) as $group) {
+            foreach (array_merge($resEmpty, $resDraft, $resReversed) as $group) {
                 if (!empty($group['rental_order_id'][0])) {
                     $soIds[] = $group['rental_order_id'][0];
                 }
@@ -1682,7 +1690,42 @@ class OdooService
 
         $periods = $this->execute('rental.period.invoice', 'read', [$periodIds, $fields]);
 
-        // Group by rental_order_id and find the earliest period based on start_rental_period_date
+        // Pre-fetch account.move data for invoice validation & replacement checking
+        $periodInvIds = [];
+        foreach ($periods as $p) {
+            if (!empty($p['invoice_id'][0])) {
+                $periodInvIds[] = $p['invoice_id'][0];
+            }
+        }
+
+        // Also fetch invoice_ids from sale.order for replacement checking
+        $soInvoiceMap = [];
+        $allMoveIdsToRead = $periodInvIds;
+        if (!empty($soIds)) {
+            $soInvRecords = $this->execute('sale.order', 'search_read', [
+                [['id', 'in', $soIds]]
+            ], [
+                'fields' => ['id', 'invoice_ids']
+            ]);
+            foreach ($soInvRecords as $soRec) {
+                $soInvoiceMap[$soRec['id']] = $soRec['invoice_ids'] ?? [];
+                $allMoveIdsToRead = array_merge($allMoveIdsToRead, $soRec['invoice_ids'] ?? []);
+            }
+        }
+
+        $movesMap = [];
+        $allMoveIdsToRead = array_values(array_unique($allMoveIdsToRead));
+        if (!empty($allMoveIdsToRead)) {
+            $movesData = $this->execute('account.move', 'read', [
+                $allMoveIdsToRead,
+                ['id', 'name', 'move_type', 'state', 'payment_state', 'invoice_date']
+            ]);
+            foreach ($movesData as $m) {
+                $movesMap[$m['id']] = $m;
+            }
+        }
+
+        // Group by rental_order_id and find the earliest valid period based on start_rental_period_date
         $grouped = [];
         foreach ($periods as $period) {
             $soId = $period['rental_order_id'][0] ?? null;
@@ -1691,6 +1734,44 @@ class OdooService
 
             // Ignore periods with zero invoice price
             if (($period['price_unit'] ?? 0) <= 0) {
+                continue;
+            }
+
+            // Check invoice state & replacement invoice for reversed periods
+            $invId = $period['invoice_id'][0] ?? null;
+            $invMove = $invId ? ($movesMap[$invId] ?? null) : null;
+
+            if ($invMove && ($invMove['payment_state'] ?? '') === 'reversed') {
+                $origInvDate = $period['invoice_date'] ?: ($invMove['invoice_date'] ?? null);
+                if ($origInvDate) {
+                    $origTime = strtotime($origInvDate);
+                    $hasReplacement = false;
+                    $soInvs = $soInvoiceMap[$soId] ?? [];
+
+                    foreach ($soInvs as $soInvId) {
+                        if ($soInvId == $invId) continue;
+                        $soInv = $movesMap[$soInvId] ?? null;
+                        if (!$soInv) continue;
+
+                        if ($soInv['move_type'] === 'out_invoice' && $soInv['state'] === 'posted' && in_array($soInv['payment_state'], ['paid', 'in_payment', 'partial'])) {
+                            $soInvTime = strtotime($soInv['invoice_date']);
+                            $diffDays = ($soInvTime - $origTime) / 86400;
+                            $sameMonth = date('Y-m', $soInvTime) === date('Y-m', $origTime);
+
+                            if (($diffDays >= -3 && $diffDays <= 15) || $sameMonth) {
+                                $hasReplacement = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if ($hasReplacement) {
+                        // Skip reversed period because it has already been replaced & paid
+                        continue;
+                    }
+                }
+            } elseif ($invMove && $invMove['state'] === 'posted' && ($invMove['payment_state'] ?? '') !== 'reversed') {
+                // Period already has a posted, non-reversed invoice -> skip
                 continue;
             }
 

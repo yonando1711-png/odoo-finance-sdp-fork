@@ -1743,32 +1743,26 @@ class OdooService
 
             if ($invMove && ($invMove['payment_state'] ?? '') === 'reversed') {
                 $origInvDate = $period['invoice_date'] ?: ($invMove['invoice_date'] ?? null);
-                if ($origInvDate) {
-                    $origTime = strtotime($origInvDate);
-                    $hasReplacement = false;
-                    $soInvs = $soInvoiceMap[$soId] ?? [];
+                $hasReplacement = false;
+                $soInvs = $soInvoiceMap[$soId] ?? [];
 
-                    foreach ($soInvs as $soInvId) {
-                        if ($soInvId == $invId) continue;
-                        $soInv = $movesMap[$soInvId] ?? null;
-                        if (!$soInv) continue;
+                foreach ($soInvs as $soInvId) {
+                    if ($soInvId == $invId) continue;
+                    $soInv = $movesMap[$soInvId] ?? null;
+                    if (!$soInv) continue;
 
-                        if ($soInv['move_type'] === 'out_invoice' && $soInv['state'] === 'posted' && in_array($soInv['payment_state'], ['paid', 'in_payment', 'partial'])) {
-                            $soInvTime = strtotime($soInv['invoice_date']);
-                            $diffDays = ($soInvTime - $origTime) / 86400;
-                            $sameMonth = date('Y-m', $soInvTime) === date('Y-m', $origTime);
-
-                            if (($diffDays >= -3 && $diffDays <= 15) || $sameMonth) {
-                                $hasReplacement = true;
-                                break;
-                            }
+                    // Any posted sales invoice created on/after the original invoice date counts as a replacement
+                    if ($soInv['move_type'] === 'out_invoice' && $soInv['state'] === 'posted') {
+                        if (!$origInvDate || $soInv['invoice_date'] >= $origInvDate) {
+                            $hasReplacement = true;
+                            break;
                         }
                     }
+                }
 
-                    if ($hasReplacement) {
-                        // Skip reversed period because it has already been replaced & paid
-                        continue;
-                    }
+                if ($hasReplacement) {
+                    // Skip reversed period because it has already been replaced
+                    continue;
                 }
             } elseif ($invMove && $invMove['state'] === 'posted' && ($invMove['payment_state'] ?? '') !== 'reversed') {
                 // Period already has a posted, non-reversed invoice -> skip

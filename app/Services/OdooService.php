@@ -1607,7 +1607,7 @@ class OdooService
             $domain = [
                 ['write_date', '>=', date('Y-m-d', strtotime('-7 days'))]
             ];
-            
+
             $res = $this->execute('rental.period.invoice', 'search_read', [
                 $domain
             ], [
@@ -1747,9 +1747,11 @@ class OdooService
                 $soInvs = $soInvoiceMap[$soId] ?? [];
 
                 foreach ($soInvs as $soInvId) {
-                    if ($soInvId == $invId) continue;
+                    if ($soInvId == $invId)
+                        continue;
                     $soInv = $movesMap[$soInvId] ?? null;
-                    if (!$soInv) continue;
+                    if (!$soInv)
+                        continue;
 
                     // Any posted sales invoice created on/after the original invoice date counts as a replacement
                     if ($soInv['move_type'] === 'out_invoice' && $soInv['state'] === 'posted') {
@@ -1925,7 +1927,7 @@ class OdooService
                 ['move_id', 'product_id', 'duration_price']
             ]);
         }
-        
+
         $invoiceDurationPriceMap = [];
         foreach ($invoiceLineData as $line) {
             $moveId = $line['move_id'][0] ?? null;
@@ -1969,8 +1971,10 @@ class OdooService
                 $statusDisplay = 'Quotation';
             } else {
                 $statusDisplay = !empty($rawStatus) ? ucwords(str_replace(['_', '-'], ' ', $rawStatus)) : ucwords($rawState);
-                if (strtolower($statusDisplay) === 'pickup') $statusDisplay = 'Reserved';
-                if (strtolower($statusDisplay) === 'return') $statusDisplay = 'Pickedup';
+                if (strtolower($statusDisplay) === 'pickup')
+                    $statusDisplay = 'Reserved';
+                if (strtolower($statusDisplay) === 'return')
+                    $statusDisplay = 'Pickedup';
             }
 
             $results[] = [

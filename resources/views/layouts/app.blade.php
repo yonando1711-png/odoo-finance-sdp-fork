@@ -97,6 +97,10 @@
                 <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
                 <span x-show="sidebarOpen" x-cloak>Invoice Penjualan</span>
             </a>
+            <a href="{{ route('invoice-dp.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors {{ request()->routeIs('invoice-dp*') ? 'bg-emerald-600/30 text-emerald-300' : 'hover:bg-slate-700 text-slate-300' }}">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                <span x-show="sidebarOpen" x-cloak>Invoice DP</span>
+            </a>
             <div x-data="{ open: {{ request()->routeIs('invoice-proforma.*') ? 'true' : 'false' }} }" class="space-y-1">
                 <div class="flex items-center justify-between rounded-lg transition-colors {{ request()->routeIs('invoice-proforma.*') ? 'bg-slate-700/50 text-slate-200' : 'hover:bg-slate-700 text-slate-300' }}">
                     <a href="{{ route('invoice-proforma.index') }}" class="flex-1 flex items-center gap-3 px-3 py-2.5 rounded-l-lg hover:text-emerald-400">

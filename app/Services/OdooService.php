@@ -2196,4 +2196,133 @@ class OdooService
             ];
         }
     }
+
+    /**
+     * Get all Invoice DP IDs for date range
+     */
+    public function getInvoiceDpIds(string $dateFrom, string $dateTo): array
+    {
+        try {
+            $domain = [
+                ['move_type', '=', 'out_invoice'],
+                ['journal_id.name', 'ilike', 'Customer Down payment'],
+                ['invoice_date', '>=', $dateFrom],
+                ['invoice_date', '<=', $dateTo],
+            ];
+            $ids = $this->execute('account.move', 'search', [$domain]);
+            return ['success' => true, 'ids' => $ids, 'count' => count($ids)];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage(), 'ids' => []];
+        }
+    }
+
+    /**
+     * Fetch Invoice DP entries by IDs
+     */
+    public function fetchInvoiceDpsByIds(array $moveIds): array
+    {
+        try {
+            if (empty($moveIds)) {
+                return ['success' => true, 'data' => []];
+            }
+
+            $exportFields = [
+                'name',
+                'partner_id/name',
+                'invoice_date',
+                'invoice_payment_term_id/name',
+                'ref',
+                'journal_id/name',
+                'amount_untaxed',
+                'amount_tax',
+                'amount_total',
+                'invoice_line_ids/name',
+                'invoice_line_ids/quantity',
+                'invoice_line_ids/price_unit',
+                'partner_bank_id',
+                'bc_manager_id/name',
+                'bc_spv_id/name',
+                'partner_id/contact_address',
+                'partner_id/contact_address_complete',
+                'narration',
+                'partner_id/vat',
+                'contract_ref',
+                'invoice_date_due',
+                'hrc_forminv_invoice_pic/name',
+                'payment_state',
+                'state',
+                'invoice_line_ids/sale_order_id/reserved_lot_id/name',
+                'invoice_line_ids/serial_ids/name',
+                'id',
+            ];
+
+            $entries = [];
+            $chunkSize = 500;
+            $moveIdsChunks = array_chunk($moveIds, $chunkSize);
+
+            foreach ($moveIdsChunks as $chunk) {
+                $result = $this->execute('account.move', 'export_data', [$chunk, $exportFields]);
+                if (!isset($result['datas'])) {
+                    continue;
+                }
+
+                $currentEntry = null;
+                foreach ($result['datas'] as $row) {
+                    $invoiceName = $row[0] ?? '';
+                    if (!empty($invoiceName)) {
+                        if ($currentEntry !== null) {
+                            $entries[] = $currentEntry;
+                        }
+                        $reservedLot = $row[24] ?? ($row[25] ?? '');
+                        $currentEntry = [
+                            'odoo_id' => $row[26] ?? null,
+                            'name' => $invoiceName,
+                            'partner_name' => $row[1] ?? '',
+                            'invoice_date' => $row[2] ?? '',
+                            'invoice_date_due' => $row[20] ?? '',
+                            'payment_term' => $row[3] ?? '',
+                            'ref' => $row[4] ?? '',
+                            'contract_ref' => $row[19] ?? '',
+                            'journal_name' => $row[5] ?? 'Customer Down payment',
+                            'amount_untaxed' => (float)($row[6] ?? 0),
+                            'amount_tax' => (float)($row[7] ?? 0),
+                            'amount_total' => (float)($row[8] ?? 0),
+                            'partner_bank' => $row[12] ?? '',
+                            'manager_name' => $row[13] ?? '',
+                            'spv_name' => $row[14] ?? '',
+                            'partner_address' => $row[15] ?? ($row[16] ?? ''),
+                            'narration' => $row[17] ?? '',
+                            'partner_npwp' => $row[18] ?? '',
+                            'invoice_pic' => $row[21] ?? '',
+                            'payment_state' => $row[22] ?? 'not_paid',
+                            'state' => $row[23] ?? 'posted',
+                            'reserved_lot' => $reservedLot,
+                            'lines' => [],
+                        ];
+                    }
+
+                    $lineDesc = $row[9] ?? '';
+                    if ($currentEntry !== null && !empty($lineDesc)) {
+                        $currentEntry['lines'][] = [
+                            'description' => $lineDesc,
+                            'quantity' => (float)($row[10] ?? 1),
+                            'price_unit' => (float)($row[11] ?? 0),
+                            'amount' => (float)($row[10] ?? 1) * (float)($row[11] ?? 0),
+                        ];
+                        if (empty($currentEntry['reserved_lot'])) {
+                            if (!empty($row[24])) $currentEntry['reserved_lot'] = $row[24];
+                            elseif (!empty($row[25])) $currentEntry['reserved_lot'] = $row[25];
+                        }
+                    }
+                }
+                if ($currentEntry !== null) {
+                    $entries[] = $currentEntry;
+                }
+            }
+
+            return ['success' => true, 'data' => $entries];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
 }

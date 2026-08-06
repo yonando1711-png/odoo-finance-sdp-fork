@@ -6,6 +6,7 @@ use App\Models\InvoiceDriver;
 use App\Models\InvoiceOther;
 use App\Models\InvoiceRental;
 use App\Models\InvoiceVehicle;
+use App\Models\InvoiceDp;
 use App\Models\InvoiceSubscription;
 use App\Models\UninvoicedRental;
 use App\Models\JournalEntry;
@@ -478,9 +479,60 @@ class SyncService
                 InvoiceDriver::whereIn('name', $names)->delete();
                 InvoiceOther::whereIn('name', $names)->delete();
                 InvoiceVehicle::whereIn('name', $names)->delete();
+                InvoiceDp::whereIn('name', $names)->delete();
             }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error("Failed to clean up cancelled invoices: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Save Invoice DP entries
+     */
+    public function saveInvoiceDps(array $entries): int
+    {
+        $count = 0;
+        foreach ($entries as $entry) {
+            $invoice = InvoiceDp::updateOrCreate(
+                ['name' => $entry['name']],
+                [
+                    'odoo_id' => $entry['odoo_id'] ?? null,
+                    'partner_name' => $entry['partner_name'] ?? null,
+                    'invoice_date' => $entry['invoice_date'] ?? null,
+                    'invoice_date_due' => $entry['invoice_date_due'] ?? null,
+                    'payment_term' => $entry['payment_term'] ?? null,
+                    'ref' => $entry['ref'] ?? null,
+                    'contract_ref' => $entry['contract_ref'] ?? null,
+                    'journal_name' => $entry['journal_name'] ?? 'Customer Down payment',
+                    'amount_untaxed' => $entry['amount_untaxed'] ?? 0,
+                    'amount_tax' => $entry['amount_tax'] ?? 0,
+                    'amount_total' => $entry['amount_total'] ?? 0,
+                    'partner_bank' => $entry['partner_bank'] ?? null,
+                    'bc_manager' => $entry['manager_name'] ?? null,
+                    'bc_spv' => $entry['spv_name'] ?? null,
+                    'partner_address' => $entry['partner_address'] ?? null,
+                    'narration' => $entry['narration'] ?? null,
+                    'partner_npwp' => $entry['partner_npwp'] ?? null,
+                    'invoice_pic' => $entry['invoice_pic'] ?? null,
+                    'reserved_lot' => $entry['reserved_lot'] ?? null,
+                    'payment_state' => $entry['payment_state'] ?? 'not_paid',
+                    'state' => $entry['state'] ?? 'posted',
+                ]
+            );
+
+            $invoice->lines()->delete();
+            if (!empty($entry['lines'])) {
+                foreach ($entry['lines'] as $line) {
+                    $invoice->lines()->create([
+                        'description' => $line['description'] ?? null,
+                        'quantity' => $line['quantity'] ?? 1,
+                        'price_unit' => $line['price_unit'] ?? 0,
+                        'amount' => $line['amount'] ?? 0,
+                    ]);
+                }
+            }
+            $count++;
+        }
+        return $count;
     }
 }

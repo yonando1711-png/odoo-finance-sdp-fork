@@ -12,6 +12,7 @@ use App\Http\Controllers\InvoiceOtherController;
 use App\Http\Controllers\InvoiceRentalController;
 use App\Http\Controllers\InvoiceProformaController;
 use App\Http\Controllers\InvoiceVehicleController;
+use App\Http\Controllers\InvoiceDpController;
 use App\Http\Controllers\InvoiceSubscriptionController;
 use App\Http\Controllers\UninvoicedRentalController;
 use App\Http\Controllers\PrintLogController;
@@ -149,6 +150,17 @@ Route::middleware('auth')->group(function () {
         Route::get('/{invoice}/kuitansi-pdf', [InvoiceVehicleController::class, 'kuitansiPdf'])->name('kuitansi-pdf');
         Route::get('/{invoice}/kuitansi-html', [InvoiceVehicleController::class, 'kuitansiHtml'])->name('kuitansi-html');
         Route::post('/{invoice}/refresh', [InvoiceVehicleController::class, 'refreshFromOdoo'])->name('refresh');
+    });
+
+    // Invoice DP (Down Payment)
+    Route::group(['prefix' => 'invoice-dp', 'as' => 'invoice-dp.', 'middleware' => 'role:invoice'], function () {
+        Route::get('/', [InvoiceDpController::class, 'index'])->name('index');
+        Route::post('/sync-ids', [InvoiceDpController::class, 'getSyncIds'])->name('sync-ids');
+        Route::post('/sync-batch', [InvoiceDpController::class, 'syncBatch'])->name('sync-batch');
+        Route::get('/{invoice}', [InvoiceDpController::class, 'show'])->name('show');
+        Route::get('/{invoice}/pdf', [InvoiceDpController::class, 'printPdf'])->name('print');
+        Route::get('/{invoice}/html', [InvoiceDpController::class, 'printHtml'])->name('print-html');
+        Route::post('/{invoice}/refresh', [InvoiceDpController::class, 'refreshFromOdoo'])->name('refresh');
     });
 
     // Invoice Subscription (Check Invoice Subscription – Rental Periods)

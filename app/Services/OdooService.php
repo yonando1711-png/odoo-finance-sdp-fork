@@ -1607,7 +1607,7 @@ class OdooService
             $domain = [
                 ['write_date', '>=', date('Y-m-d', strtotime('-7 days'))]
             ];
-            
+
             $res = $this->execute('rental.period.invoice', 'search_read', [
                 $domain
             ], [
@@ -1747,9 +1747,11 @@ class OdooService
                 $soInvs = $soInvoiceMap[$soId] ?? [];
 
                 foreach ($soInvs as $soInvId) {
-                    if ($soInvId == $invId) continue;
+                    if ($soInvId == $invId)
+                        continue;
                     $soInv = $movesMap[$soInvId] ?? null;
-                    if (!$soInv) continue;
+                    if (!$soInv)
+                        continue;
 
                     // Any posted sales invoice created on/after the original invoice date counts as a replacement
                     if ($soInv['move_type'] === 'out_invoice' && $soInv['state'] === 'posted') {
@@ -1925,7 +1927,7 @@ class OdooService
                 ['move_id', 'product_id', 'duration_price']
             ]);
         }
-        
+
         $invoiceDurationPriceMap = [];
         foreach ($invoiceLineData as $line) {
             $moveId = $line['move_id'][0] ?? null;
@@ -1969,8 +1971,10 @@ class OdooService
                 $statusDisplay = 'Quotation';
             } else {
                 $statusDisplay = !empty($rawStatus) ? ucwords(str_replace(['_', '-'], ' ', $rawStatus)) : ucwords($rawState);
-                if (strtolower($statusDisplay) === 'pickup') $statusDisplay = 'Reserved';
-                if (strtolower($statusDisplay) === 'return') $statusDisplay = 'Pickedup';
+                if (strtolower($statusDisplay) === 'pickup')
+                    $statusDisplay = 'Reserved';
+                if (strtolower($statusDisplay) === 'return')
+                    $statusDisplay = 'Pickedup';
             }
 
             $results[] = [
@@ -2190,6 +2194,174 @@ class OdooService
                 'success' => false,
                 'message' => $e->getMessage()
             ];
+        }
+    }
+
+    /**
+     * Get all Invoice DP IDs for date range
+     */
+    public function getInvoiceDpIds(string $dateFrom, string $dateTo): array
+    {
+        try {
+            $domain = [
+                ['move_type', '=', 'out_invoice'],
+                ['journal_id.name', 'ilike', 'Customer Down payment'],
+                ['invoice_date', '>=', $dateFrom],
+                ['invoice_date', '<=', $dateTo],
+            ];
+            $ids = $this->execute('account.move', 'search', [$domain]);
+            return ['success' => true, 'ids' => $ids, 'count' => count($ids)];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage(), 'ids' => []];
+        }
+    }
+
+    /**
+     * Fetch Invoice DP entries by IDs
+     */
+    public function fetchInvoiceDpsByIds(array $moveIds): array
+    {
+        try {
+            if (empty($moveIds)) {
+                return ['success' => true, 'data' => []];
+            }
+
+            $exportFields = [
+                'name',
+                'partner_id/name',
+                'invoice_date',
+                'invoice_payment_term_id/name',
+                'ref',
+                'journal_id/name',
+                'amount_untaxed',
+                'amount_tax',
+                'amount_total',
+                'invoice_line_ids/name',
+                'invoice_line_ids/quantity',
+                'invoice_line_ids/price_unit',
+                'partner_bank_id',
+                'bc_manager_id/name',
+                'bc_spv_id/name',
+                'partner_id/contact_address',
+                'partner_id/contact_address_complete',
+                'narration',
+                'partner_id/vat',
+                'contract_ref',
+                'invoice_date_due',
+                'hrc_forminv_invoice_pic/name',
+                'payment_state',
+                'state',
+                'invoice_line_ids/sale_order_id/.id',
+                'id',
+            ];
+
+            $entries = [];
+            $chunkSize = 500;
+            $moveIdsChunks = array_chunk($moveIds, $chunkSize);
+
+            foreach ($moveIdsChunks as $chunk) {
+                $result = $this->execute('account.move', 'export_data', [$chunk, $exportFields]);
+                if (!isset($result['datas'])) {
+                    continue;
+                }
+
+                $currentEntry = null;
+                foreach ($result['datas'] as $row) {
+                    $invoiceName = $row[0] ?? '';
+                    if (!empty($invoiceName)) {
+                        if ($currentEntry !== null) {
+                            $entries[] = $currentEntry;
+                        }
+                        $currentEntry = [
+                            'odoo_id' => $row[25] ?? null,
+                            'name' => $invoiceName,
+                            'partner_name' => $row[1] ?? '',
+                            'invoice_date' => $row[2] ?? '',
+                            'invoice_date_due' => $row[20] ?? '',
+                            'payment_term' => $row[3] ?? '',
+                            'ref' => $row[4] ?? '',
+                            'contract_ref' => $row[19] ?? '',
+                            'journal_name' => $row[5] ?? 'Customer Down payment',
+                            'amount_untaxed' => (float)($row[6] ?? 0),
+                            'amount_tax' => (float)($row[7] ?? 0),
+                            'amount_total' => (float)($row[8] ?? 0),
+                            'partner_bank' => $row[12] ?? '',
+                            'manager_name' => $row[13] ?? '',
+                            'spv_name' => $row[14] ?? '',
+                            'partner_address' => $row[15] ?? ($row[16] ?? ''),
+                            'narration' => $row[17] ?? '',
+                            'partner_npwp' => $row[18] ?? '',
+                            'invoice_pic' => $row[21] ?? '',
+                            'payment_state' => $row[22] ?? 'not_paid',
+                            'state' => $row[23] ?? 'posted',
+                            'so_id' => $row[24] ?? null,
+                            'reserved_lot' => '',
+                            'lines' => [],
+                        ];
+                    }
+
+                    $lineDesc = $row[9] ?? '';
+                    if ($currentEntry !== null && !empty($lineDesc)) {
+                        $currentEntry['lines'][] = [
+                            'description' => $lineDesc,
+                            'quantity' => (float)($row[10] ?? 1),
+                            'price_unit' => (float)($row[11] ?? 0),
+                            'amount' => (float)($row[10] ?? 1) * (float)($row[11] ?? 0),
+                        ];
+                        
+                        if (empty($currentEntry['so_id']) && !empty($row[24])) {
+                            $currentEntry['so_id'] = $row[24];
+                        }
+
+                        // Extract Nopol / Reserved Lot from line description or ref if found
+                        if (empty($currentEntry['reserved_lot'])) {
+                            if (preg_match('/\b([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})\b/i', $lineDesc, $matches)) {
+                                $currentEntry['reserved_lot'] = strtoupper(str_replace(' ', '', $matches[1]));
+                            } elseif (!empty($currentEntry['ref']) && preg_match('/\b([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})\b/i', $currentEntry['ref'], $matches)) {
+                                $currentEntry['reserved_lot'] = strtoupper(str_replace(' ', '', $matches[1]));
+                            }
+                        }
+                    }
+                }
+                if ($currentEntry !== null) {
+                    $entries[] = $currentEntry;
+                }
+            }
+
+            // Step 2: Query linked sale.order records directly for reserved_lot_id
+            $soIds = [];
+            foreach ($entries as $e) {
+                if (!empty($e['so_id']) && is_numeric($e['so_id'])) {
+                    $soIds[] = (int)$e['so_id'];
+                }
+            }
+            $soIds = array_values(array_unique($soIds));
+
+            if (!empty($soIds)) {
+                try {
+                    $soData = $this->execute('sale.order', 'read', [$soIds, ['id', 'lot_serial_names']]);
+                    $soMap = [];
+                    foreach ($soData as $so) {
+                        if (!empty($so['lot_serial_names'])) {
+                            $lotName = is_array($so['lot_serial_names']) ? ($so['lot_serial_names'][1] ?? '') : $so['lot_serial_names'];
+                            if (!empty($lotName)) {
+                                $soMap[$so['id']] = trim($lotName);
+                            }
+                        }
+                    }
+                    foreach ($entries as &$e) {
+                        if (!empty($e['so_id']) && isset($soMap[$e['so_id']])) {
+                            $e['reserved_lot'] = $soMap[$e['so_id']];
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Fallback
+                }
+            }
+
+            return ['success' => true, 'data' => $entries];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 }

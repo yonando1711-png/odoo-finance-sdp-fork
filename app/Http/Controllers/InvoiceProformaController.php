@@ -432,6 +432,14 @@ class InvoiceProformaController extends Controller
         $cetakan = 'detail_nopol';
         if ($request->query('print_mode') === 'summary') {
             $cetakan = 'summary';
+        } elseif ($request->query('print_mode') === 'driver') {
+            $cetakan = 'driver';
+        } elseif ($request->query('print_mode') === 'driver_summary') {
+            $cetakan = 'driver_summary';
+        } elseif ($request->query('print_mode') === 'other') {
+            $cetakan = 'other';
+        } elseif ($request->query('print_mode') === 'other_summary') {
+            $cetakan = 'other_summary';
         } elseif ($request->query('hide_nopol') === '1') {
             $cetakan = 'without_nopol';
         } elseif ($request->query('show_username') === '1') {
@@ -453,10 +461,20 @@ class InvoiceProformaController extends Controller
             }
         }
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-proforma.pdf', [
+        $view = 'invoice-proforma.pdf';
+        $viewPrintMode = $printMode;
+        if ($printMode === 'driver' || $printMode === 'driver_summary') {
+            $view = 'invoice-driver.pdf';
+            if ($printMode === 'driver_summary') $viewPrintMode = 'summary';
+        } elseif ($printMode === 'other' || $printMode === 'other_summary') {
+            $view = 'invoice-other.pdf';
+            if ($printMode === 'other_summary') $viewPrintMode = 'summary';
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($view, [
             'invoices' => $invoices,
             'showUsername' => $showUsername,
-            'printMode' => $printMode,
+            'printMode' => $viewPrintMode,
             'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
             'defaultManager' => Setting::get('default_bc_manager', ''),
             'defaultSpv' => Setting::get('default_bc_spv', ''),
@@ -492,6 +510,14 @@ class InvoiceProformaController extends Controller
         $cetakan = 'detail_nopol';
         if ($request->query('print_mode') === 'summary') {
             $cetakan = 'summary';
+        } elseif ($request->query('print_mode') === 'driver') {
+            $cetakan = 'driver';
+        } elseif ($request->query('print_mode') === 'driver_summary') {
+            $cetakan = 'driver_summary';
+        } elseif ($request->query('print_mode') === 'other') {
+            $cetakan = 'other';
+        } elseif ($request->query('print_mode') === 'other_summary') {
+            $cetakan = 'other_summary';
         } elseif ($request->query('hide_nopol') === '1') {
             $cetakan = 'without_nopol';
         } elseif ($request->query('show_username') === '1') {
@@ -508,10 +534,20 @@ class InvoiceProformaController extends Controller
             }
         } catch (\Exception $e) {}
 
-        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('invoice-proforma.pdf', [
+        $view = 'invoice-proforma.pdf';
+        $viewPrintMode = $printMode;
+        if ($printMode === 'driver' || $printMode === 'driver_summary') {
+            $view = 'invoice-driver.pdf';
+            if ($printMode === 'driver_summary') $viewPrintMode = 'summary';
+        } elseif ($printMode === 'other' || $printMode === 'other_summary') {
+            $view = 'invoice-other.pdf';
+            if ($printMode === 'other_summary') $viewPrintMode = 'summary';
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($view, [
             'invoices' => $invoices,
             'showUsername' => $showUsername,
-            'printMode' => $printMode
+            'printMode' => $viewPrintMode
         ])->setPaper('a4', 'portrait');
 
         if (count($invoices) === 1) {
@@ -540,6 +576,14 @@ class InvoiceProformaController extends Controller
         $cetakan = 'detail_nopol';
         if ($request->query('print_mode') === 'summary') {
             $cetakan = 'summary';
+        } elseif ($request->query('print_mode') === 'driver') {
+            $cetakan = 'driver';
+        } elseif ($request->query('print_mode') === 'driver_summary') {
+            $cetakan = 'driver_summary';
+        } elseif ($request->query('print_mode') === 'other') {
+            $cetakan = 'other';
+        } elseif ($request->query('print_mode') === 'other_summary') {
+            $cetakan = 'other_summary';
         } elseif ($request->query('hide_nopol') === '1') {
             $cetakan = 'without_nopol';
         } elseif ($request->query('show_username') === '1') {
@@ -559,10 +603,20 @@ class InvoiceProformaController extends Controller
             }
         } catch (\Exception $e) {}
 
-        return view('invoice-proforma.pdf', [
+        $view = 'invoice-proforma.pdf';
+        $viewPrintMode = $printMode;
+        if ($printMode === 'driver' || $printMode === 'driver_summary') {
+            $view = 'invoice-driver.pdf';
+            if ($printMode === 'driver_summary') $viewPrintMode = 'summary';
+        } elseif ($printMode === 'other' || $printMode === 'other_summary') {
+            $view = 'invoice-other.pdf';
+            if ($printMode === 'other_summary') $viewPrintMode = 'summary';
+        }
+
+        return view($view, [
             'invoices' => $invoices,
             'showUsername' => $showUsername,
-            'printMode' => $printMode,
+            'printMode' => $viewPrintMode,
             'enableWatermark' => Setting::get('enable_pdf_watermark', '1'),
             'defaultManager' => Setting::get('default_bc_manager', ''),
             'defaultSpv' => Setting::get('default_bc_spv', ''),
@@ -592,6 +646,14 @@ class InvoiceProformaController extends Controller
         $cetakan = 'detail_nopol';
         if ($request->query('print_mode') === 'summary') {
             $cetakan = 'summary';
+        } elseif ($request->query('print_mode') === 'driver') {
+            $cetakan = 'driver';
+        } elseif ($request->query('print_mode') === 'driver_summary') {
+            $cetakan = 'driver_summary';
+        } elseif ($request->query('print_mode') === 'other') {
+            $cetakan = 'other';
+        } elseif ($request->query('print_mode') === 'other_summary') {
+            $cetakan = 'other_summary';
         } elseif ($request->query('hide_nopol') === '1') {
             $cetakan = 'without_nopol';
         } elseif ($request->query('show_username') === '1') {
@@ -610,7 +672,14 @@ class InvoiceProformaController extends Controller
             }
         } catch (\Exception $e) {}
 
-        return view('invoice-proforma.pdf', [
+        $view = 'invoice-proforma.pdf';
+        if ($printMode === 'driver') {
+            $view = 'invoice-driver.pdf';
+        } elseif ($printMode === 'other') {
+            $view = 'invoice-other.pdf';
+        }
+
+        return view($view, [
             'invoices' => $invoices,
             'showUsername' => $showUsername,
             'printMode' => $printMode,

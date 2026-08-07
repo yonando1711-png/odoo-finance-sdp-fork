@@ -266,8 +266,8 @@
                     <td x-show="columns.proforma_number.visible" class="px-4 py-2 font-mono text-xs font-semibold whitespace-nowrap">
                         @php
                             $printQuery = '';
-                            if ($invoice->last_print_mode === 'summary') {
-                                $printQuery = '?print_mode=summary';
+                            if (in_array($invoice->last_print_mode, ['summary', 'driver', 'driver_summary', 'other', 'other_summary'])) {
+                                $printQuery = '?print_mode=' . $invoice->last_print_mode;
                             } elseif ($invoice->last_print_mode === 'without_nopol') {
                                 $printQuery = '?hide_nopol=1';
                             } elseif ($invoice->last_print_mode === 'detail_username') {

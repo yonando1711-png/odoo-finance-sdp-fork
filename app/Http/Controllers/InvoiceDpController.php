@@ -197,6 +197,10 @@ class InvoiceDpController extends Controller
     public function printPdf($id)
     {
         $invoice = InvoiceDp::with('lines')->findOrFail($id);
+
+        $displayCount = (int)$invoice->print_count + 1;
+        $printNumDisplay = str_pad($displayCount, 2, '0', STR_PAD_LEFT);
+
         $invoice->increment('print_count');
         $invoice->update(['last_printed_at' => now()]);
 
@@ -205,6 +209,7 @@ class InvoiceDpController extends Controller
         $pdf = Pdf::loadView('invoice-dp.pdf', [
             'invoices' => collect([$invoice]),
             'enableWatermark' => $enableWatermark,
+            'printNumDisplay' => $printNumDisplay,
             'isPdf' => true,
         ]);
 
@@ -220,11 +225,16 @@ class InvoiceDpController extends Controller
     public function printHtml($id)
     {
         $invoice = InvoiceDp::with('lines')->findOrFail($id);
+
+        $displayCount = (int)$invoice->print_count + 1;
+        $printNumDisplay = str_pad($displayCount, 2, '0', STR_PAD_LEFT);
+
         $enableWatermark = Setting::get('enable_pdf_watermark', '1');
 
         return view('invoice-dp.pdf', [
             'invoices' => collect([$invoice]),
             'enableWatermark' => $enableWatermark,
+            'printNumDisplay' => $printNumDisplay,
             'isHtml' => true,
         ]);
     }

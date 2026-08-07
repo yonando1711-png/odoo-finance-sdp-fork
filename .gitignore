@@ -1,49 +1,70 @@
-*.log
-.DS_Store
+# Environment & Secret Files
 .env
-.env.backup
-.env.production
-.phpactor.json
-.phpunit.result.cache
-/.fleet
-/.idea
-/.nova
-/.phpunit.cache
-/.vscode
-/.zed
+.env.*
+*.env
 /auth.json
+Homestead.json
+Homestead.yaml
+
+# Security Keys & Certificates
+/storage/*.key
+*.key
+*.pem
+/storage/cacert.pem
+
+# Databases, Dumps & SQLite
+/storage/database.sqlite
+*.sqlite
+*.sqlite3
+*.db
+*.sql
+*.dump
+*dump*.json
+dump*.json
+
+# Logs, Cache & Storage Builds
+*.log
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/pail
+.phpunit.result.cache
+/.phpunit.cache
+
+# Dependencies & Compiled Assets
 /node_modules
+/vendor
 /public/build
 /public/hot
 /public/storage
-/storage/*.key
-/storage/pail
-/vendor
-Homestead.json
-Homestead.yaml
-Thumbs.db
-/brain
-/storage/database.sqlite
-/storage/cacert.pem
 
-# AI Session scratch and debug files
+# IDEs & System Junk
+.DS_Store
+Thumbs.db
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+.phpactor.json
+.~lock.*
+*.bak
+*.tmp
+*.swp
+
+# AI Session, Debug & Temporary Files
+/brain
 /scratch/
 scratch/
 /scratch_*
 scratch_*
-/*.pdf
-/invoice_logic_options.md
-/session_log_*.md
+test_*.php
+*.md
 project-rules.md
 
-test_*.php
-
-# Exported files
+# Exports & User Uploaded Documents
+*.pdf
 *.xlsx
 *.xls
 *.csv
-
-# Security: ignore data dumps and spreadsheets
-*dump*.json
-dump*.json
-.~lock.*

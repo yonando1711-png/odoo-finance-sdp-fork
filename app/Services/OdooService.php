@@ -2251,8 +2251,7 @@ class OdooService
                 'hrc_forminv_invoice_pic/name',
                 'payment_state',
                 'state',
-                'invoice_line_ids/sale_order_id/reserved_lot_id/name',
-                'invoice_line_ids/serial_ids/name',
+                'invoice_line_ids/sale_order_id/.id',
                 'id',
             ];
 
@@ -2273,9 +2272,8 @@ class OdooService
                         if ($currentEntry !== null) {
                             $entries[] = $currentEntry;
                         }
-                        $reservedLot = $row[24] ?? ($row[25] ?? '');
                         $currentEntry = [
-                            'odoo_id' => $row[26] ?? null,
+                            'odoo_id' => $row[25] ?? null,
                             'name' => $invoiceName,
                             'partner_name' => $row[1] ?? '',
                             'invoice_date' => $row[2] ?? '',
@@ -2296,7 +2294,8 @@ class OdooService
                             'invoice_pic' => $row[21] ?? '',
                             'payment_state' => $row[22] ?? 'not_paid',
                             'state' => $row[23] ?? 'posted',
-                            'reserved_lot' => $reservedLot,
+                            'so_id' => $row[24] ?? null,
+                            'reserved_lot' => '',
                             'lines' => [],
                         ];
                     }
@@ -2309,14 +2308,54 @@ class OdooService
                             'price_unit' => (float)($row[11] ?? 0),
                             'amount' => (float)($row[10] ?? 1) * (float)($row[11] ?? 0),
                         ];
+                        
+                        if (empty($currentEntry['so_id']) && !empty($row[24])) {
+                            $currentEntry['so_id'] = $row[24];
+                        }
+
+                        // Extract Nopol / Reserved Lot from line description or ref if found
                         if (empty($currentEntry['reserved_lot'])) {
-                            if (!empty($row[24])) $currentEntry['reserved_lot'] = $row[24];
-                            elseif (!empty($row[25])) $currentEntry['reserved_lot'] = $row[25];
+                            if (preg_match('/\b([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})\b/i', $lineDesc, $matches)) {
+                                $currentEntry['reserved_lot'] = strtoupper(str_replace(' ', '', $matches[1]));
+                            } elseif (!empty($currentEntry['ref']) && preg_match('/\b([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})\b/i', $currentEntry['ref'], $matches)) {
+                                $currentEntry['reserved_lot'] = strtoupper(str_replace(' ', '', $matches[1]));
+                            }
                         }
                     }
                 }
                 if ($currentEntry !== null) {
                     $entries[] = $currentEntry;
+                }
+            }
+
+            // Step 2: Query linked sale.order records directly for reserved_lot_id
+            $soIds = [];
+            foreach ($entries as $e) {
+                if (!empty($e['so_id']) && is_numeric($e['so_id'])) {
+                    $soIds[] = (int)$e['so_id'];
+                }
+            }
+            $soIds = array_values(array_unique($soIds));
+
+            if (!empty($soIds)) {
+                try {
+                    $soData = $this->execute('sale.order', 'read', [$soIds, ['id', 'lot_serial_names']]);
+                    $soMap = [];
+                    foreach ($soData as $so) {
+                        if (!empty($so['lot_serial_names'])) {
+                            $lotName = is_array($so['lot_serial_names']) ? ($so['lot_serial_names'][1] ?? '') : $so['lot_serial_names'];
+                            if (!empty($lotName)) {
+                                $soMap[$so['id']] = trim($lotName);
+                            }
+                        }
+                    }
+                    foreach ($entries as &$e) {
+                        if (!empty($e['so_id']) && isset($soMap[$e['so_id']])) {
+                            $e['reserved_lot'] = $soMap[$e['so_id']];
+                        }
+                    }
+                } catch (\Exception $e) {
+                    // Fallback
                 }
             }
 

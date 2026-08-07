@@ -5,14 +5,15 @@
     <title>Tanda Terima Uang Muka</title>
     <style>
         @page {
-            margin: 30px 40px 60px 40px;
+            margin: 25px 35px 35px 35px;
         }
         body {
             font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
             font-size: 10px;
-            color: #1e293b;
+            color: #000000;
             margin: 0;
             padding: 0;
+            line-height: 1.3;
         }
         table {
             width: 100%;
@@ -30,119 +31,95 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 80px;
-            color: rgba(255, 0, 0, 0.15);
+            font-size: 70px;
+            color: rgba(255, 0, 0, 0.12);
             font-weight: bold;
             text-align: center;
             white-space: nowrap;
             z-index: -1;
         }
-        .company-header {
+        .header-table {
+            width: 100%;
             margin-bottom: 5px;
         }
-        .company-header td {
+        .header-table td {
             vertical-align: top;
         }
         .company-name {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: bold;
         }
         .company-address {
-            font-size: 9px;
-            color: #334155;
+            font-size: 8.5px;
+            color: #000;
         }
         .doc-title {
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             text-align: center;
             letter-spacing: 1px;
-            text-decoration: underline;
-            margin: 15px 0 20px 0;
-            color: #0f172a;
+            margin: 10px 0 3px 0;
+            color: #000;
         }
-        .header-info-table {
-            margin-bottom: 20px;
+        .title-divider {
+            border-bottom: 1px solid #000;
+            margin-bottom: 12px;
         }
-        .header-info-table td {
-            padding: 4px 0;
-            font-size: 10.5px;
+        .info-table td {
+            padding: 3px 0;
+            font-size: 10px;
             vertical-align: top;
         }
         .field-label {
             font-weight: bold;
-            color: #1e293b;
-            width: 170px;
+            color: #000;
+            width: 150px;
         }
-        .field-colon {
-            width: 15px;
-            text-align: center;
-        }
-        .bordered-table {
-            border: 1px solid #000;
-            margin: 15px 0;
-        }
-        .bordered-table td {
-            padding: 6px 10px;
-            font-size: 10.5px;
-            border-bottom: 1px solid #cbd5e1;
-        }
-        .bordered-table tr:last-child td {
-            border-bottom: none;
-        }
-        .amount-table {
-            width: 100%;
-            margin-top: 10px;
-            border-top: 1.5px solid #000;
-            border-bottom: 1.5px solid #000;
-        }
-        .amount-table td {
-            padding: 6px 10px;
-            font-size: 11px;
-        }
-        .terbilang-box {
-            border: 1.5px solid #000;
-            padding: 8px 12px;
+        .amount-section {
             margin: 15px 0 10px 0;
-            font-size: 11px;
-            background-color: #f8fafc;
+        }
+        .amount-section td {
+            padding: 4px 0;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .terbilang-container {
+            border: 1px solid #000;
+            padding: 5px 8px;
+            margin: 8px 0 12px 0;
+            font-size: 10px;
         }
         .legal-notice {
             font-style: italic;
-            font-size: 9.5px;
-            color: #334155;
-            margin: 10px 0 25px 0;
-            line-height: 1.4;
+            font-size: 8.5px;
+            color: #000;
+            line-height: 1.3;
+            width: 65%;
+            float: left;
         }
-        .footer-table {
-            margin-top: 30px;
-        }
-        .footer-table td {
-            vertical-align: top;
-        }
-        .signature-box {
-            text-align: center;
-            width: 200px;
+        .signature-container {
+            width: 30%;
             float: right;
+            text-align: center;
         }
-        .signature-line {
-            margin-top: 60px;
-            border-bottom: 1px solid #000;
-            width: 160px;
-            display: inline-block;
+        .signature-title {
+            font-size: 10px;
+            margin-bottom: 45px;
         }
-        .doc-control {
-            position: absolute;
-            bottom: -35px;
-            left: 0;
-            font-size: 8px;
-            color: #64748b;
+        .footer-bar {
+            margin-top: 50px;
+            padding-top: 4px;
+            font-size: 8.5px;
+            color: #000;
+            clear: both;
         }
-        .print-timestamp {
-            position: absolute;
-            bottom: -35px;
-            right: 0;
-            font-size: 8px;
-            color: #1e293b;
+        .footer-left {
+            float: left;
+            font-weight: normal;
+        }
+        .footer-right {
+            float: right;
+            font-weight: bold;
         }
     </style>
 </head>
@@ -153,30 +130,30 @@
             <div class="watermark">DUPLICATE - {{ $invoice->print_count }}</div>
         @endif
 
-        {{-- Company Header & Top Right Info --}}
-        <table class="company-header">
+        {{-- Top Header --}}
+        <table class="header-table">
             <tr>
-                <td style="width: 55%;">
+                <td style="width: 58%;">
                     @php
                         $isPdfRequest = request()->is('*/pdf');
                         $logoSource = $isPdfRequest ? public_path('images/logo.png') : asset('images/logo.png');
                     @endphp
-                    <img src="{{ $logoSource }}" style="max-height: 45px; max-width: 180px; margin-bottom: 5px;" alt="Logo"><br>
+                    <img src="{{ $logoSource }}" style="max-height: 38px; max-width: 170px; margin-bottom: 3px;" alt="Logo"><br>
                     <span class="company-name">PT. SURYA DARMA PERKASA</span><br>
                     <span class="company-address">
                         JL. DAAN MOGOT KM.1 NO. 99, JAKARTA BARAT<br>
                         (021) 56977708, 5661060
                     </span>
                 </td>
-                <td style="width: 45%; text-align: right; vertical-align: top;">
-                    <table style="width: 100%; border-collapse: collapse;">
+                <td style="width: 42%; text-align: right; vertical-align: top;">
+                    <table style="width: 220px; float: right; border-collapse: collapse;">
                         <tr>
-                            <td style="font-weight: bold; width: 70px; text-align: left;">Nomor</td>
+                            <td style="width: 55px; text-align: left;">Nomor</td>
                             <td style="width: 10px; text-align: center;">:</td>
-                            <td style="font-weight: bold; text-align: left;">{{ $invoice->name }}</td>
+                            <td style="text-align: left; font-weight: bold;">{{ $invoice->name }}</td>
                         </tr>
                         <tr>
-                            <td style="font-weight: bold; text-align: left;">Tanggal</td>
+                            <td style="text-align: left;">Tanggal</td>
                             <td style="text-align: center;">:</td>
                             <td style="text-align: left;">{{ $invoice->invoice_date ? $invoice->invoice_date->format('d/m/Y') : '' }}</td>
                         </tr>
@@ -187,91 +164,97 @@
 
         {{-- Document Title --}}
         <div class="doc-title">TANDA TERIMA UANG MUKA</div>
+        <div class="title-divider"></div>
 
-        {{-- Customer & Receipt Info --}}
-        <table class="header-info-table">
+        {{-- Info Block --}}
+        <table class="info-table" style="width: 100%;">
             <tr>
-                <td class="field-label">TELAH TERIMA DARI</td>
-                <td class="field-colon">:</td>
-                <td style="font-weight: bold;">{{ strtoupper($invoice->partner_name) }}</td>
+                <td style="width: 58%; vertical-align: top; padding: 0;">
+                    <table style="width: 100%;">
+                        <tr>
+                            <td class="field-label" style="width: 140px; font-weight: bold;">TELAH TERIMA DARI</td>
+                            <td style="width: 10px;">:</td>
+                            <td style="font-weight: bold;">{{ $invoice->partner_name }}</td>
+                        </tr>
+                    </table>
+                </td>
+                <td style="width: 42%; vertical-align: top; padding: 0;">
+                    <table style="width: 220px; float: right; border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 55px; text-align: left;">NPWP</td>
+                            <td style="width: 10px; text-align: center;">:</td>
+                            <td style="text-align: left;">{{ $invoice->partner_npwp ?: '00.000.000.0-000.000' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="text-align: left;">Tanggal</td>
+                            <td style="text-align: center;">:</td>
+                            <td style="text-align: left;">{{ $invoice->invoice_date ? $invoice->invoice_date->format('d/m/Y') : '' }}</td>
+                        </tr>
+                    </table>
+                </td>
             </tr>
             <tr>
-                <td class="field-label">NPWP</td>
-                <td class="field-colon">:</td>
-                <td>{{ $invoice->partner_npwp ?: '00.000.000.0-000.000' }}</td>
-            </tr>
-            <tr>
-                <td class="field-label">Tanggal</td>
-                <td class="field-colon">:</td>
-                <td>{{ $invoice->invoice_date ? $invoice->invoice_date->format('d/m/Y') : '' }}</td>
-            </tr>
-            <tr>
-                <td class="field-label" style="padding-top: 15px;">UNTUK PEMBAYARAN</td>
-                <td class="field-colon" style="padding-top: 15px;">:</td>
-                <td style="padding-top: 15px; font-weight: bold; font-size: 11px;">
-                    {{ $invoice->payment_description }}
+                <td colspan="2" style="padding-top: 15px;">
+                    <table style="width: 100%;">
+                        <tr>
+                            <td class="field-label" style="width: 140px; font-weight: bold;">UNTUK PEMBAYARAN</td>
+                            <td style="width: 10px;">:</td>
+                            <td>{{ $invoice->payment_description }}</td>
+                        </tr>
+                    </table>
                 </td>
             </tr>
         </table>
 
-        {{-- Financial Amounts Table --}}
-        <table class="amount-table">
+        {{-- Financial Amounts Section --}}
+        <table class="amount-section" style="margin-top: 20px;">
             <tr>
-                <td style="font-weight: bold; width: 170px;">JUMLAH PEMBAYARAN</td>
+                <td class="field-label">JUMLAH PEMBAYARAN</td>
                 <td style="width: 30px;">Rp.</td>
-                <td style="text-align: right; width: 120px; font-weight: bold;">
-                    {{ number_format($invoice->amount_untaxed, 0, ',', '.') }}
-                </td>
-                <td style="font-weight: bold; width: 60px; text-align: right;">PPN</td>
-                <td style="width: 30px; text-align: right;">Rp.</td>
-                <td style="text-align: right; width: 120px; font-weight: bold;">
-                    {{ number_format($invoice->amount_tax, 0, ',', '.') }}
-                </td>
+                <td style="width: 110px; text-align: right;">{{ number_format($invoice->amount_untaxed, 0, ',', '.') }}</td>
+                <td style="width: 60px; text-align: center;">PPN</td>
+                <td style="width: 30px;">Rp.</td>
+                <td style="text-align: left;">{{ number_format($invoice->amount_tax, 0, ',', '.') }}</td>
             </tr>
-            <tr style="font-size: 11.5px;">
-                <td style="font-weight: bold;">TOTAL PEMBAYARAN</td>
-                <td style="font-weight: bold;">Rp.</td>
-                <td style="text-align: right; font-weight: bold; font-size: 12px;" colspan="4">
-                    {{ number_format($invoice->amount_total, 0, ',', '.') }}
-                </td>
+            <tr>
+                <td class="field-label">TOTAL PEMBAYARAN</td>
+                <td>Rp.</td>
+                <td style="text-align: right;">{{ number_format($invoice->amount_total, 0, ',', '.') }}</td>
+                <td colspan="3"></td>
             </tr>
         </table>
 
         {{-- Terbilang Box --}}
-        <div class="terbilang-box">
+        <div class="terbilang-container">
             <strong>Terbilang :</strong>
             <em>{{ ucwords(\App\Helpers\Terbilang::convert($invoice->amount_total)) }} Rp. #</em>
         </div>
 
-        {{-- Legal Notice --}}
-        <div class="legal-notice">
-            Tanda Terima Uang Muka akan berlaku sebagai bukti pembayaran yang sah apabila dana sudah efektif di rekening PT. Surya Darma Perkasa.
+        {{-- Legal Notice & Signature Row --}}
+        <div style="margin-top: 10px;">
+            <div class="legal-notice">
+                Tanda Terima Uang Muka akan berlaku sebagai bukti pembayaran yang sah apabila<br>
+                dana sudah efektif di rekening PT. Surya Darma Perkasa.
+            </div>
+            <div class="signature-container">
+                <div class="signature-title">Penerima</div>
+            </div>
+            <div style="clear: both;"></div>
         </div>
 
-        {{-- Signature Section --}}
-        <table class="footer-table">
-            <tr>
-                <td style="width: 60%;"></td>
-                <td style="width: 40%; text-align: center;">
-                    <div style="font-weight: bold; margin-bottom: 50px;">Penerima</div>
-                    <div style="border-bottom: 1px solid #000; width: 160px; margin: 0 auto;"></div>
-                </td>
-            </tr>
-        </table>
-
-        {{-- Document Control Code & Dynamic Print Timestamp Footer --}}
+        {{-- Footer: Document Control Code & Dynamic Timestamp --}}
         @php
             $picCode = $invoice->invoice_pic ? strtoupper(substr(trim($invoice->invoice_pic), 0, 3)) : 'SDP';
             $dateCode = date('dmy');
-            $printNum = str_pad($invoice->print_count ?: 1, 2, '0', STR_PAD_LEFT);
+            $printNum = $printNumDisplay ?? str_pad(max(1, (int)$invoice->print_count), 2, '0', STR_PAD_LEFT);
             $timestampCode = "{$picCode}/{$dateCode}/{$printNum}";
         @endphp
 
-        <div style="margin-top: 40px; border-top: 1px solid #000; padding-top: 5px; position: relative;">
-            <div style="float: left; font-size: 8.5px; color: #475569;">
+        <div class="footer-bar">
+            <div class="footer-left">
                 SDP/FR/BC/02, Rev.01
             </div>
-            <div style="float: right; font-size: 8.5px; font-weight: bold; color: #1e293b;">
+            <div class="footer-right">
                 {{ $timestampCode }}
             </div>
             <div style="clear: both;"></div>

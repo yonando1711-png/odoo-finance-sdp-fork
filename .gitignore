@@ -62,6 +62,8 @@ scratch_*
 test_*.php
 *.md
 project-rules.md
+.gemini/
+.agents/
 
 # Exports & User Uploaded Documents
 *.pdf

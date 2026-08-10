@@ -746,6 +746,12 @@
                                                 {{ $rec->payment_date ? $rec->payment_date->format('Y-m-d') : '-' }}
                                             @endif
                                         </span>
+                                    @elseif($col['id'] === 'over_due_days')
+                                        @if($rec->over_due_days > 0)
+                                            <span class="font-bold text-red-600 dark:text-red-400">{{ $rec->over_due_days }} Days</span>
+                                        @else
+                                            <span class="text-slate-400">-</span>
+                                        @endif
                                     @elseif($col['id'] === 'invoice_name' || $col['id'] === 'invoice_ref' || $col['id'] === 'customer_ref' || $col['id'] === 'transaction_code')
                                         <div class="{{ $col['id'] === 'transaction_code' ? '' : 'whitespace-nowrap' }}">
                                             @if($col['id'] === 'invoice_name')

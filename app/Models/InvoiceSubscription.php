@@ -90,6 +90,30 @@ class InvoiceSubscription extends Model
         return \Carbon\Carbon::parse($this->invoice_date)->lt(\Carbon\Carbon::today());
     }
 
+    /**
+     * Get the number of days the invoice is overdue
+     */
+    public function getOverDueDaysAttribute(): int
+    {
+        if (in_array($this->status, ['paid', 'in_payment', 'partial'])) {
+            return 0;
+        }
+        
+        $targetDateStr = $this->due_date ?: $this->invoice_date;
+        if (!$targetDateStr) {
+            return 0;
+        }
+        
+        $targetDate = \Carbon\Carbon::parse($targetDateStr);
+        $today = \Carbon\Carbon::today();
+        
+        if ($today->gt($targetDate)) {
+            return (int) abs($today->diffInDays($targetDate));
+        }
+        
+        return 0;
+    }
+
     // ─── Scopes ───
 
     public function scopeStatus(Builder $q, string $status): Builder

@@ -43,6 +43,7 @@ class InvoiceSubscriptionController extends Controller
             ['id' => 'invoice_date', 'label' => 'Exp. Invoice Date', 'visible' => true, 'width' => '120', 'sortable' => true, 'align' => 'center'],
             ['id' => 'due_date', 'label' => 'Due Date', 'visible' => false, 'width' => '120', 'sortable' => true, 'align' => 'center'],
             ['id' => 'payment_date', 'label' => 'Tanggal Bayar', 'visible' => false, 'width' => '120', 'sortable' => true, 'align' => 'center'],
+            ['id' => 'over_due_days', 'label' => 'Over Due Days', 'visible' => true, 'width' => '110', 'sortable' => false, 'align' => 'center'],
             ['id' => 'invoice_name', 'label' => 'Invoice #', 'visible' => true, 'width' => '120', 'sortable' => true, 'align' => 'left'],
             ['id' => 'invoice_ref', 'label' => 'Invoice Ref', 'visible' => false, 'width' => '150', 'sortable' => true, 'align' => 'left'],
             ['id' => 'customer_ref', 'label' => 'Cust. Reference', 'visible' => false, 'width' => '170', 'sortable' => true, 'align' => 'left'],

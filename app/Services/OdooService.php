@@ -1163,6 +1163,13 @@ class OdooService
                         $lineDesc = $row[10] ?? '';
                         $lineQty = (float) ($row[11] ?? 0);
                         $linePrice = (float) ($row[12] ?? 0);
+                        $productName = $row[27] ?? '';
+
+                        // Prepend product name to description if it's not already there, so we can filter by it
+                        if (!empty($productName) && !empty($lineDesc) && !str_contains(strtolower($lineDesc), strtolower($productName))) {
+                            // If it's something like "Lain-Lain (inv)", we format it nicely
+                            $lineDesc = $productName . "\n" . $lineDesc;
+                        }
 
                         if (!empty($lineDesc) || $lineQty > 0 || $linePrice > 0) {
                             $uom = !empty($row[30]) ? $row[30] : ($row[31] ?? '');

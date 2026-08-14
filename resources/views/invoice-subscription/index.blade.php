@@ -359,7 +359,7 @@
 }" x-init="initSortable()">
 
     {{-- Stats Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
             <p class="text-2xl font-bold text-slate-700 dark:text-slate-200">{{ number_format($stats['total']) }}</p>
             <p class="text-xs text-slate-500">Total Periods in Window</p>
@@ -387,6 +387,10 @@
             <p class="text-xs text-slate-500">Posted/Unpaid</p>
         </div>
         <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
+            <p class="text-2xl font-bold text-indigo-500">{{ number_format($stats['partial'] ?? 0) }}</p>
+            <p class="text-xs text-slate-500">Partially Paid</p>
+        </div>
+        <div class="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
             <p class="text-2xl font-bold text-emerald-500">{{ number_format($stats['paid']) }}</p>
             <p class="text-xs text-slate-500">Paid Invoices</p>
         </div>
@@ -402,7 +406,7 @@
             
             {{-- Tabs for Status --}}
             <div class="flex space-x-1 border-b border-slate-200 dark:border-slate-700 mb-4 overflow-x-auto pb-px">
-                @php $tabs = ['all' => 'All Status', 'not_invoiced' => 'Not Invoiced', 'not_invoiced_overdue' => 'Not Invoiced (Overdue)', 'not_invoiced_upcoming' => 'Not Invoiced (Upcoming)', 'draft' => 'Draft', 'uninvoiced' => 'Uninvoiced', 'unpaid' => 'Unpaid', 'paid' => 'Paid']; @endphp
+                @php $tabs = ['all' => 'All Status', 'not_invoiced' => 'Not Invoiced', 'not_invoiced_overdue' => 'Not Invoiced (Overdue)', 'not_invoiced_upcoming' => 'Not Invoiced (Upcoming)', 'draft' => 'Draft', 'uninvoiced' => 'Uninvoiced', 'unpaid' => 'Unpaid', 'paid' => 'Paid', 'partial' => 'Partial']; @endphp
                 @foreach($tabs as $val => $label)
                     <button type="submit" name="status" value="{{ $val }}" class="px-4 py-2 text-sm font-medium whitespace-nowrap border-b-2 transition-colors {{ $statusFilter === $val ? 'border-emerald-500 text-emerald-600 dark:text-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300' }}">
                         {{ $label }}

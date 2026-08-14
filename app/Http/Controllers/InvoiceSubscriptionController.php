@@ -42,7 +42,7 @@ class InvoiceSubscriptionController extends Controller
             ['id' => 'actual_end_rental', 'label' => 'Actual End', 'visible' => false, 'width' => '110', 'sortable' => true, 'align' => 'center'],
             ['id' => 'invoice_date', 'label' => 'Exp. Invoice Date', 'visible' => true, 'width' => '120', 'sortable' => true, 'align' => 'center'],
             ['id' => 'due_date', 'label' => 'Due Date', 'visible' => false, 'width' => '120', 'sortable' => true, 'align' => 'center'],
-            ['id' => 'payment_date', 'label' => 'Tanggal Bayar', 'visible' => false, 'width' => '120', 'sortable' => true, 'align' => 'center'],
+            ['id' => 'payment_date', 'label' => 'Tanggal Bayar', 'visible' => true, 'width' => '120', 'sortable' => true, 'align' => 'center'],
             ['id' => 'over_due_days', 'label' => 'Over Due Days', 'visible' => true, 'width' => '110', 'sortable' => false, 'align' => 'center'],
             ['id' => 'invoice_name', 'label' => 'Invoice #', 'visible' => true, 'width' => '120', 'sortable' => true, 'align' => 'left'],
             ['id' => 'invoice_ref', 'label' => 'Invoice Ref', 'visible' => false, 'width' => '150', 'sortable' => true, 'align' => 'left'],
@@ -126,9 +126,10 @@ class InvoiceSubscriptionController extends Controller
                           })->where('invoice_date', '>=', $today);
                       });
                 }),
-                'paid'    => $query->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(payment_state)'), ['paid', 'in_payment', 'partial', 'reversed']),
+                'paid'    => $query->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(payment_state)'), ['paid', 'in_payment', 'reversed']),
+                'partial' => $query->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(payment_state)'), ['partial', 'partially paid', 'partially_paid']),
                 'unpaid'  => $query->whereRaw("LOWER(invoice_state) = 'posted'")
-                                   ->whereNotIn(\Illuminate\Support\Facades\DB::raw("LOWER(COALESCE(payment_state,''))"), ['paid', 'in_payment', 'partial', 'reversed']),
+                                   ->whereNotIn(\Illuminate\Support\Facades\DB::raw("LOWER(COALESCE(payment_state,''))"), ['paid', 'in_payment', 'partial', 'partially paid', 'partially_paid', 'reversed']),
                 default   => null,
             };
         }
@@ -184,8 +185,9 @@ class InvoiceSubscriptionController extends Controller
                 count(CASE WHEN (invoice_name IS NULL OR invoice_name = '') AND invoice_date < ? THEN 1 END) as not_invoiced_overdue,
                 count(CASE WHEN (invoice_name IS NULL OR invoice_name = '') AND invoice_date >= ? THEN 1 END) as not_invoiced_upcoming,
                 count(CASE WHEN LOWER(invoice_state) = 'draft' THEN 1 END) as draft,
-                count(CASE WHEN LOWER(payment_state) IN ('paid', 'in_payment', 'partial', 'reversed') THEN 1 END) as paid,
-                count(CASE WHEN LOWER(invoice_state) = 'posted' AND LOWER(COALESCE(payment_state,'')) NOT IN ('paid', 'in_payment', 'partial', 'reversed') THEN 1 END) as unpaid
+                count(CASE WHEN LOWER(payment_state) IN ('paid', 'in_payment', 'reversed') THEN 1 END) as paid,
+                count(CASE WHEN LOWER(payment_state) IN ('partial', 'partially paid', 'partially_paid') THEN 1 END) as partial,
+                count(CASE WHEN LOWER(invoice_state) = 'posted' AND LOWER(COALESCE(payment_state,'')) NOT IN ('paid', 'in_payment', 'partial', 'partially paid', 'partially_paid', 'reversed') THEN 1 END) as unpaid
             ", [now()->toDateString(), now()->toDateString()])
             ->first()
             ->toArray();
@@ -414,9 +416,10 @@ class InvoiceSubscriptionController extends Controller
                                                   })->where('invoice_date', '>=', $today);
                                               });
                                         }),
-                    'paid'         => $query->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(payment_state)'), ['paid', 'in_payment', 'partial', 'reversed']),
+                    'paid'         => $query->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(payment_state)'), ['paid', 'in_payment', 'reversed']),
+                    'partial'      => $query->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(payment_state)'), ['partial', 'partially paid', 'partially_paid']),
                     'unpaid'       => $query->whereRaw("LOWER(invoice_state) = 'posted'")
-                                           ->whereNotIn(\Illuminate\Support\Facades\DB::raw("LOWER(COALESCE(payment_state,''))"), ['paid', 'in_payment', 'partial', 'reversed']),
+                                           ->whereNotIn(\Illuminate\Support\Facades\DB::raw("LOWER(COALESCE(payment_state,''))"), ['paid', 'in_payment', 'partial', 'partially paid', 'partially_paid', 'reversed']),
                     default        => null,
                 };
             }
@@ -450,6 +453,7 @@ class InvoiceSubscriptionController extends Controller
             'draft' => 'Draft',
             'uninvoiced' => 'Uninvoiced',
             'paid' => 'Paid',
+            'partial' => 'Partial_Paid',
             'unpaid' => 'Unpaid',
             default => 'All_Status',
         };
@@ -537,6 +541,7 @@ class InvoiceSubscriptionController extends Controller
             'status'       => $this->getStatusLabel($row),
             'period_start' => $row->period_start ? \Carbon\Carbon::parse($row->period_start)->format('d M Y') . ' - ' . ($row->period_end ? \Carbon\Carbon::parse($row->period_end)->format('d M Y') : '') : '',
             'invoice_date' => $row->invoice_date ? \Carbon\Carbon::parse($row->invoice_date)->format('d M Y') : '',
+            'payment_date' => $row->payment_date ? \Carbon\Carbon::parse($row->payment_date)->format('d M Y') : '',
             'synced_at'    => $row->synced_at ? \Carbon\Carbon::parse($row->synced_at)->format('d M Y H:i') : '',
             'price_unit'   => number_format($row->price_unit, 2),
             'invoice_amount' => number_format($row->invoice_amount, 2),

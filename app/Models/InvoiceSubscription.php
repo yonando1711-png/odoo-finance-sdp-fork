@@ -69,7 +69,10 @@ class InvoiceSubscription extends Model
             return 'draft';
         }
         $pay = strtolower($this->payment_state ?? '');
-        if (in_array($pay, ['paid', 'in_payment', 'partial', 'reversed'])) {
+        if (in_array($pay, ['partial', 'partially paid', 'partially_paid'])) {
+            return 'partial';
+        }
+        if (in_array($pay, ['paid', 'in_payment', 'reversed'])) {
             return $pay;
         }
         if (strtolower($this->invoice_state ?? '') === 'posted') {
@@ -121,8 +124,9 @@ class InvoiceSubscription extends Model
         return match($status) {
             'not_invoiced' => $q->whereNull('invoice_name')->orWhere('invoice_name', ''),
             'draft'        => $q->whereRaw("LOWER(invoice_state) = 'draft'"),
-            'paid'         => $q->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(payment_state)'), ['paid', 'in_payment', 'partial', 'reversed']),
-            'unpaid'       => $q->whereRaw("LOWER(invoice_state) = 'posted'")->whereNotIn(\Illuminate\Support\Facades\DB::raw('LOWER(payment_state)'), ['paid', 'in_payment', 'partial', 'reversed']),
+            'paid'         => $q->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(payment_state)'), ['paid', 'in_payment', 'reversed']),
+            'partial'      => $q->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(payment_state)'), ['partial', 'partially paid', 'partially_paid']),
+            'unpaid'       => $q->whereRaw("LOWER(invoice_state) = 'posted'")->whereNotIn(\Illuminate\Support\Facades\DB::raw('LOWER(payment_state)'), ['paid', 'in_payment', 'partial', 'partially paid', 'partially_paid', 'reversed']),
             default        => $q,
         };
     }

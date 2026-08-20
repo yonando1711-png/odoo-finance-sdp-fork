@@ -776,6 +776,8 @@
                                         {{ number_format($rec->price_unit, 2) }}
                                     @elseif($col['id'] === 'invoice_amount')
                                         {{ number_format($rec->invoice_amount, 2) }}
+                                    @elseif($col['id'] === 'amount_paid')
+                                        {{ number_format($rec->amount_paid, 2) }}
                                     @elseif($col['id'] === 'rental_uom')
                                         @php
                                             $uomMap = [

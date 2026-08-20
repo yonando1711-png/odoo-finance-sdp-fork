@@ -51,6 +51,7 @@ class InvoiceSubscriptionController extends Controller
             ['id' => 'invoice_state', 'label' => 'Invoice State', 'visible' => false, 'width' => '100', 'sortable' => true, 'align' => 'center'],
             ['id' => 'payment_state', 'label' => 'Payment State', 'visible' => false, 'width' => '100', 'sortable' => true, 'align' => 'center'],
             ['id' => 'invoice_amount', 'label' => 'Invoice Price', 'visible' => true, 'width' => '110', 'sortable' => true, 'align' => 'right'],
+            ['id' => 'amount_paid', 'label' => 'Amount Paid', 'visible' => true, 'width' => '110', 'sortable' => true, 'align' => 'right'],
             ['id' => 'price_unit', 'label' => 'Price Unit', 'visible' => false, 'width' => '100', 'sortable' => true, 'align' => 'right'],
             ['id' => 'rental_uom', 'label' => 'Unit of Measure', 'visible' => false, 'width' => '120', 'sortable' => true, 'align' => 'center'],
             ['id' => 'status', 'label' => 'Status', 'visible' => true, 'width' => '90', 'sortable' => true, 'align' => 'center'],
@@ -545,6 +546,7 @@ class InvoiceSubscriptionController extends Controller
             'synced_at'    => $row->synced_at ? \Carbon\Carbon::parse($row->synced_at)->format('d M Y H:i') : '',
             'price_unit'   => number_format($row->price_unit, 2),
             'invoice_amount' => number_format($row->invoice_amount, 2),
+            'amount_paid' => number_format($row->amount_paid, 2),
             'actual_start_rental' => $row->actual_start_rental ? \Carbon\Carbon::parse($row->actual_start_rental)->format('d M Y') : '',
             'actual_end_rental'   => $row->actual_end_rental ? \Carbon\Carbon::parse($row->actual_end_rental)->format('d M Y') : '',
             default        => $row->{$colId} ?? ''

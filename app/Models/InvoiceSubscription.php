@@ -39,6 +39,7 @@ class InvoiceSubscription extends Model
         'partner_address_complete',
         'synced_at',
         'invoice_pic',
+        'amount_paid',
     ];
 
     protected $casts = [
@@ -52,6 +53,7 @@ class InvoiceSubscription extends Model
         'price_unit'          => 'decimal:2',
         'duration_price'      => 'decimal:2',
         'invoice_amount'      => 'decimal:2',
+        'amount_paid'         => 'decimal:2',
         'synced_at'           => 'datetime',
     ];
 
@@ -98,7 +100,7 @@ class InvoiceSubscription extends Model
      */
     public function getOverDueDaysAttribute(): int
     {
-        if (in_array($this->status, ['paid', 'in_payment', 'partial'])) {
+        if (in_array($this->status, ['paid', 'in_payment'])) {
             return 0;
         }
         

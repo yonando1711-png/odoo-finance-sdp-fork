@@ -294,6 +294,7 @@ class SyncService
                 'price_unit'          => $entry['price_unit'] ?? 0,
                 'duration_price'      => $entry['duration_price'] ?? 0,
                 'invoice_amount'      => $entry['invoice_amount'] ?? 0,
+                'amount_paid'         => $entry['amount_paid'] ?? 0,
                 'rental_uom'          => $entry['rental_uom'] ?? null,
                 'invoice_name'        => $entry['invoice_name'] ?: null,
                 'invoice_ref'         => $entry['invoice_ref'] ?: null,

@@ -790,6 +790,7 @@ class OdooService
                 'rental_order_id/partner_id/vat',                        // 26: NPWP
                 'rental_order_id/partner_id/.id',                        // 27: Partner ID for enrichment
                 'invoice_id/hrc_forminv_invoice_pic/name',               // 28: PIC Name
+                'invoice_id/amount_residual',                            // 29: Unpaid amount
             ];
 
             $entries = [];
@@ -812,6 +813,8 @@ class OdooService
                     $paymentState = $row[14] ?? null;
                     $priceUnit = (float) ($row[16] ?? 0);
                     $invoiceAmount = (float) ($row[18] ?? 0);
+                    $amountResidual = (float) ($row[29] ?? $invoiceAmount);
+                    $amountPaid = $invoiceAmount - $amountResidual;
 
                     // Skip if it has an invoice, but the Invoice Price is 0 (unless it is cancelled/reversed, so we can track cancellation/reversal status for Accounting Report).
                     // If it has NO invoice (Not Invoiced), we keep it.
@@ -847,6 +850,7 @@ class OdooService
                         'payment_state' => $row[14] ?? null,
                         'price_unit' => $priceUnit,
                         'invoice_amount' => $invoiceAmount,
+                        'amount_paid' => $amountPaid,
                         'rental_uom' => $row[17] ?? '',
                         'license_plate' => $row[19] ?? null,
                         'customer_ref' => $row[20] ?? null,

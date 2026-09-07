@@ -307,6 +307,8 @@ class SyncService
                 'payment_state'       => $entry['payment_state'] ?: null,
                 'synced_at'           => $syncedAt,
                 'invoice_pic'         => $entry['invoice_pic'] ?? null,
+                'journal_code'        => $entry['journal_code'] ?? 'INVRS',
+                'journal_name'        => $entry['journal_name'] ?? 'Invoice Sewa Subscription',
             ];
 
             InvoiceSubscription::updateOrCreate(

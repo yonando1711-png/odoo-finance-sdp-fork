@@ -44,6 +44,7 @@ class InvoiceSubscriptionController extends Controller
             ['id' => 'due_date', 'label' => 'Due Date', 'visible' => false, 'width' => '120', 'sortable' => true, 'align' => 'center'],
             ['id' => 'payment_date', 'label' => 'Tanggal Bayar', 'visible' => true, 'width' => '120', 'sortable' => true, 'align' => 'center'],
             ['id' => 'over_due_days', 'label' => 'Over Due Days', 'visible' => true, 'width' => '110', 'sortable' => false, 'align' => 'center'],
+            ['id' => 'journal_code', 'label' => 'Journal', 'visible' => false, 'width' => '90', 'sortable' => true, 'align' => 'center'],
             ['id' => 'invoice_name', 'label' => 'Invoice #', 'visible' => true, 'width' => '120', 'sortable' => true, 'align' => 'left'],
             ['id' => 'invoice_ref', 'label' => 'Invoice Ref', 'visible' => false, 'width' => '150', 'sortable' => true, 'align' => 'left'],
             ['id' => 'customer_ref', 'label' => 'Cust. Reference', 'visible' => false, 'width' => '170', 'sortable' => true, 'align' => 'left'],
@@ -101,6 +102,12 @@ class InvoiceSubscriptionController extends Controller
         // ── Search ──
         if ($request->filled('search')) {
             $query->search($request->search);
+        }
+
+        // ── Journal filter ──
+        $journalFilter = $request->input('journal', 'all');
+        if ($journalFilter !== 'all') {
+            $query->where('journal_code', $journalFilter);
         }
 
         // ── Status filter ──
@@ -163,12 +170,15 @@ class InvoiceSubscriptionController extends Controller
 
         $records = $query->paginate($perPage)->withQueryString();
 
-        // ── Stats (over the whole window, no status/search filters) ──
+        // ── Stats (over the whole window, respecting journal/search/date filters) ──
         $statsQuery = InvoiceSubscription::query()
             ->where(function ($q) {
                 $q->where('invoice_amount', '>', 0)
                   ->orWhereNull('invoice_name')
                   ->orWhere('invoice_name', '');
+            })
+            ->when($journalFilter !== 'all', function ($q) use ($journalFilter) {
+                $q->where('journal_code', $journalFilter);
             })
             ->when($request->filled('search'), function ($q) use ($request) {
                 $q->search($request->search);
@@ -205,7 +215,7 @@ class InvoiceSubscriptionController extends Controller
 
         return view('invoice-subscription.index', compact(
             'records', 'stats', 'sort', 'dir', 'perPage',
-            'statusFilter', 'lastSync', 'dateWindow', 'tablePrefs'
+            'statusFilter', 'journalFilter', 'lastSync', 'dateWindow', 'tablePrefs'
         ));
     }
 
@@ -241,31 +251,39 @@ class InvoiceSubscriptionController extends Controller
     }
 
     /**
-     * Quick sync recent invoices
+     * Quick sync recent invoices (subscription & other journals)
      */
     public function syncRecent(Request $request, SyncService $sync)
     {
         try {
             $odoo = new OdooService();
             $idResult = $odoo->getRecentInvoiceIds('subscription', 50);
+            $recentOtherResult = $odoo->getRecentCustomerInvoiceIdsByJournals(['INVOW', 'INVOT', 'INVRT', 'INVDV'], 20);
 
-            if (!$idResult['success'] || empty($idResult['ids'])) {
+            $allData = [];
+
+            if (!empty($idResult['success']) && !empty($idResult['ids'])) {
+                $subResult = $odoo->fetchSubscriptionInvoicePeriodsByIds($idResult['ids']);
+                if (!empty($subResult['data'])) {
+                    $allData = array_merge($allData, $subResult['data']);
+                }
+            }
+
+            if (!empty($recentOtherResult['success']) && !empty($recentOtherResult['ids'])) {
+                $otherResult = $odoo->fetchCustomerInvoicesByIds($recentOtherResult['ids']);
+                if (!empty($otherResult['data'])) {
+                    $allData = array_merge($allData, $otherResult['data']);
+                }
+            }
+
+            if (empty($allData)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No recent invoices found or fetch failed: ' . ($idResult['message'] ?? '')
+                    'message' => 'No recent invoices found or fetch failed.'
                 ]);
             }
 
-            $result = $odoo->fetchSubscriptionInvoicePeriodsByIds($idResult['ids']);
-
-            if (!$result['success'] || empty($result['data'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Odoo fetch failed: ' . ($result['message'] ?? 'Unknown error')
-                ]);
-            }
-
-            $savedCount = $sync->saveInvoiceSubscriptions($result['data'], false);
+            $savedCount = $sync->saveInvoiceSubscriptions($allData, false);
 
             return response()->json([
                 'success' => true,
@@ -281,8 +299,8 @@ class InvoiceSubscriptionController extends Controller
     }
 
     /**
-     * Sync subscription invoice periods from Odoo.
-     * Uses a fixed date window: 2025-04-01 → today + 15 days.
+     * Sync subscription invoice periods and non-subscription customer invoices from Odoo.
+     * Uses a fixed date window: 2025-04-01 → today + 15 days (or chunk window).
      */
     public function sync(Request $request, SyncService $sync)
     {
@@ -300,8 +318,14 @@ class InvoiceSubscriptionController extends Controller
 
             $odoo   = new OdooService();
             $result = $odoo->fetchSubscriptionInvoicePeriods($dateFrom, $dateTo);
+            $otherResult = $odoo->fetchCustomerInvoicesByJournals($dateFrom, $dateTo, ['INVOW', 'INVOT', 'INVRT', 'INVDV']);
 
-            if (!$result['success']) {
+            $allData = array_merge(
+                $result['data'] ?? [],
+                $otherResult['data'] ?? []
+            );
+
+            if (!$result['success'] && empty($allData)) {
                 ImportLog::create([
                     'source'        => 'odoo_subscription_periods',
                     'imported_at'   => now(),
@@ -317,16 +341,16 @@ class InvoiceSubscriptionController extends Controller
                 ]);
             }
 
-            if (empty($result['data'])) {
+            if (empty($allData)) {
                 return response()->json([
                     'success' => true,
-                    'message' => "No periods found for {$dateFrom} to {$dateTo}.",
+                    'message' => "No periods or invoices found for {$dateFrom} to {$dateTo}.",
                     'count'   => 0,
                 ]);
             }
 
             $truncate = $request->boolean('truncate', false);
-            $savedCount = $sync->saveInvoiceSubscriptions($result['data'], $truncate);
+            $savedCount = $sync->saveInvoiceSubscriptions($allData, $truncate);
 
             ImportLog::create([
                 'source'       => 'odoo_subscription_periods',
@@ -342,7 +366,7 @@ class InvoiceSubscriptionController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => "Synced {$savedCount} periods for range [{$dateFrom} to {$dateTo}].",
+                'message' => "Synced {$savedCount} records for range [{$dateFrom} to {$dateTo}].",
                 'count'   => $savedCount,
             ]);
         } catch (\Exception $e) {
@@ -429,6 +453,9 @@ class InvoiceSubscriptionController extends Controller
             if ($request->filled('date_to'))   $query->where('invoice_date', '<=', $request->date_to);
             if ($request->filled('rental_status') && $request->rental_status !== 'all') {
                 $query->where('rental_status', $request->rental_status);
+            }
+            if ($request->filled('journal') && $request->journal !== 'all') {
+                $query->where('journal_code', $request->journal);
             }
         }
 

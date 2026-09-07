@@ -883,6 +883,183 @@ class OdooService
     }
 
     /**
+     * Fetch non-subscription customer invoices (INVOW, INVOT, INVRT, INVDV) from account.move
+     * strictly for Cek Invoice Subscription monitoring.
+     */
+    public function fetchCustomerInvoicesByJournals(string $dateFrom, string $dateTo, array $journalCodes = ['INVOW', 'INVOT', 'INVRT', 'INVDV']): array
+    {
+        try {
+            $domain = [
+                ['move_type', '=', 'out_invoice'],
+                ['journal_id.code', 'in', $journalCodes],
+                ['invoice_date', '>=', $dateFrom],
+                ['invoice_date', '<=', $dateTo],
+            ];
+
+            $moveIds = $this->execute('account.move', 'search', [$domain], ['order' => 'invoice_date asc']);
+            return $this->fetchCustomerInvoicesByIds($moveIds);
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Fetch customer invoices failed: ' . $e->getMessage(), 'data' => []];
+        }
+    }
+
+    /**
+     * Fetch customer invoices by IDs from account.move for Cek Invoice Subscription
+     */
+    public function fetchCustomerInvoicesByIds(array $moveIds): array
+    {
+        try {
+            if (empty($moveIds)) {
+                return ['success' => true, 'data' => [], 'count' => 0];
+            }
+
+            $fields = [
+                'id', 'name', 'partner_id', 'invoice_date', 'invoice_date_due',
+                'journal_id', 'state', 'payment_state', 'amount_total', 'amount_residual',
+                'ref', 'invoice_origin', 'invoice_payments_widget', 'invoice_line_ids',
+                'l10n_id_kode_transaksi', 'hrc_forminv_invoice_pic'
+            ];
+
+            $entries = [];
+            $chunkSize = 100;
+            $chunks = array_chunk($moveIds, $chunkSize);
+
+            foreach ($chunks as $chunk) {
+                $moves = $this->execute('account.move', 'read', [$chunk, $fields]);
+                if (empty($moves) || !is_array($moves)) {
+                    continue;
+                }
+
+                // Gather line IDs to batch-fetch line descriptions
+                $allLineIds = [];
+                foreach ($moves as $m) {
+                    if (!empty($m['invoice_line_ids']) && is_array($m['invoice_line_ids'])) {
+                        $allLineIds[] = $m['invoice_line_ids'][0];
+                    }
+                }
+
+                $lineMap = [];
+                if (!empty($allLineIds)) {
+                    $lineRows = $this->execute('account.move.line', 'read', [array_unique($allLineIds), ['id', 'name', 'price_unit']]);
+                    if (is_array($lineRows)) {
+                        foreach ($lineRows as $lr) {
+                            $lineMap[$lr['id']] = $lr;
+                        }
+                    }
+                }
+
+                foreach ($moves as $m) {
+                    $invoiceName = $m['name'] ?? '';
+                    $jCode = '';
+                    $jName = '';
+                    if (!empty($m['journal_id']) && is_array($m['journal_id'])) {
+                        $jName = $m['journal_id'][1] ?? '';
+                        if (str_starts_with($invoiceName, 'INVOW')) $jCode = 'INVOW';
+                        elseif (str_starts_with($invoiceName, 'INVOT')) $jCode = 'INVOT';
+                        elseif (str_starts_with($invoiceName, 'INVRT')) $jCode = 'INVRT';
+                        elseif (str_starts_with($invoiceName, 'INVDV')) $jCode = 'INVDV';
+                        elseif (str_starts_with($invoiceName, 'INVRS')) $jCode = 'INVRS';
+                    }
+
+                    $lineDesc = '';
+                    $priceUnit = 0;
+                    if (!empty($m['invoice_line_ids']) && is_array($m['invoice_line_ids'])) {
+                        $firstId = $m['invoice_line_ids'][0];
+                        if (isset($lineMap[$firstId])) {
+                            $lineDesc = $lineMap[$firstId]['name'] ?? '';
+                            $priceUnit = (float) ($lineMap[$firstId]['price_unit'] ?? 0);
+                        }
+                    }
+
+                    $invoiceAmount = (float) ($m['amount_total'] ?? 0);
+                    $amountResidual = (float) ($m['amount_residual'] ?? $invoiceAmount);
+                    $amountPaid = max(0, $invoiceAmount - $amountResidual);
+
+                    // Try to detect license plate from line description
+                    $licensePlate = null;
+                    if (preg_match('/\b([A-Z]{1,2}[-\s]?\d{1,4}[-\s]?[A-Z]{1,3})\b/i', $lineDesc, $match)) {
+                        $licensePlate = strtoupper(str_replace(' ', '-', $match[1]));
+                    }
+
+                    $partnerName = is_array($m['partner_id']) ? ($m['partner_id'][1] ?? '') : '';
+                    $partnerIdOdoo = is_array($m['partner_id']) ? ($m['partner_id'][0] ?? null) : null;
+                    $invoicePic = is_array($m['hrc_forminv_invoice_pic'] ?? null) ? ($m['hrc_forminv_invoice_pic'][1] ?? '') : ($m['hrc_forminv_invoice_pic'] ?? '');
+
+                    $entries[] = [
+                        'period_odoo_id'      => 'move_' . $m['id'],
+                        'period_numeric_id'   => $m['id'],
+                        'so_name'             => $m['invoice_origin'] ?: null,
+                        'partner_name'        => $partnerName,
+                        'partner_id_odoo'     => $partnerIdOdoo,
+                        'partner_address'     => '',
+                        'partner_address_complete' => '',
+                        'partner_npwp'        => '',
+                        'rental_status'       => null,
+                        'rental_type'         => match($jCode) {
+                            'INVOW' => 'Other (Own Risk)',
+                            'INVOT' => 'Other (With Tax)',
+                            'INVRT' => 'Retail',
+                            'INVDV' => 'Driver',
+                            default => 'Other',
+                        },
+                        'journal_code'        => $jCode ?: 'INVOW',
+                        'journal_name'        => $jName,
+                        'actual_start_rental' => null,
+                        'actual_end_rental'   => null,
+                        'period_type'         => null,
+                        'product_name'        => $lineDesc ?: ($jName ?: 'Other Invoice'),
+                        'license_plate'       => $licensePlate,
+                        'period_start'        => null,
+                        'period_end'          => null,
+                        'invoice_date'        => $m['invoice_date'] ?: null,
+                        'due_date'            => $m['invoice_date_due'] ?: null,
+                        'payment_date'        => $this->extractLatestPaymentDate($m['invoice_payments_widget'] ?? null),
+                        'price_unit'          => $priceUnit ?: $invoiceAmount,
+                        'duration_price'      => $invoiceAmount,
+                        'rental_uom'          => null,
+                        'invoice_name'        => $invoiceName,
+                        'invoice_ref'         => $invoiceName,
+                        'customer_ref'        => $m['ref'] ?: null,
+                        'transaction_code'    => $m['l10n_id_kode_transaksi'] ?: null,
+                        'invoice_state'       => $m['state'] ?: null,
+                        'payment_state'       => $m['payment_state'] ?: null,
+                        'invoice_amount'      => $invoiceAmount,
+                        'amount_paid'         => $amountPaid,
+                        'invoice_pic'         => $invoicePic,
+                    ];
+                }
+            }
+
+            $this->enrichAddresses($entries);
+
+            return [
+                'success' => true,
+                'data'    => $entries,
+                'count'   => count($entries),
+            ];
+        } catch (\Exception $e) {
+            return ['success' => false, 'message' => 'Fetch customer invoices failed: ' . $e->getMessage(), 'data' => []];
+        }
+    }
+
+    /**
+     * Get recent invoice IDs for other journals (INVOW, INVOT, INVRT, INVDV)
+     */
+    public function getRecentCustomerInvoiceIdsByJournals(array $journalCodes = ['INVOW', 'INVOT', 'INVRT', 'INVDV'], int $limit = 20): array
+    {
+        try {
+            $domain = [
+                ['move_type', '=', 'out_invoice'],
+                ['journal_id.code', 'in', $journalCodes],
+            ];
+            $ids = $this->execute('account.move', 'search', [$domain], ['order' => 'write_date desc', 'limit' => $limit]);
+            return ['success' => true, 'ids' => $ids];
+        } catch (\Exception $e) {
+            return ['success' => false, 'ids' => [], 'message' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Fetch Invoice Rental entries from Odoo using export_data
      * Fetches both "Invoice Sewa Retail" and "Invoice Sewa Subscription" journals
      */

@@ -40,6 +40,8 @@ class InvoiceSubscription extends Model
         'synced_at',
         'invoice_pic',
         'amount_paid',
+        'journal_code',
+        'journal_name',
     ];
 
     protected $casts = [
@@ -141,6 +143,28 @@ class InvoiceSubscription extends Model
                   ->orWhere('invoice_name', 'like', "%{$term}%")
                   ->orWhere('product_name', 'like', "%{$term}%");
         });
+    }
+
+    public function scopeJournal(Builder $q, string $journal): Builder
+    {
+        if ($journal === 'all' || empty($journal)) {
+            return $q;
+        }
+        return $q->where('journal_code', $journal);
+    }
+
+    /**
+     * Get journal badge details for display
+     */
+    public function getJournalBadgeAttribute(): array
+    {
+        return match($this->journal_code) {
+            'INVOW' => ['label' => 'INVOW', 'title' => 'Other wo Tax (Own Risk)', 'class' => 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-300 dark:border-purple-700/50'],
+            'INVOT' => ['label' => 'INVOT', 'title' => 'Other with Tax (ETLE/Toolkit/Ongkir)', 'class' => 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-300 dark:border-amber-700/50'],
+            'INVRT' => ['label' => 'INVRT', 'title' => 'Sewa Retail', 'class' => 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400 border border-teal-300 dark:border-teal-700/50'],
+            'INVDV' => ['label' => 'INVDV', 'title' => 'Invoice Driver', 'class' => 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 border border-indigo-300 dark:border-indigo-700/50'],
+            default => ['label' => 'INVRS', 'title' => 'Sewa Subscription', 'class' => 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-300 dark:border-blue-700/50'],
+        };
     }
 
     /**

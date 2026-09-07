@@ -420,6 +420,18 @@
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="SO #, customer, invoice..."
                         class="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
                 </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-500 mb-1">Filter Journal</label>
+                    <select name="journal" onchange="this.form.submit()" class="px-3 py-2 bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded-lg text-sm font-medium focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                        <option value="all" {{ ($journalFilter ?? 'all') == 'all' ? 'selected' : '' }}>Semua Journal</option>
+                        <option value="INVRS" {{ ($journalFilter ?? '') == 'INVRS' ? 'selected' : '' }}>INVRS — Sewa Subscription</option>
+                        <option value="INVOW" {{ ($journalFilter ?? '') == 'INVOW' ? 'selected' : '' }}>INVOW — Other wo Tax (Own Risk)</option>
+                        <option value="INVOT" {{ ($journalFilter ?? '') == 'INVOT' ? 'selected' : '' }}>INVOT — Other with Tax (ETLE, Toolkit, Ongkir)</option>
+                        <option value="INVRT" {{ ($journalFilter ?? '') == 'INVRT' ? 'selected' : '' }}>INVRT — Sewa Retail</option>
+                        <option value="INVDV" {{ ($journalFilter ?? '') == 'INVDV' ? 'selected' : '' }}>INVDV — Driver</option>
+                    </select>
+                </div>
                 
                 <div>
                     <label class="block text-xs font-medium text-slate-500 mb-1">Rental Status</label>
@@ -756,10 +768,23 @@
                                         @else
                                             <span class="text-slate-400">-</span>
                                         @endif
+                                    @elseif($col['id'] === 'journal_code')
+                                        @php $badge = $rec->journal_badge; @endphp
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold {{ $badge['class'] }}" title="{{ $badge['title'] }}">
+                                            {{ $badge['label'] }}
+                                        </span>
                                     @elseif($col['id'] === 'invoice_name' || $col['id'] === 'invoice_ref' || $col['id'] === 'customer_ref' || $col['id'] === 'transaction_code')
                                         <div class="{{ $col['id'] === 'transaction_code' ? '' : 'whitespace-nowrap' }}">
                                             @if($col['id'] === 'invoice_name')
-                                                <span class="font-mono font-semibold text-emerald-600 dark:text-emerald-400" title="{{ $rec->invoice_ref }}">{{ $rec->invoice_name ?: '-' }}</span>
+                                                <div class="flex items-center gap-1.5 whitespace-nowrap">
+                                                    @if($rec->journal_code)
+                                                        @php $badge = $rec->journal_badge; @endphp
+                                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold {{ $badge['class'] }}" title="{{ $badge['title'] }}">
+                                                            {{ $badge['label'] }}
+                                                        </span>
+                                                    @endif
+                                                    <span class="font-mono font-semibold text-emerald-600 dark:text-emerald-400" title="{{ $rec->invoice_ref }}">{{ $rec->invoice_name ?: '-' }}</span>
+                                                </div>
                                             @elseif($col['id'] === 'invoice_ref')
                                                 <div class="truncate max-w-[140px] font-mono text-slate-500" title="{{ $rec->invoice_ref }}">{{ $rec->invoice_ref ?: '-' }}</div>
                                             @elseif($col['id'] === 'transaction_code')

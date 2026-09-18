@@ -314,12 +314,24 @@
                                         <tr>
                                             <td colspan="3" style="padding-bottom: 5px; padding-left: 0;">
                                                 <span style="font-size: 9px; color: #64748b;">Kepada Yth.</span><br>
-                                                <span class="customer-name">{{ $invoice->partner_name }}</span>
                                                 @php
-                                                    $address = $invoice->partner_address ?? $invoice->partner_address_complete ?? '';
-                                                    $address = preg_replace('/^' . preg_quote($invoice->partner_name, '/') . '[\r\n]*/i', '', $address);
-                                                    $address = preg_replace('/,?\s*Indonesia\s*$/i', '', trim($address));
+                                                    $withoutContactName = request()->query('without_contact_name', '0') === '1';
+                                                    $addressRaw = $invoice->partner_address ?? $invoice->partner_address_complete ?? '';
+                                                    $addressClean = preg_replace('/,?\s*Indonesia\s*$/i', '', trim($addressRaw));
+                                                    $lines = array_values(array_filter(array_map('trim', preg_split('/[\r\n]+/', $addressClean))));
+                                                    $firstAddrLine = $lines[0] ?? '';
+                                                    $isStreet = !empty($firstAddrLine) && preg_match('/^(jl|jalan|gg|gang|komp|komplek|kp|kampung|rt|rw|dusun)\b/i', $firstAddrLine);
+
+                                                    if ($withoutContactName && !empty($firstAddrLine) && !$isStreet && strcasecmp(trim($invoice->partner_name), $firstAddrLine) !== 0) {
+                                                        $displayName = $firstAddrLine;
+                                                        array_shift($lines);
+                                                        $address = implode("\n", $lines);
+                                                    } else {
+                                                        $displayName = $invoice->partner_name;
+                                                        $address = preg_replace('/^' . preg_quote($invoice->partner_name, '/') . '[\r\n]*/i', '', $addressClean);
+                                                    }
                                                 @endphp
+                                                <span class="customer-name">{{ $displayName }}</span>
                                                 <div class="customer-address">{!! nl2br(e(trim($address))) !!}</div>
                                                 @if($invoice->partner_npwp)
                                                 <div style="font-size: 9px; margin-top: 3px; font-weight: bold; padding-top: 5px;">NPWP : {{ $invoice->partner_npwp }}</div>

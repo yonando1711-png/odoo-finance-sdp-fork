@@ -335,7 +335,7 @@ class SyncService
 
         $count = 0;
         foreach ($entries as $entry) {
-            if (($entry['status'] ?? '') === 'Cancelled') {
+            if (in_array($entry['status'] ?? '', ['Cancelled', 'Returned'])) {
                 UninvoicedRental::where('nomor_so', $entry['nomor_so'])->delete();
                 continue;
             }

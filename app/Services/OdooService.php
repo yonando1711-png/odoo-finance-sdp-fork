@@ -1739,9 +1739,18 @@ class OdooService
      */
     public function getUninvoicedSoIds($dateFrom = null, $dateTo = null): array
     {
-        $domainEmpty = [['invoice_id', '=', false]];
-        $domainDraft = [['invoice_id.state', '=', 'draft']];
-        $domainReversed = [['invoice_id.payment_state', '=', 'reversed']];
+        $domainEmpty = [
+            ['invoice_id', '=', false],
+            ['rental_order_id.rental_status', '!=', 'returned']
+        ];
+        $domainDraft = [
+            ['invoice_id.state', '=', 'draft'],
+            ['rental_order_id.rental_status', '!=', 'returned']
+        ];
+        $domainReversed = [
+            ['invoice_id.payment_state', '=', 'reversed'],
+            ['rental_order_id.rental_status', '!=', 'returned']
+        ];
 
         if ($dateFrom) {
             $domainEmpty[] = ['invoice_date', '>=', $dateFrom];
@@ -1793,7 +1802,8 @@ class OdooService
         try {
             // Find periods modified in the last 7 days (or just the most recently modified ones up to limit)
             $domain = [
-                ['write_date', '>=', date('Y-m-d', strtotime('-7 days'))]
+                ['write_date', '>=', date('Y-m-d', strtotime('-7 days'))],
+                ['rental_order_id.rental_status', '!=', 'returned']
             ];
 
             $res = $this->execute('rental.period.invoice', 'search_read', [
@@ -1841,17 +1851,20 @@ class OdooService
     {
         $domainEmpty = [
             ['invoice_id', '=', false],
-            ['rental_order_id', 'in', $soIds]
+            ['rental_order_id', 'in', $soIds],
+            ['rental_order_id.rental_status', '!=', 'returned']
         ];
 
         $domainDraft = [
             ['invoice_id.state', '=', 'draft'],
-            ['rental_order_id', 'in', $soIds]
+            ['rental_order_id', 'in', $soIds],
+            ['rental_order_id.rental_status', '!=', 'returned']
         ];
 
         $domainReversed = [
             ['invoice_id.payment_state', '=', 'reversed'],
-            ['rental_order_id', 'in', $soIds]
+            ['rental_order_id', 'in', $soIds],
+            ['rental_order_id.rental_status', '!=', 'returned']
         ];
 
         // Fetch periods

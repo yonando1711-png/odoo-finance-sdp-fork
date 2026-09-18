@@ -246,9 +246,46 @@
         if (refreshBtn) refreshBtn.dataset.htmlUrl = updateUrl(refreshBtn.dataset.htmlUrl);
     };
 
+    window.toggleContactName = function(isChecked) {
+        const iframe = document.getElementById('invoicePreviewIframe');
+        const dlBtn = document.getElementById('downloadPdfBtn');
+        const refreshBtn = document.getElementById('refreshOdooBtn');
+        
+        const updateUrl = (urlStr) => {
+            if (!urlStr) return urlStr;
+            let url = new URL(urlStr, urlStr.startsWith('http') ? undefined : window.location.origin);
+            if (isChecked) {
+                url.searchParams.set('without_contact_name', '1');
+            } else {
+                url.searchParams.set('without_contact_name', '0');
+            }
+            return url.pathname + url.search;
+        };
+
+        if (iframe) iframe.src = updateUrl(iframe.src);
+        if (dlBtn) dlBtn.href = updateUrl(dlBtn.href);
+        if (refreshBtn) refreshBtn.dataset.htmlUrl = updateUrl(refreshBtn.dataset.htmlUrl);
+    };
+
     /* ---------- preview modal (iframe) ---------- */
     window.showInvoicePreviewModal = function(htmlUrl, pdfUrl, refreshUrl) {
         const isTargetInvoice = /invoice-(driver|other|vehicle|proforma)/.test(htmlUrl);
+        const isContactNameTarget = /invoice-(rental|driver|other|vehicle)/.test(htmlUrl);
+
+        if (isContactNameTarget) {
+            const addDefaultContactNameParam = (urlStr) => {
+                if (!urlStr) return urlStr;
+                let url = new URL(urlStr, urlStr.startsWith('http') ? undefined : window.location.origin);
+                if (!url.searchParams.has('without_contact_name')) {
+                    url.searchParams.set('without_contact_name', '1');
+                }
+                return url.pathname + url.search;
+            };
+            htmlUrl = addDefaultContactNameParam(htmlUrl);
+            pdfUrl = addDefaultContactNameParam(pdfUrl);
+            if (refreshUrl) refreshUrl = addDefaultContactNameParam(refreshUrl);
+        }
+
         Swal.fire({
             html: `
                 <div style="margin:0 -20px 0 -20px;">
@@ -258,6 +295,11 @@
                             ${isTargetInvoice ? `
                             <label style="margin-left:12px;border-left:1px solid #475569;padding-left:12px;display:flex;align-items:center;gap:6px;cursor:pointer;color:#e2e8f0;font-weight:600;">
                                 <input type="checkbox" id="withoutSatuanCheckbox" onchange="window.toggleSatuan(this.checked)" style="cursor:pointer;" ${htmlUrl.includes('without_satuan=1') ? 'checked' : ''} /> Without SATUAN
+                            </label>
+                            ` : ''}
+                            ${isContactNameTarget ? `
+                            <label style="margin-left:12px;border-left:1px solid #475569;padding-left:12px;display:flex;align-items:center;gap:6px;cursor:pointer;color:#e2e8f0;font-weight:600;">
+                                <input type="checkbox" id="withoutContactNameCheckbox" onchange="window.toggleContactName(this.checked)" style="cursor:pointer;" ${htmlUrl.includes('without_contact_name=1') || !htmlUrl.includes('without_contact_name=0') ? 'checked' : ''} /> Without Contact Name
                             </label>
                             ` : ''}
                         </span>

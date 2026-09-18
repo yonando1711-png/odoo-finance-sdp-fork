@@ -20,7 +20,7 @@ class UninvoicedRentalController extends Controller
         $dir = $request->input('dir', 'desc');
 
         $query = UninvoicedRental::query()->where(function ($q) {
-            $q->whereNull('status')->orWhere('status', '!=', 'Cancelled');
+            $q->whereNull('status')->orWhereNotIn('status', ['Cancelled', 'Returned']);
         });
 
         // Search
@@ -185,7 +185,7 @@ class UninvoicedRentalController extends Controller
     public function export(Request $request)
     {
         $query = UninvoicedRental::query()->where(function ($q) {
-            $q->whereNull('status')->orWhere('status', '!=', 'Cancelled');
+            $q->whereNull('status')->orWhereNotIn('status', ['Cancelled', 'Returned']);
         });
 
         // Apply filters to export

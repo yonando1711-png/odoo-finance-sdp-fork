@@ -1741,14 +1741,15 @@ class OdooService
     {
         $domainEmpty = [
             ['invoice_id', '=', false],
-            ['rental_order_id.rental_status', '!=', 'returned']
+            ['price_unit', '>', 0]
         ];
         $domainDraft = [
             ['invoice_id.state', '=', 'draft'],
-            ['rental_order_id.rental_status', '!=', 'returned']
+            ['price_unit', '>', 0]
         ];
         $domainReversed = [
             ['invoice_id.payment_state', '=', 'reversed'],
+            ['price_unit', '>', 0],
             ['rental_order_id.rental_status', '!=', 'returned']
         ];
 
@@ -1803,7 +1804,7 @@ class OdooService
             // Find periods modified in the last 7 days (or just the most recently modified ones up to limit)
             $domain = [
                 ['write_date', '>=', date('Y-m-d', strtotime('-7 days'))],
-                ['rental_order_id.rental_status', '!=', 'returned']
+                ['price_unit', '>', 0]
             ];
 
             $res = $this->execute('rental.period.invoice', 'search_read', [
@@ -1852,18 +1853,19 @@ class OdooService
         $domainEmpty = [
             ['invoice_id', '=', false],
             ['rental_order_id', 'in', $soIds],
-            ['rental_order_id.rental_status', '!=', 'returned']
+            ['price_unit', '>', 0]
         ];
 
         $domainDraft = [
             ['invoice_id.state', '=', 'draft'],
             ['rental_order_id', 'in', $soIds],
-            ['rental_order_id.rental_status', '!=', 'returned']
+            ['price_unit', '>', 0]
         ];
 
         $domainReversed = [
             ['invoice_id.payment_state', '=', 'reversed'],
             ['rental_order_id', 'in', $soIds],
+            ['price_unit', '>', 0],
             ['rental_order_id.rental_status', '!=', 'returned']
         ];
 

@@ -20,7 +20,7 @@ class UninvoicedRentalController extends Controller
         $dir = $request->input('dir', 'desc');
 
         $query = UninvoicedRental::query()->where(function ($q) {
-            $q->whereNull('status')->orWhereNotIn('status', ['Cancelled', 'Returned']);
+            $q->whereNull('status')->orWhere('status', '!=', 'Cancelled');
         });
 
         // Search
@@ -185,7 +185,7 @@ class UninvoicedRentalController extends Controller
     public function export(Request $request)
     {
         $query = UninvoicedRental::query()->where(function ($q) {
-            $q->whereNull('status')->orWhereNotIn('status', ['Cancelled', 'Returned']);
+            $q->whereNull('status')->orWhere('status', '!=', 'Cancelled');
         });
 
         // Apply filters to export
@@ -251,10 +251,11 @@ class UninvoicedRentalController extends Controller
             $html .= '</tr></thead><tbody>';
 
             foreach ($rentals as $rental) {
+                $statusDisplay = $rental->status === 'Returned' ? 'Returned (Unbilled)' : $rental->status;
                 $html .= '<tr>';
                 $html .= '<td style="mso-number-format:\'\@\';">' . htmlspecialchars((string) $rental->kode_cust) . '</td>';
                 $html .= '<td style="mso-number-format:\'\@\';">' . htmlspecialchars((string) $rental->nomor_so) . '</td>';
-                $html .= '<td>' . htmlspecialchars((string) $rental->status) . '</td>';
+                $html .= '<td>' . htmlspecialchars((string) $statusDisplay) . '</td>';
                 $html .= '<td style="mso-number-format:\'\@\';">' . htmlspecialchars((string) $rental->nomor_po) . '</td>';
                 $html .= '<td style="mso-number-format:\'\@\';">' . htmlspecialchars((string) $rental->nomor_kontrak) . '</td>';
                 $html .= '<td style="mso-number-format:\'\@\';">' . htmlspecialchars((string) $rental->kontrak_ref) . '</td>';
@@ -310,10 +311,11 @@ class UninvoicedRentalController extends Controller
             fputcsv($file, $columns);
 
             foreach ($rentals as $rental) {
+                $statusDisplay = $rental->status === 'Returned' ? 'Returned (Unbilled)' : $rental->status;
                 fputcsv($file, [
                     $rental->kode_cust,
                     $rental->nomor_so,
-                    $rental->status,
+                    $statusDisplay,
                     $rental->nomor_po,
                     $rental->nomor_kontrak,
                     $rental->kontrak_ref,

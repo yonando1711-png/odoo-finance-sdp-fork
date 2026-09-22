@@ -464,10 +464,10 @@ class InvoiceProformaController extends Controller
         $view = 'invoice-proforma.pdf';
         $viewPrintMode = $printMode;
         if ($printMode === 'driver' || $printMode === 'driver_summary') {
-            $view = 'invoice-driver.pdf';
+            $view = 'invoice-proforma.driver-pdf';
             if ($printMode === 'driver_summary') $viewPrintMode = 'summary';
         } elseif ($printMode === 'other' || $printMode === 'other_summary') {
-            $view = 'invoice-other.pdf';
+            $view = 'invoice-proforma.other-pdf';
             if ($printMode === 'other_summary') $viewPrintMode = 'summary';
         }
 
@@ -537,10 +537,10 @@ class InvoiceProformaController extends Controller
         $view = 'invoice-proforma.pdf';
         $viewPrintMode = $printMode;
         if ($printMode === 'driver' || $printMode === 'driver_summary') {
-            $view = 'invoice-driver.pdf';
+            $view = 'invoice-proforma.driver-pdf';
             if ($printMode === 'driver_summary') $viewPrintMode = 'summary';
         } elseif ($printMode === 'other' || $printMode === 'other_summary') {
-            $view = 'invoice-other.pdf';
+            $view = 'invoice-proforma.other-pdf';
             if ($printMode === 'other_summary') $viewPrintMode = 'summary';
         }
 
@@ -606,10 +606,10 @@ class InvoiceProformaController extends Controller
         $view = 'invoice-proforma.pdf';
         $viewPrintMode = $printMode;
         if ($printMode === 'driver' || $printMode === 'driver_summary') {
-            $view = 'invoice-driver.pdf';
+            $view = 'invoice-proforma.driver-pdf';
             if ($printMode === 'driver_summary') $viewPrintMode = 'summary';
         } elseif ($printMode === 'other' || $printMode === 'other_summary') {
-            $view = 'invoice-other.pdf';
+            $view = 'invoice-proforma.other-pdf';
             if ($printMode === 'other_summary') $viewPrintMode = 'summary';
         }
 
@@ -673,16 +673,19 @@ class InvoiceProformaController extends Controller
         } catch (\Exception $e) {}
 
         $view = 'invoice-proforma.pdf';
-        if ($printMode === 'driver') {
-            $view = 'invoice-driver.pdf';
-        } elseif ($printMode === 'other') {
-            $view = 'invoice-other.pdf';
+        $viewPrintMode = $printMode;
+        if ($printMode === 'driver' || $printMode === 'driver_summary') {
+            $view = 'invoice-proforma.driver-pdf';
+            if ($printMode === 'driver_summary') $viewPrintMode = 'summary';
+        } elseif ($printMode === 'other' || $printMode === 'other_summary') {
+            $view = 'invoice-proforma.other-pdf';
+            if ($printMode === 'other_summary') $viewPrintMode = 'summary';
         }
 
         return view($view, [
             'invoices' => $invoices,
             'showUsername' => $showUsername,
-            'printMode' => $printMode,
+            'printMode' => $viewPrintMode,
             'isHtml' => true,
         ]);
     }

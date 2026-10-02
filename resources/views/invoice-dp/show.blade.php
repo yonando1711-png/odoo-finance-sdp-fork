@@ -55,13 +55,14 @@
                     <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-1">
                         @php
                             $lots = $invoice->lots;
+                            $lotChunks = array_chunk($lots, 5);
                         @endphp
-                        @if(count($lots) > 1)
-                            <div class="flex items-start gap-1.5">
-                                <span>Uang Muka Nopol</span>
+                        @if(count($lots) > 0)
+                            <div class="flex items-start">
+                                <span>Uang Muka Nopol&nbsp;</span>
                                 <div class="flex flex-col">
-                                    @foreach($lots as $lot)
-                                        <span>{{ $lot }}</span>
+                                    @foreach($lotChunks as $cIndex => $chunk)
+                                        <div>{{ implode(', ', $chunk) }}@if(!$loop->last),@endif</div>
                                     @endforeach
                                 </div>
                             </div>

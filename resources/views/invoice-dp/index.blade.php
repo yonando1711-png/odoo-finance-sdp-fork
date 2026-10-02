@@ -364,9 +364,29 @@
                         <td x-show="columns.partner.visible" class="px-3 py-2 text-xs">{{ $invoice->partner_name }}</td>
                         <td x-show="columns.npwp.visible" class="px-3 py-2 text-xs font-mono text-slate-500">{{ $invoice->partner_npwp ?: '-' }}</td>
                         <td x-show="columns.lot.visible" class="px-3 py-2 text-xs font-mono font-bold text-amber-600 dark:text-amber-400">
-                            {{ $invoice->reserved_lot ?: '-' }}
+                            @php
+                                $lots = $invoice->lots;
+                            @endphp
+                            @if(count($lots) > 1)
+                                <div class="flex flex-col gap-0.5">
+                                    @foreach($lots as $lot)
+                                        <span>{{ $lot }}</span>
+                                    @endforeach
+                                </div>
+                            @else
+                                {{ $invoice->reserved_lot ?: '-' }}
+                            @endif
                         </td>
-                        <td x-show="columns.payment_desc.visible" class="px-3 py-2 text-xs text-slate-700 dark:text-slate-300 font-medium">{{ $invoice->payment_description }}</td>
+                        <td x-show="columns.payment_desc.visible" class="px-3 py-2 text-xs text-slate-700 dark:text-slate-300 font-medium">
+                            @if(count($lots) > 1)
+                                <div class="flex flex-col">
+                                    <span>Uang Muka Nopol:</span>
+                                    <span class="font-mono text-[11px] text-slate-500 dark:text-slate-400">{{ implode(', ', $lots) }}</span>
+                                </div>
+                            @else
+                                {{ $invoice->payment_description }}
+                            @endif
+                        </td>
                         <td x-show="columns.untaxed.visible" class="px-3 py-2 text-right font-mono text-xs whitespace-nowrap">{{ number_format($invoice->amount_untaxed, 0, ',', '.') }}</td>
                         <td x-show="columns.tax.visible" class="px-3 py-2 text-right font-mono text-xs text-amber-600 dark:text-amber-400 whitespace-nowrap">{{ number_format($invoice->amount_tax, 0, ',', '.') }}</td>
                         <td x-show="columns.total.visible" class="px-3 py-2 text-right font-mono text-xs font-semibold whitespace-nowrap">{{ number_format($invoice->amount_total, 0, ',', '.') }}</td>

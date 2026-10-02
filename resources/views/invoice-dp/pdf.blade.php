@@ -76,6 +76,7 @@
             width: 150px;
         }
         .amount-section {
+            width: auto !important;
             margin: 15px 0 10px 0;
         }
         .amount-section td {
@@ -197,9 +198,19 @@
                 <td colspan="2" style="padding-top: 15px;">
                     <table style="width: 100%;">
                         <tr>
-                            <td class="field-label" style="width: 140px; font-weight: bold;">UNTUK PEMBAYARAN</td>
-                            <td style="width: 10px;">:</td>
-                            <td>{{ $invoice->payment_description }}</td>
+                            <td class="field-label" style="width: 140px; font-weight: bold; vertical-align: top;">UNTUK PEMBAYARAN</td>
+                            <td style="width: 10px; vertical-align: top;">:</td>
+                            <td style="vertical-align: top;">
+                                @php
+                                    $lots = $invoice->lots;
+                                    $lotChunks = array_chunk($lots, 5);
+                                @endphp
+                                @if(count($lots) > 0)
+                                    <span style="vertical-align: top; display: inline-block;">Uang Muka Nopol&nbsp;</span><span style="vertical-align: top; display: inline-block;">@foreach($lotChunks as $cIndex => $chunk){{ implode(', ', $chunk) }}@if(!$loop->last),<br>@endif @endforeach</span>
+                                @else
+                                    {{ $invoice->payment_description }}
+                                @endif
+                            </td>
                         </tr>
                     </table>
                 </td>
@@ -207,19 +218,19 @@
         </table>
 
         {{-- Financial Amounts Section --}}
-        <table class="amount-section" style="margin-top: 20px;">
+        <table class="amount-section" style="width: auto !important; margin-top: 20px;">
             <tr>
-                <td class="field-label">JUMLAH PEMBAYARAN</td>
-                <td style="width: 30px;">Rp.</td>
-                <td style="width: 110px; text-align: right;">{{ number_format($invoice->amount_untaxed, 0, ',', '.') }}</td>
-                <td style="width: 60px; text-align: center;">PPN</td>
-                <td style="width: 30px;">Rp.</td>
-                <td style="text-align: left;">{{ number_format($invoice->amount_tax, 0, ',', '.') }}</td>
+                <td class="field-label" style="width: 140px;">JUMLAH PEMBAYARAN</td>
+                <td style="width: 25px;">Rp.</td>
+                <td style="text-align: right; padding-right: 25px;">{{ number_format($invoice->amount_untaxed, 0, ',', '.') }}</td>
+                <td style="padding-right: 12px;">PPN</td>
+                <td style="width: 25px;">Rp.</td>
+                <td style="text-align: right;">{{ number_format($invoice->amount_tax, 0, ',', '.') }}</td>
             </tr>
             <tr>
-                <td class="field-label">TOTAL PEMBAYARAN</td>
-                <td>Rp.</td>
-                <td style="text-align: right;">{{ number_format($invoice->amount_total, 0, ',', '.') }}</td>
+                <td class="field-label" style="width: 140px;">TOTAL PEMBAYARAN</td>
+                <td style="width: 25px;">Rp.</td>
+                <td style="text-align: right; padding-right: 25px;">{{ number_format($invoice->amount_total, 0, ',', '.') }}</td>
                 <td colspan="3"></td>
             </tr>
         </table>
@@ -227,7 +238,7 @@
         {{-- Terbilang Box --}}
         <div class="terbilang-container">
             <strong>Terbilang :</strong>
-            <em>{{ ucwords(\App\Helpers\Terbilang::convert($invoice->amount_total)) }} Rp. #</em>
+            <em>{{ ucwords(\App\Helpers\Terbilang::convert($invoice->amount_total)) }} Rupiah</em>
         </div>
 
         {{-- Legal Notice & Signature Row --}}

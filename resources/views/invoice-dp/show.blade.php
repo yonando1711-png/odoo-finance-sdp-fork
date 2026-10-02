@@ -52,7 +52,24 @@
                 </div>
                 <div>
                     <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Untuk Pembayaran</p>
-                    <p class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-1">{{ $invoice->payment_description }}</p>
+                    <div class="text-sm font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                        @php
+                            $lots = $invoice->lots;
+                            $lotChunks = array_chunk($lots, 5);
+                        @endphp
+                        @if(count($lots) > 0)
+                            <div class="flex items-start">
+                                <span>Uang Muka Nopol&nbsp;</span>
+                                <div class="flex flex-col">
+                                    @foreach($lotChunks as $cIndex => $chunk)
+                                        <div>{{ implode(', ', $chunk) }}@if(!$loop->last),@endif</div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @else
+                            {{ $invoice->payment_description }}
+                        @endif
+                    </div>
                 </div>
             </div>
 
@@ -64,7 +81,15 @@
                 </div>
                 <div>
                     <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Reserved Lot (Nopol)</p>
-                    <p class="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-1">{{ $invoice->reserved_lot ?: '-' }}</p>
+                    <div class="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-1 flex flex-wrap gap-1.5">
+                        @if(count($lots) > 0)
+                            @foreach($lots as $lot)
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-mono font-bold bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50">{{ $lot }}</span>
+                            @endforeach
+                        @else
+                            <span>-</span>
+                        @endif
+                    </div>
                 </div>
                 <div>
                     <p class="text-xs font-medium text-slate-500 uppercase tracking-wider">Invoice PIC</p>

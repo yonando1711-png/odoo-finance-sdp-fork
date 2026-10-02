@@ -2429,6 +2429,22 @@ class OdooService
                 return ['success' => true, 'data' => []];
             }
 
+            // Sanitize moveIds: can be integer or string external ID like __export__.account_move_815717_xxx
+            $sanitizedIds = [];
+            foreach ($moveIds as $mid) {
+                if (is_numeric($mid)) {
+                    $sanitizedIds[] = (int)$mid;
+                } elseif (preg_match('/account_move_(\d+)/', (string)$mid, $m)) {
+                    $sanitizedIds[] = (int)$m[1];
+                } elseif (preg_match('/(\d+)/', (string)$mid, $m)) {
+                    $sanitizedIds[] = (int)$m[1];
+                }
+            }
+            $moveIds = array_values(array_unique(array_filter($sanitizedIds)));
+            if (empty($moveIds)) {
+                return ['success' => true, 'data' => []];
+            }
+
             $exportFields = [
                 'name',
                 'partner_id/name',
@@ -2455,7 +2471,7 @@ class OdooService
                 'payment_state',
                 'state',
                 'invoice_line_ids/sale_order_id/.id',
-                'id',
+                '.id',
             ];
 
             $entries = [];
@@ -2475,8 +2491,14 @@ class OdooService
                         if ($currentEntry !== null) {
                             $entries[] = $currentEntry;
                         }
+                        $rawOdooId = $row[25] ?? null;
+                        $numericOdooId = is_numeric($rawOdooId) ? (int)$rawOdooId : null;
+                        if (!$numericOdooId && !empty($rawOdooId) && preg_match('/account_move_(\d+)/', (string)$rawOdooId, $m)) {
+                            $numericOdooId = (int)$m[1];
+                        }
+
                         $currentEntry = [
-                            'odoo_id' => $row[25] ?? null,
+                            'odoo_id' => $numericOdooId,
                             'name' => $invoiceName,
                             'partner_name' => $row[1] ?? '',
                             'invoice_date' => $row[2] ?? '',
@@ -2497,7 +2519,7 @@ class OdooService
                             'invoice_pic' => $row[21] ?? '',
                             'payment_state' => $row[22] ?? 'not_paid',
                             'state' => $row[23] ?? 'posted',
-                            'so_id' => $row[24] ?? null,
+                            'so_ids' => [],
                             'reserved_lot' => '',
                             'lines' => [],
                         ];
@@ -2505,24 +2527,18 @@ class OdooService
 
                     $lineDesc = $row[9] ?? '';
                     if ($currentEntry !== null && !empty($lineDesc)) {
+                        $lineSoId = !empty($row[24]) && is_numeric($row[24]) ? (int)$row[24] : null;
                         $currentEntry['lines'][] = [
                             'description' => $lineDesc,
                             'quantity' => (float)($row[10] ?? 1),
                             'price_unit' => (float)($row[11] ?? 0),
                             'amount' => (float)($row[10] ?? 1) * (float)($row[11] ?? 0),
+                            'so_id' => $lineSoId,
+                            'serial_number' => null,
                         ];
-                        
-                        if (empty($currentEntry['so_id']) && !empty($row[24])) {
-                            $currentEntry['so_id'] = $row[24];
-                        }
 
-                        // Extract Nopol / Reserved Lot from line description or ref if found
-                        if (empty($currentEntry['reserved_lot'])) {
-                            if (preg_match('/\b([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})\b/i', $lineDesc, $matches)) {
-                                $currentEntry['reserved_lot'] = strtoupper(str_replace(' ', '', $matches[1]));
-                            } elseif (!empty($currentEntry['ref']) && preg_match('/\b([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})\b/i', $currentEntry['ref'], $matches)) {
-                                $currentEntry['reserved_lot'] = strtoupper(str_replace(' ', '', $matches[1]));
-                            }
+                        if ($lineSoId && !in_array($lineSoId, $currentEntry['so_ids'])) {
+                            $currentEntry['so_ids'][] = $lineSoId;
                         }
                     }
                 }
@@ -2531,19 +2547,21 @@ class OdooService
                 }
             }
 
-            // Step 2: Query linked sale.order records directly for reserved_lot_id
-            $soIds = [];
+            // Step 2: Query linked sale.order records directly for lot_serial_names
+            $allSoIds = [];
             foreach ($entries as $e) {
-                if (!empty($e['so_id']) && is_numeric($e['so_id'])) {
-                    $soIds[] = (int)$e['so_id'];
+                if (!empty($e['so_ids'])) {
+                    foreach ($e['so_ids'] as $sid) {
+                        $allSoIds[] = (int)$sid;
+                    }
                 }
             }
-            $soIds = array_values(array_unique($soIds));
+            $allSoIds = array_values(array_unique($allSoIds));
 
-            if (!empty($soIds)) {
+            $soMap = [];
+            if (!empty($allSoIds)) {
                 try {
-                    $soData = $this->execute('sale.order', 'read', [$soIds, ['id', 'lot_serial_names']]);
-                    $soMap = [];
+                    $soData = $this->execute('sale.order', 'read', [$allSoIds, ['id', 'lot_serial_names']]);
                     foreach ($soData as $so) {
                         if (!empty($so['lot_serial_names'])) {
                             $lotName = is_array($so['lot_serial_names']) ? ($so['lot_serial_names'][1] ?? '') : $so['lot_serial_names'];
@@ -2552,15 +2570,54 @@ class OdooService
                             }
                         }
                     }
-                    foreach ($entries as &$e) {
-                        if (!empty($e['so_id']) && isset($soMap[$e['so_id']])) {
-                            $e['reserved_lot'] = $soMap[$e['so_id']];
-                        }
-                    }
                 } catch (\Exception $e) {
                     // Fallback
                 }
             }
+
+            foreach ($entries as &$e) {
+                $lotsFound = [];
+                foreach ($e['lines'] as &$l) {
+                    if (!empty($l['so_id']) && isset($soMap[$l['so_id']])) {
+                        $l['serial_number'] = $soMap[$l['so_id']];
+                        if (!in_array($l['serial_number'], $lotsFound)) {
+                            $lotsFound[] = $l['serial_number'];
+                        }
+                    }
+                }
+                unset($l);
+
+                // If not found via SO, try regex on line descriptions
+                if (empty($lotsFound)) {
+                    foreach ($e['lines'] as &$l) {
+                        if (preg_match('/\b([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})\b/i', $l['description'], $matches)) {
+                            $foundLot = strtoupper(str_replace(' ', '', $matches[1]));
+                            $l['serial_number'] = $foundLot;
+                            if (!in_array($foundLot, $lotsFound)) {
+                                $lotsFound[] = $foundLot;
+                            }
+                        }
+                    }
+                    unset($l);
+                }
+
+                // If still empty, try regex on ref
+                if (empty($lotsFound) && !empty($e['ref'])) {
+                    if (preg_match_all('/\b([A-Z]{1,2}\s*\d{1,4}\s*[A-Z]{1,3})\b/i', $e['ref'], $matches)) {
+                        foreach ($matches[1] as $m) {
+                            $cleanM = strtoupper(str_replace(' ', '', $m));
+                            if (!in_array($cleanM, $lotsFound)) {
+                                $lotsFound[] = $cleanM;
+                            }
+                        }
+                    }
+                }
+
+                if (!empty($lotsFound)) {
+                    $e['reserved_lot'] = implode(', ', $lotsFound);
+                }
+            }
+            unset($e);
 
             return ['success' => true, 'data' => $entries];
         } catch (\Exception $e) {

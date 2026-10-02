@@ -47,6 +47,31 @@ class InvoiceDp extends Model
         return $this->hasMany(InvoiceDpLine::class);
     }
 
+    public function getLotsAttribute(): array
+    {
+        $lots = [];
+        if (!empty($this->reserved_lot)) {
+            $parts = preg_split('/[,\n\/]+/', $this->reserved_lot);
+            foreach ($parts as $part) {
+                $trimmed = trim($part);
+                if (!empty($trimmed) && !in_array($trimmed, $lots)) {
+                    $lots[] = $trimmed;
+                }
+            }
+        }
+        if ($this->relationLoaded('lines')) {
+            foreach ($this->lines as $line) {
+                if (!empty($line->serial_number)) {
+                    $trimmed = trim($line->serial_number);
+                    if (!empty($trimmed) && !in_array($trimmed, $lots)) {
+                        $lots[] = $trimmed;
+                    }
+                }
+            }
+        }
+        return $lots;
+    }
+
     public function getPaymentDescriptionAttribute(): string
     {
         return 'Uang Muka Nopol ' . ($this->reserved_lot ? trim($this->reserved_lot) : '');

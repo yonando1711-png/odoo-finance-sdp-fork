@@ -197,9 +197,29 @@
                 <td colspan="2" style="padding-top: 15px;">
                     <table style="width: 100%;">
                         <tr>
-                            <td class="field-label" style="width: 140px; font-weight: bold;">UNTUK PEMBAYARAN</td>
-                            <td style="width: 10px;">:</td>
-                            <td>{{ $invoice->payment_description }}</td>
+                            <td class="field-label" style="width: 140px; font-weight: bold; vertical-align: top;">UNTUK PEMBAYARAN</td>
+                            <td style="width: 10px; vertical-align: top;">:</td>
+                            <td style="vertical-align: top;">
+                                @php
+                                    $lots = $invoice->lots;
+                                @endphp
+                                @if(count($lots) > 1)
+                                    <table style="border-collapse: collapse; margin: 0; padding: 0;">
+                                        @foreach($lots as $index => $lot)
+                                            <tr>
+                                                @if($index === 0)
+                                                    <td style="padding: 1px 4px 1px 0; vertical-align: top; white-space: nowrap;">Uang Muka Nopol</td>
+                                                @else
+                                                    <td style="padding: 1px 4px 1px 0;"></td>
+                                                @endif
+                                                <td style="padding: 1px 0; vertical-align: top;">{{ $lot }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </table>
+                                @else
+                                    {{ $invoice->payment_description }}
+                                @endif
+                            </td>
                         </tr>
                     </table>
                 </td>

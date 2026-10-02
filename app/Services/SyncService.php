@@ -531,6 +531,7 @@ class SyncService
                         'quantity' => $line['quantity'] ?? 1,
                         'price_unit' => $line['price_unit'] ?? 0,
                         'amount' => $line['amount'] ?? 0,
+                        'serial_number' => $line['serial_number'] ?? null,
                     ]);
                 }
             }

@@ -9,6 +9,8 @@ use App\Models\InvoiceVehicle;
 use App\Models\InvoiceDp;
 use App\Models\InvoiceSubscription;
 use App\Models\UninvoicedRental;
+use App\Models\UninvoicedShortTerm;
+use App\Models\UninvoicedSoldOut;
 use App\Models\JournalEntry;
 use App\Models\JournalLine;
 use Illuminate\Support\Facades\DB;
@@ -342,6 +344,122 @@ class SyncService
 
             // we update or create by nomor_so since it's grouped by SO
             UninvoicedRental::updateOrCreate(
+                ['nomor_so' => $entry['nomor_so']],
+                [
+                    'kode_cust' => $entry['kode_cust'],
+                    'status' => $entry['status'] ?? null,
+                    'nomor_po' => $entry['nomor_po'],
+                    'nomor_kontrak' => $entry['nomor_kontrak'],
+                    'kontrak_ref' => $entry['kontrak_ref'] ?? '',
+                    'nama_user' => $entry['nama_user'],
+                    'nopol' => $entry['nopol'],
+                    'model' => $entry['model'],
+                    'tahun_mobil' => $entry['tahun_mobil'],
+                    'start' => $entry['start'],
+                    'end' => $entry['end'],
+                    'tanggal_periode_belum_cetak' => $entry['tanggal_periode_belum_cetak'],
+                    'start_rental_period' => $entry['start_rental_period'] ?? null,
+                    'end_rental_period' => $entry['end_rental_period'] ?? null,
+                    'price_di_so' => $entry['price_di_so'],
+                    'duration_price' => $entry['duration_price'],
+                    'invoice_period' => $entry['invoice_period'],
+                    'payment_terms' => $entry['payment_terms'],
+                    'area_pemakaian_unit' => $entry['area_pemakaian_unit'],
+                    'chassis' => $entry['chassis'],
+                    'invoice_pic' => $entry['invoice_pic'],
+                    'first_invoice_date' => $entry['first_invoice_date'],
+                    'rental_method' => $entry['rental_method'],
+                    'recipient_bank' => $entry['recipient_bank'],
+                    'tax_id' => $entry['tax_id'],
+                    'id_tku' => $entry['id_tku'],
+                    'kode_transaksi' => $entry['kode_transaksi'],
+                    'address' => $entry['address'],
+                    'tax_address' => $entry['tax_address'],
+                ]
+            );
+            $count++;
+        }
+        return $count;
+    }
+
+    /**
+     * Save Uninvoiced Short Term entries
+     * 
+     * @param array $entries        The records to save
+     * @param bool  $truncateFirst  If true, wipe the table first (Deep Re-Sync).
+     */
+    public function saveUninvoicedShortTerms(array $entries, bool $truncateFirst = false): int
+    {
+        if ($truncateFirst) {
+            UninvoicedShortTerm::truncate();
+        }
+
+        $count = 0;
+        foreach ($entries as $entry) {
+            if (($entry['status'] ?? '') === 'Cancelled') {
+                UninvoicedShortTerm::where('nomor_so', $entry['nomor_so'])->delete();
+                continue;
+            }
+
+            UninvoicedShortTerm::updateOrCreate(
+                ['nomor_so' => $entry['nomor_so']],
+                [
+                    'kode_cust' => $entry['kode_cust'],
+                    'status' => $entry['status'] ?? null,
+                    'nomor_po' => $entry['nomor_po'],
+                    'nomor_kontrak' => $entry['nomor_kontrak'],
+                    'kontrak_ref' => $entry['kontrak_ref'] ?? '',
+                    'nama_user' => $entry['nama_user'],
+                    'nopol' => $entry['nopol'],
+                    'model' => $entry['model'],
+                    'tahun_mobil' => $entry['tahun_mobil'],
+                    'start' => $entry['start'],
+                    'end' => $entry['end'],
+                    'tanggal_periode_belum_cetak' => $entry['tanggal_periode_belum_cetak'],
+                    'start_rental_period' => $entry['start_rental_period'] ?? null,
+                    'end_rental_period' => $entry['end_rental_period'] ?? null,
+                    'price_di_so' => $entry['price_di_so'],
+                    'duration_price' => $entry['duration_price'],
+                    'invoice_period' => $entry['invoice_period'],
+                    'payment_terms' => $entry['payment_terms'],
+                    'area_pemakaian_unit' => $entry['area_pemakaian_unit'],
+                    'chassis' => $entry['chassis'],
+                    'invoice_pic' => $entry['invoice_pic'],
+                    'first_invoice_date' => $entry['first_invoice_date'],
+                    'rental_method' => $entry['rental_method'],
+                    'recipient_bank' => $entry['recipient_bank'],
+                    'tax_id' => $entry['tax_id'],
+                    'id_tku' => $entry['id_tku'],
+                    'kode_transaksi' => $entry['kode_transaksi'],
+                    'address' => $entry['address'],
+                    'tax_address' => $entry['tax_address'],
+                ]
+            );
+            $count++;
+        }
+        return $count;
+    }
+
+    /**
+     * Save Uninvoiced Sold Out entries
+     * 
+     * @param array $entries        The records to save
+     * @param bool  $truncateFirst  If true, wipe the table first (Deep Re-Sync).
+     */
+    public function saveUninvoicedSoldOuts(array $entries, bool $truncateFirst = false): int
+    {
+        if ($truncateFirst) {
+            UninvoicedSoldOut::truncate();
+        }
+
+        $count = 0;
+        foreach ($entries as $entry) {
+            if (($entry['status'] ?? '') === 'Cancelled') {
+                UninvoicedSoldOut::where('nomor_so', $entry['nomor_so'])->delete();
+                continue;
+            }
+
+            UninvoicedSoldOut::updateOrCreate(
                 ['nomor_so' => $entry['nomor_so']],
                 [
                     'kode_cust' => $entry['kode_cust'],

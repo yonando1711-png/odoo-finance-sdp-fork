@@ -191,6 +191,16 @@ Route::middleware('auth')->group(function () {
         Route::post('/sync-chunk', [UninvoicedRentalController::class, 'syncChunk'])->name('sync-chunk');
         Route::post('/export', [UninvoicedRentalController::class, 'export'])->name('export');
         Route::post('/auto-sync/toggle', [UninvoicedRentalController::class, 'toggleAutoSync'])->name('auto-sync.toggle');
+
+        // Short Term Sync
+        Route::post('/short-term/sync-init', [UninvoicedRentalController::class, 'syncInitShortTerm'])->name('short-term.sync-init');
+        Route::post('/short-term/sync-init-fast', [UninvoicedRentalController::class, 'syncInitFastShortTerm'])->name('short-term.sync-init-fast');
+        Route::post('/short-term/sync-chunk', [UninvoicedRentalController::class, 'syncChunkShortTerm'])->name('short-term.sync-chunk');
+
+        // Sold Out Sync
+        Route::post('/sold-out/sync-init', [UninvoicedRentalController::class, 'syncInitSoldOut'])->name('sold-out.sync-init');
+        Route::post('/sold-out/sync-init-fast', [UninvoicedRentalController::class, 'syncInitFastSoldOut'])->name('sold-out.sync-init-fast');
+        Route::post('/sold-out/sync-chunk', [UninvoicedRentalController::class, 'syncChunkSoldOut'])->name('sold-out.sync-chunk');
     });
 
     // Kuitansi Override Route (accessible by authenticated users printing Kuitansi)

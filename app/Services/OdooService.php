@@ -2232,6 +2232,435 @@ class OdooService
     }
 
     /**
+     * Get all Short Term SO IDs with invoice_status = 'to invoice'
+     */
+    public function getUninvoicedShortTermSoIds(): array
+    {
+        try {
+            $domain = [
+                ['rental_type', '=', 'regular'],
+                ['state', '=', 'sale'],
+                ['invoice_status', '=', 'to invoice'],
+                ['rental_status', '!=', 'cancel']
+            ];
+            $soIds = $this->execute('sale.order', 'search', [$domain], ['order' => 'id desc']);
+            return array_values(array_unique($soIds ?? []));
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Fast Sync: Get recent Short Term SO IDs and Names
+     */
+    public function getUninvoicedShortTermSoIdsFast($limit = 500): array
+    {
+        try {
+            $domain = [
+                ['rental_type', '=', 'regular'],
+                ['state', '=', 'sale'],
+                ['write_date', '>=', date('Y-m-d', strtotime('-7 days'))]
+            ];
+            $records = $this->execute('sale.order', 'search_read', [
+                $domain
+            ], [
+                'fields' => ['id', 'name', 'invoice_status', 'rental_status'],
+                'order' => 'write_date desc',
+                'limit' => $limit
+            ]);
+
+            $soIds = [];
+            $soNames = [];
+            foreach ($records as $r) {
+                $soNames[] = $r['name'];
+                if (($r['invoice_status'] ?? '') === 'to invoice' && ($r['rental_status'] ?? '') !== 'cancel') {
+                    $soIds[] = $r['id'];
+                }
+            }
+
+            return [
+                'so_ids' => array_values(array_unique($soIds)),
+                'so_names' => array_values(array_unique($soNames))
+            ];
+        } catch (\Exception $e) {
+            return ['so_ids' => [], 'so_names' => []];
+        }
+    }
+
+    /**
+     * Fetch full Uninvoiced Short Term rental data for given SO IDs
+     */
+    public function fetchUninvoicedShortTermsBySoIds(array $soIds): array
+    {
+        if (empty($soIds)) return [];
+
+        $soFields = [
+            'name', 'client_order_ref', 'rental_contract_id', 'customer_name',
+            'actual_start_rental', 'actual_end_rental', 'rental_start_date', 'rental_return_date',
+            'payment_term_id', 'area_id', 'partner_invoice_id', 'first_invoice_date',
+            'rental_method', 'partner_id', 'sale_invoice_period_id', 'order_line',
+            'rental_status', 'state', 'lot_serial_names', 'amount_untaxed', 'date_order'
+        ];
+
+        $soData = $this->execute('sale.order', 'read', [$soIds, $soFields]);
+        $soMap = [];
+        $partnerIdsToFetch = [];
+        $contractIdsToFetch = [];
+        $orderLineIdsToFetch = [];
+        $lotNamesToFetch = [];
+
+        foreach ($soData as $so) {
+            $soMap[$so['id']] = $so;
+            if (!empty($so['partner_id'][0])) {
+                $partnerIdsToFetch[] = $so['partner_id'][0];
+            }
+            if (!empty($so['rental_contract_id'][0])) {
+                $contractIdsToFetch[] = $so['rental_contract_id'][0];
+            }
+            if (!empty($so['order_line'])) {
+                $orderLineIdsToFetch = array_merge($orderLineIdsToFetch, $so['order_line']);
+            }
+            if (!empty($so['lot_serial_names'])) {
+                $lotNamesToFetch[] = trim($so['lot_serial_names']);
+            }
+        }
+
+        $partnerIdsToFetch = array_values(array_unique($partnerIdsToFetch));
+        $contractIdsToFetch = array_values(array_unique($contractIdsToFetch));
+        $orderLineIdsToFetch = array_values(array_unique($orderLineIdsToFetch));
+        $lotNamesToFetch = array_values(array_unique($lotNamesToFetch));
+
+        $partnerMap = [];
+        if (!empty($partnerIdsToFetch)) {
+            $partnerFields = ['partner_bank_id', 'vat', 'l10n_id_tku', 'tku_number', 'l10n_id_kode_transaksi', 'contact_address', 'contact_address_complete', 'l10n_id_tax_address', 'ref', 'hrc_forminv_invoice_pic'];
+            $partnerData = $this->execute('res.partner', 'read', [$partnerIdsToFetch, $partnerFields]);
+            foreach ($partnerData as $p) {
+                $partnerMap[$p['id']] = $p;
+            }
+        }
+
+        $contractMap = [];
+        if (!empty($contractIdsToFetch)) {
+            $contractData = $this->execute('rental.contract', 'read', [$contractIdsToFetch, ['reference']]);
+            foreach ($contractData as $c) {
+                $contractMap[$c['id']] = $c;
+            }
+        }
+
+        $lotMap = [];
+        if (!empty($lotNamesToFetch)) {
+            $lotData = $this->execute('stock.lot', 'search_read', [
+                [['name', 'in', $lotNamesToFetch]],
+                ['name', 'ref', 'vehicle_year', 'product_id']
+            ]);
+            foreach ($lotData as $lot) {
+                $lotMap[$lot['name']] = $lot;
+            }
+        }
+
+        $lineMap = [];
+        if (!empty($orderLineIdsToFetch)) {
+            $lineData = $this->execute('sale.order.line', 'read', [
+                $orderLineIdsToFetch,
+                ['order_id', 'product_id', 'price_unit', 'duration_price', 'is_rental']
+            ]);
+            foreach ($lineData as $line) {
+                $soId = $line['order_id'][0] ?? null;
+                if ($soId && (!isset($lineMap[$soId]) || !empty($line['is_rental']))) {
+                    $lineMap[$soId] = $line;
+                }
+            }
+        }
+
+        $results = [];
+        foreach ($soData as $so) {
+            $soId = $so['id'];
+            $partnerId = $so['partner_id'][0] ?? null;
+            $partner = $partnerMap[$partnerId] ?? [];
+            $contractId = $so['rental_contract_id'][0] ?? null;
+            $contract = $contractMap[$contractId] ?? [];
+
+            $lotName = trim($so['lot_serial_names'] ?? '');
+            $lot = $lotMap[$lotName] ?? [];
+            $line = $lineMap[$soId] ?? [];
+
+            $kodeCust = $so['partner_id'][1] ?? '';
+
+            $rawStatus = strtolower(trim($so['rental_status'] ?? ''));
+            $rawState = strtolower(trim($so['state'] ?? ''));
+
+            if ($rawState === 'cancel' || $rawStatus === 'cancel' || $rawStatus === 'cancelled') {
+                $statusDisplay = 'Cancelled';
+            } elseif ($rawStatus === 'pickup' || $rawStatus === 'reserved') {
+                $statusDisplay = 'Reserved';
+            } elseif ($rawStatus === 'return' || $rawStatus === 'pickedup' || $rawStatus === 'picked_up') {
+                $statusDisplay = 'Pickedup';
+            } elseif ($rawStatus === 'returned') {
+                $statusDisplay = 'Returned';
+            } elseif ($rawStatus === 'draft' || $rawStatus === 'sent' || $rawState === 'draft' || $rawState === 'sent') {
+                $statusDisplay = 'Quotation';
+            } else {
+                $statusDisplay = !empty($rawStatus) ? ucwords(str_replace(['_', '-'], ' ', $rawStatus)) : ucwords($rawState);
+                if (strtolower($statusDisplay) === 'pickup') $statusDisplay = 'Reserved';
+                if (strtolower($statusDisplay) === 'return') $statusDisplay = 'Pickedup';
+            }
+
+            $productName = $lot['product_id'][1] ?? ($line['product_id'][1] ?? '');
+
+            $model = (function ($str) {
+                if (preg_match('/\[(.*?)\]/', $str, $matches)) {
+                    return str_replace('-', '', $matches[1]);
+                }
+                return str_replace('-', '', $str);
+            })($productName);
+
+            $startDate = !empty($so['actual_start_rental']) 
+                ? \Carbon\Carbon::parse($so['actual_start_rental'], 'UTC')->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
+                : (!empty($so['rental_start_date']) ? \Carbon\Carbon::parse($so['rental_start_date'], 'UTC')->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s') : '');
+
+            $endDate = !empty($so['actual_end_rental']) 
+                ? \Carbon\Carbon::parse($so['actual_end_rental'], 'UTC')->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
+                : (!empty($so['rental_return_date']) ? \Carbon\Carbon::parse($so['rental_return_date'], 'UTC')->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s') : '');
+
+            $tglPeriode = !empty($so['actual_start_rental'])
+                ? \Carbon\Carbon::parse($so['actual_start_rental'], 'UTC')->setTimezone('Asia/Jakarta')->format('Y-m-d')
+                : (!empty($so['rental_start_date']) ? \Carbon\Carbon::parse($so['rental_start_date'], 'UTC')->setTimezone('Asia/Jakarta')->format('Y-m-d') : (!empty($so['date_order']) ? \Carbon\Carbon::parse($so['date_order'], 'UTC')->setTimezone('Asia/Jakarta')->format('Y-m-d') : ''));
+
+            $priceDiSo = $line['price_unit'] ?? ($so['amount_untaxed'] ?? 0);
+            $durationPrice = $line['duration_price'] ?? 0;
+
+            $results[] = [
+                'kode_cust' => $kodeCust === false ? '' : $kodeCust,
+                'nomor_so' => ($so['name'] ?? '') === false ? '' : ($so['name'] ?? ''),
+                'status' => $statusDisplay,
+                'nomor_po' => ($so['client_order_ref'] ?? '') === false ? '' : ($so['client_order_ref'] ?? ''),
+                'nomor_kontrak' => ($so['rental_contract_id'][1] ?? '') === false ? '' : ($so['rental_contract_id'][1] ?? ''),
+                'kontrak_ref' => ($contract['reference'] ?? '') === false ? '' : ($contract['reference'] ?? ''),
+                'nama_user' => ($so['customer_name'] ?? '') === false ? '' : ($so['customer_name'] ?? ''),
+                'nopol' => $lotName,
+                'model' => $model,
+                'tahun_mobil' => $lot['vehicle_year'] ?? '',
+                'chassis' => $lot['ref'] ?? '',
+                'start' => $startDate,
+                'end' => $endDate,
+                'tanggal_periode_belum_cetak' => $tglPeriode,
+                'start_rental_period' => !empty($startDate) ? substr($startDate, 0, 10) : '',
+                'end_rental_period' => !empty($endDate) ? substr($endDate, 0, 10) : '',
+                'price_di_so' => $priceDiSo,
+                'duration_price' => $durationPrice,
+                'invoice_period' => $so['sale_invoice_period_id'][1] ?? 'Short Term',
+                'payment_terms' => $so['payment_term_id'][1] ?? '',
+                'rental_method' => ucwords(str_replace('_', ' ', $so['rental_method'] ?? 'Short Term')),
+                'first_invoice_date' => $so['first_invoice_date'] ?? '',
+                'area_pemakaian_unit' => $so['area_id'][1] ?? '',
+                'invoice_pic' => $partner['hrc_forminv_invoice_pic'][1] ?? '',
+                'recipient_bank' => $partner['partner_bank_id'][1] ?? '',
+                'tax_id' => $partner['vat'] ?? '',
+                'id_tku' => $partner['tku_number'] ?? '',
+                'kode_transaksi' => $partner['l10n_id_kode_transaksi'] ?? '',
+                'address' => $partner['contact_address'] ?? '',
+                'tax_address' => $partner['l10n_id_tax_address'] ?? '',
+            ];
+        }
+
+        return $results;
+    }
+
+    /**
+     * Get all Sold Out SO IDs with invoice_status = 'to invoice'
+     */
+    public function getUninvoicedSoldOutSoIds(): array
+    {
+        try {
+            $domain = [
+                ['name', 'like', 'S/'],
+                ['state', '=', 'sale'],
+                ['invoice_status', '=', 'to invoice']
+            ];
+            $soIds = $this->execute('sale.order', 'search', [$domain], ['order' => 'id desc']);
+            return array_values(array_unique($soIds ?? []));
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Fast Sync: Get recent Sold Out SO IDs and Names
+     */
+    public function getUninvoicedSoldOutSoIdsFast($limit = 500): array
+    {
+        try {
+            $domain = [
+                ['name', 'like', 'S/'],
+                ['state', '=', 'sale'],
+                ['write_date', '>=', date('Y-m-d', strtotime('-7 days'))]
+            ];
+            $records = $this->execute('sale.order', 'search_read', [
+                $domain
+            ], [
+                'fields' => ['id', 'name', 'invoice_status'],
+                'order' => 'write_date desc',
+                'limit' => $limit
+            ]);
+
+            $soIds = [];
+            $soNames = [];
+            foreach ($records as $r) {
+                $soNames[] = $r['name'];
+                if (($r['invoice_status'] ?? '') === 'to invoice') {
+                    $soIds[] = $r['id'];
+                }
+            }
+
+            return [
+                'so_ids' => array_values(array_unique($soIds)),
+                'so_names' => array_values(array_unique($soNames))
+            ];
+        } catch (\Exception $e) {
+            return ['so_ids' => [], 'so_names' => []];
+        }
+    }
+
+    /**
+     * Fetch full Uninvoiced Sold Out data for given SO IDs
+     */
+    public function fetchUninvoicedSoldOutsBySoIds(array $soIds): array
+    {
+        if (empty($soIds)) return [];
+
+        $soFields = [
+            'name', 'client_order_ref', 'customer_name', 'date_order', 'commitment_date',
+            'payment_term_id', 'area_id', 'partner_invoice_id', 'first_invoice_date',
+            'partner_id', 'order_line', 'state', 'lot_serial_names', 'amount_untaxed'
+        ];
+
+        $soData = $this->execute('sale.order', 'read', [$soIds, $soFields]);
+        $soMap = [];
+        $partnerIdsToFetch = [];
+        $orderLineIdsToFetch = [];
+        $lotNamesToFetch = [];
+
+        foreach ($soData as $so) {
+            $soMap[$so['id']] = $so;
+            if (!empty($so['partner_id'][0])) {
+                $partnerIdsToFetch[] = $so['partner_id'][0];
+            }
+            if (!empty($so['order_line'])) {
+                $orderLineIdsToFetch = array_merge($orderLineIdsToFetch, $so['order_line']);
+            }
+            if (!empty($so['lot_serial_names'])) {
+                $lotNamesToFetch[] = trim($so['lot_serial_names']);
+            }
+        }
+
+        $partnerIdsToFetch = array_values(array_unique($partnerIdsToFetch));
+        $orderLineIdsToFetch = array_values(array_unique($orderLineIdsToFetch));
+        $lotNamesToFetch = array_values(array_unique($lotNamesToFetch));
+
+        $partnerMap = [];
+        if (!empty($partnerIdsToFetch)) {
+            $partnerFields = ['partner_bank_id', 'vat', 'l10n_id_tku', 'tku_number', 'l10n_id_kode_transaksi', 'contact_address', 'contact_address_complete', 'l10n_id_tax_address', 'ref', 'hrc_forminv_invoice_pic'];
+            $partnerData = $this->execute('res.partner', 'read', [$partnerIdsToFetch, $partnerFields]);
+            foreach ($partnerData as $p) {
+                $partnerMap[$p['id']] = $p;
+            }
+        }
+
+        $lotMap = [];
+        if (!empty($lotNamesToFetch)) {
+            $lotData = $this->execute('stock.lot', 'search_read', [
+                [['name', 'in', $lotNamesToFetch]],
+                ['name', 'ref', 'vehicle_year', 'product_id']
+            ]);
+            foreach ($lotData as $lot) {
+                $lotMap[$lot['name']] = $lot;
+            }
+        }
+
+        $lineMap = [];
+        if (!empty($orderLineIdsToFetch)) {
+            $lineData = $this->execute('sale.order.line', 'read', [
+                $orderLineIdsToFetch,
+                ['order_id', 'product_id', 'price_unit', 'duration_price', 'price_subtotal']
+            ]);
+            foreach ($lineData as $line) {
+                $soId = $line['order_id'][0] ?? null;
+                if ($soId && !isset($lineMap[$soId])) {
+                    $lineMap[$soId] = $line;
+                }
+            }
+        }
+
+        $results = [];
+        foreach ($soData as $so) {
+            $soId = $so['id'];
+            $partnerId = $so['partner_id'][0] ?? null;
+            $partner = $partnerMap[$partnerId] ?? [];
+
+            $lotName = trim($so['lot_serial_names'] ?? '');
+            $lot = $lotMap[$lotName] ?? [];
+            $line = $lineMap[$soId] ?? [];
+
+            $kodeCust = $so['partner_id'][1] ?? '';
+            $productName = $lot['product_id'][1] ?? ($line['product_id'][1] ?? '');
+
+            $model = (function ($str) {
+                if (preg_match('/\[(.*?)\]/', $str, $matches)) {
+                    return str_replace('-', '', $matches[1]);
+                }
+                return str_replace('-', '', $str);
+            })($productName);
+
+            $orderDate = !empty($so['date_order']) 
+                ? \Carbon\Carbon::parse($so['date_order'], 'UTC')->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
+                : '';
+
+            $commitDate = !empty($so['commitment_date']) 
+                ? \Carbon\Carbon::parse($so['commitment_date'], 'UTC')->setTimezone('Asia/Jakarta')->format('Y-m-d H:i:s')
+                : $orderDate;
+
+            $tglPeriode = !empty($orderDate) ? substr($orderDate, 0, 10) : '';
+
+            $priceDiSo = $line['price_unit'] ?? ($so['amount_untaxed'] ?? 0);
+
+            $results[] = [
+                'kode_cust' => $kodeCust === false ? '' : $kodeCust,
+                'nomor_so' => ($so['name'] ?? '') === false ? '' : ($so['name'] ?? ''),
+                'status' => 'Sold Out',
+                'nomor_po' => ($so['client_order_ref'] ?? '') === false ? '' : ($so['client_order_ref'] ?? ''),
+                'nomor_kontrak' => '',
+                'kontrak_ref' => '',
+                'nama_user' => ($so['customer_name'] ?? '') === false ? '' : ($so['customer_name'] ?? ''),
+                'nopol' => $lotName,
+                'model' => $model,
+                'tahun_mobil' => $lot['vehicle_year'] ?? '',
+                'chassis' => $lot['ref'] ?? '',
+                'start' => $orderDate,
+                'end' => $commitDate,
+                'tanggal_periode_belum_cetak' => $tglPeriode,
+                'start_rental_period' => !empty($orderDate) ? substr($orderDate, 0, 10) : '',
+                'end_rental_period' => !empty($commitDate) ? substr($commitDate, 0, 10) : '',
+                'price_di_so' => $priceDiSo,
+                'duration_price' => 0,
+                'invoice_period' => 'Sold Out',
+                'payment_terms' => $so['payment_term_id'][1] ?? '',
+                'rental_method' => 'Sold Out',
+                'first_invoice_date' => $so['first_invoice_date'] ?? '',
+                'area_pemakaian_unit' => $so['area_id'][1] ?? '',
+                'invoice_pic' => $partner['hrc_forminv_invoice_pic'][1] ?? '',
+                'recipient_bank' => $partner['partner_bank_id'][1] ?? '',
+                'tax_id' => $partner['vat'] ?? '',
+                'id_tku' => $partner['tku_number'] ?? '',
+                'kode_transaksi' => $partner['l10n_id_kode_transaksi'] ?? '',
+                'address' => $partner['contact_address'] ?? '',
+                'tax_address' => $partner['l10n_id_tax_address'] ?? '',
+            ];
+        }
+
+        return $results;
+    }
+
+    /**
      * Get recent invoice IDs for quick sync (fetches the newest created in Odoo)
      */
     public function getRecentInvoiceIds(string $type, int $limit = 20): array

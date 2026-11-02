@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\UninvoicedRental;
+use App\Models\UninvoicedShortTerm;
+use App\Models\UninvoicedSoldOut;
 use App\Models\Setting;
 use App\Services\OdooService;
 use App\Services\SyncService;
@@ -12,14 +14,25 @@ use Illuminate\Support\Facades\Response;
 class UninvoicedRentalController extends Controller
 {
     /**
-     * Display the uninvoiced rentals list
+     * Display the uninvoiced rentals list (supports tabs: long_term, short_term, sold_out)
      */
     public function index(Request $request)
     {
+        $activeTab = $request->input('tab', 'long_term');
+        if (!in_array($activeTab, ['long_term', 'short_term', 'sold_out'])) {
+            $activeTab = 'long_term';
+        }
+
         $sort = $request->input('sort', 'tanggal_periode_belum_cetak');
         $dir = $request->input('dir', 'desc');
 
-        $query = UninvoicedRental::query()->where(function ($q) {
+        $modelClass = match ($activeTab) {
+            'short_term' => UninvoicedShortTerm::class,
+            'sold_out' => UninvoicedSoldOut::class,
+            default => UninvoicedRental::class,
+        };
+
+        $query = $modelClass::query()->where(function ($q) {
             $q->whereNull('status')->orWhere('status', '!=', 'Cancelled');
         });
 
@@ -60,7 +73,19 @@ class UninvoicedRentalController extends Controller
 
         $autoSyncEnabled = Setting::getValue('uninvoiced_rentals_auto_sync_enabled', 'false') === 'true';
 
-        return view('uninvoiced-rentals.index', compact('rentals', 'sort', 'dir', 'perPage', 'autoSyncEnabled'));
+        $counts = [
+            'long_term' => UninvoicedRental::where(function ($q) {
+                $q->whereNull('status')->orWhere('status', '!=', 'Cancelled');
+            })->count(),
+            'short_term' => UninvoicedShortTerm::where(function ($q) {
+                $q->whereNull('status')->orWhere('status', '!=', 'Cancelled');
+            })->count(),
+            'sold_out' => UninvoicedSoldOut::where(function ($q) {
+                $q->whereNull('status')->orWhere('status', '!=', 'Cancelled');
+            })->count(),
+        ];
+
+        return view('uninvoiced-rentals.index', compact('rentals', 'sort', 'dir', 'perPage', 'autoSyncEnabled', 'activeTab', 'counts'));
     }
 
     /**
@@ -77,8 +102,10 @@ class UninvoicedRentalController extends Controller
         ]);
     }
 
+    // ─── Long Term (Subscription) Sync Methods — 100% Preserved ───
+
     /**
-     * Initialize sync by fetching all SO IDs
+     * Initialize sync by fetching all SO IDs (Long Term)
      */
     public function syncInit(Request $request)
     {
@@ -105,15 +132,16 @@ class UninvoicedRentalController extends Controller
             ]);
         }
     }
+
     /**
-     * Initialize fast sync by fetching recently modified SO IDs and clearing them locally
+     * Initialize fast sync by fetching recently modified SO IDs and clearing them locally (Long Term)
      */
     public function syncInitFast(Request $request)
     {
         try {
             $odoo = new \App\Services\OdooService();
             $data = $odoo->getUninvoicedSoIdsFast(500);
-            
+
             $soIds = $data['so_ids'] ?? [];
             $soNames = $data['so_names'] ?? [];
 
@@ -144,7 +172,7 @@ class UninvoicedRentalController extends Controller
     }
 
     /**
-     * Process a chunk of SO IDs
+     * Process a chunk of SO IDs (Long Term)
      */
     public function syncChunk(Request $request)
     {
@@ -179,12 +207,235 @@ class UninvoicedRentalController extends Controller
         }
     }
 
+    // ─── Short Term Sync Methods ───
+
     /**
-     * Export data to CSV
+     * Initialize sync for Short Term SOs
+     */
+    public function syncInitShortTerm(Request $request)
+    {
+        try {
+            $odoo = new OdooService();
+            $soIds = $odoo->getUninvoicedShortTermSoIds();
+
+            if (empty($soIds)) {
+                return response()->json([
+                    'success' => true,
+                    'so_ids' => [],
+                    'message' => 'No uninvoiced short term orders found.'
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'so_ids' => $soIds,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Short term initialization failed: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Fast sync for Short Term SOs
+     */
+    public function syncInitFastShortTerm(Request $request)
+    {
+        try {
+            $odoo = new OdooService();
+            $data = $odoo->getUninvoicedShortTermSoIdsFast(500);
+
+            $soIds = $data['so_ids'] ?? [];
+            $soNames = $data['so_names'] ?? [];
+
+            if (empty($soIds)) {
+                return response()->json([
+                    'success' => true,
+                    'so_ids' => [],
+                    'message' => 'No recent uninvoiced short term orders found.'
+                ]);
+            }
+
+            if (!empty($soNames)) {
+                UninvoicedShortTerm::whereIn('nomor_so', $soNames)->delete();
+            }
+
+            return response()->json([
+                'success' => true,
+                'so_ids' => $soIds,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Short term fast sync initialization failed: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Process chunk for Short Term SOs
+     */
+    public function syncChunkShortTerm(Request $request)
+    {
+        try {
+            $soIds = $request->input('so_ids', []);
+            $isFirstChunk = $request->input('is_first_chunk', false);
+
+            if (empty($soIds)) {
+                return response()->json(['success' => true, 'count' => 0]);
+            }
+
+            $odoo = new OdooService();
+            $result = $odoo->fetchUninvoicedShortTermsBySoIds($soIds);
+
+            if (empty($result)) {
+                return response()->json(['success' => true, 'count' => 0]);
+            }
+
+            $syncService = new SyncService();
+            $savedCount = $syncService->saveUninvoicedShortTerms($result, $isFirstChunk);
+
+            return response()->json([
+                'success' => true,
+                'count' => $savedCount,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Short term chunk sync failed: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    // ─── Sold Out Sync Methods ───
+
+    /**
+     * Initialize sync for Sold Out SOs
+     */
+    public function syncInitSoldOut(Request $request)
+    {
+        try {
+            $odoo = new OdooService();
+            $soIds = $odoo->getUninvoicedSoldOutSoIds();
+
+            if (empty($soIds)) {
+                return response()->json([
+                    'success' => true,
+                    'so_ids' => [],
+                    'message' => 'No uninvoiced sold out orders found.'
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'so_ids' => $soIds,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sold out initialization failed: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Fast sync for Sold Out SOs
+     */
+    public function syncInitFastSoldOut(Request $request)
+    {
+        try {
+            $odoo = new OdooService();
+            $data = $odoo->getUninvoicedSoldOutSoIdsFast(500);
+
+            $soIds = $data['so_ids'] ?? [];
+            $soNames = $data['so_names'] ?? [];
+
+            if (empty($soIds)) {
+                return response()->json([
+                    'success' => true,
+                    'so_ids' => [],
+                    'message' => 'No recent uninvoiced sold out orders found.'
+                ]);
+            }
+
+            if (!empty($soNames)) {
+                UninvoicedSoldOut::whereIn('nomor_so', $soNames)->delete();
+            }
+
+            return response()->json([
+                'success' => true,
+                'so_ids' => $soIds,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sold out fast sync initialization failed: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Process chunk for Sold Out SOs
+     */
+    public function syncChunkSoldOut(Request $request)
+    {
+        try {
+            $soIds = $request->input('so_ids', []);
+            $isFirstChunk = $request->input('is_first_chunk', false);
+
+            if (empty($soIds)) {
+                return response()->json(['success' => true, 'count' => 0]);
+            }
+
+            $odoo = new OdooService();
+            $result = $odoo->fetchUninvoicedSoldOutsBySoIds($soIds);
+
+            if (empty($result)) {
+                return response()->json(['success' => true, 'count' => 0]);
+            }
+
+            $syncService = new SyncService();
+            $savedCount = $syncService->saveUninvoicedSoldOuts($result, $isFirstChunk);
+
+            return response()->json([
+                'success' => true,
+                'count' => $savedCount,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sold out chunk sync failed: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    // ─── Export Method (Adjusted Filenames per Tab) ───
+
+    /**
+     * Export data to CSV or Excel
      */
     public function export(Request $request)
     {
-        $query = UninvoicedRental::query()->where(function ($q) {
+        $tab = $request->input('tab', 'long_term');
+        if (!in_array($tab, ['long_term', 'short_term', 'sold_out'])) {
+            $tab = 'long_term';
+        }
+
+        $modelClass = match ($tab) {
+            'short_term' => UninvoicedShortTerm::class,
+            'sold_out' => UninvoicedSoldOut::class,
+            default => UninvoicedRental::class,
+        };
+
+        $filePrefix = match ($tab) {
+            'short_term' => 'REPORT_UNINVOICED_SHORT_TERM_',
+            'sold_out' => 'REPORT_UNINVOICED_SOLD_OUT_',
+            default => 'REPORT_UNINVOICED_LONG_TERM_',
+        };
+
+        $query = $modelClass::query()->where(function ($q) {
             $q->whereNull('status')->orWhere('status', '!=', 'Cancelled');
         });
 
@@ -243,7 +494,7 @@ class UninvoicedRentalController extends Controller
 
         if (in_array($format, ['xls', 'xlsx'])) {
             $ext = $format;
-            $filename = "REPORT_UNINVOICED_" . now()->format('YmdHis') . '.' . $ext;
+            $filename = $filePrefix . now()->format('YmdHis') . '.' . $ext;
             $html = '<table border="1"><thead><tr>';
             foreach ($columns as $col) {
                 $html .= '<th style="background-color: #f2f2f2;">' . htmlspecialchars($col) . '</th>';
@@ -263,11 +514,11 @@ class UninvoicedRentalController extends Controller
                 $html .= '<td>' . htmlspecialchars((string) $rental->nopol) . '</td>';
                 $html .= '<td>' . htmlspecialchars((string) $rental->model) . '</td>';
                 $html .= '<td>' . htmlspecialchars((string) $rental->tahun_mobil) . '</td>';
-                $html .= '<td>' . htmlspecialchars((string) \App\Models\UninvoicedRental::formatDate($rental->start)) . '</td>';
-                $html .= '<td>' . htmlspecialchars((string) \App\Models\UninvoicedRental::formatDate($rental->end)) . '</td>';
-                $html .= '<td>' . htmlspecialchars((string) \App\Models\UninvoicedRental::formatDate($rental->tanggal_periode_belum_cetak)) . '</td>';
-                $html .= '<td>' . htmlspecialchars((string) \App\Models\UninvoicedRental::formatDate($rental->start_rental_period)) . '</td>';
-                $html .= '<td>' . htmlspecialchars((string) \App\Models\UninvoicedRental::formatDate($rental->end_rental_period)) . '</td>';
+                $html .= '<td>' . htmlspecialchars((string) $modelClass::formatDate($rental->start)) . '</td>';
+                $html .= '<td>' . htmlspecialchars((string) $modelClass::formatDate($rental->end)) . '</td>';
+                $html .= '<td>' . htmlspecialchars((string) $modelClass::formatDate($rental->tanggal_periode_belum_cetak)) . '</td>';
+                $html .= '<td>' . htmlspecialchars((string) $modelClass::formatDate($rental->start_rental_period)) . '</td>';
+                $html .= '<td>' . htmlspecialchars((string) $modelClass::formatDate($rental->end_rental_period)) . '</td>';
                 $html .= '<td>' . htmlspecialchars((string) $rental->price_di_so) . '</td>';
                 $html .= '<td>' . htmlspecialchars((string) $rental->duration_price) . '</td>';
                 $html .= '<td>' . htmlspecialchars((string) $rental->invoice_period) . '</td>';
@@ -275,7 +526,7 @@ class UninvoicedRentalController extends Controller
                 $html .= '<td>' . htmlspecialchars((string) $rental->area_pemakaian_unit) . '</td>';
                 $html .= '<td style="mso-number-format:\'\@\';">' . htmlspecialchars((string) $rental->chassis) . '</td>';
                 $html .= '<td>' . htmlspecialchars((string) $rental->invoice_pic) . '</td>';
-                $html .= '<td>' . htmlspecialchars((string) \App\Models\UninvoicedRental::formatDate($rental->first_invoice_date)) . '</td>';
+                $html .= '<td>' . htmlspecialchars((string) $modelClass::formatDate($rental->first_invoice_date)) . '</td>';
                 $html .= '<td>' . htmlspecialchars((string) $rental->rental_method) . '</td>';
                 $html .= '<td style="mso-number-format:\'\@\';">' . htmlspecialchars((string) $rental->recipient_bank) . '</td>';
                 $html .= '<td style="mso-number-format:\'\@\';">' . htmlspecialchars((string) $rental->tax_id) . '</td>';
@@ -297,7 +548,7 @@ class UninvoicedRentalController extends Controller
         }
 
         // Default CSV
-        $filename = "REPORT_UNINVOICED_" . now()->format('YmdHis') . '.csv';
+        $filename = $filePrefix . now()->format('YmdHis') . '.csv';
         $headers = array(
             "Content-type" => "text/csv",
             "Content-Disposition" => "attachment; filename=$filename",
@@ -306,7 +557,7 @@ class UninvoicedRentalController extends Controller
             "Expires" => "0"
         );
 
-        $callback = function () use ($rentals, $columns) {
+        $callback = function () use ($rentals, $columns, $modelClass) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
 
@@ -323,11 +574,11 @@ class UninvoicedRentalController extends Controller
                     $rental->nopol,
                     $rental->model,
                     $rental->tahun_mobil,
-                    \App\Models\UninvoicedRental::formatDate($rental->start),
-                    \App\Models\UninvoicedRental::formatDate($rental->end),
-                    \App\Models\UninvoicedRental::formatDate($rental->tanggal_periode_belum_cetak),
-                    \App\Models\UninvoicedRental::formatDate($rental->start_rental_period),
-                    \App\Models\UninvoicedRental::formatDate($rental->end_rental_period),
+                    $modelClass::formatDate($rental->start),
+                    $modelClass::formatDate($rental->end),
+                    $modelClass::formatDate($rental->tanggal_periode_belum_cetak),
+                    $modelClass::formatDate($rental->start_rental_period),
+                    $modelClass::formatDate($rental->end_rental_period),
                     $rental->price_di_so,
                     $rental->duration_price,
                     $rental->invoice_period,
@@ -335,7 +586,7 @@ class UninvoicedRentalController extends Controller
                     $rental->area_pemakaian_unit,
                     $rental->chassis,
                     $rental->invoice_pic,
-                    \App\Models\UninvoicedRental::formatDate($rental->first_invoice_date),
+                    $modelClass::formatDate($rental->first_invoice_date),
                     $rental->rental_method,
                     $rental->recipient_bank,
                     $rental->tax_id,

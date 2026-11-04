@@ -2310,14 +2310,14 @@ class OdooService
         }
         $allInvIds = array_values(array_unique($allInvIds));
 
-        // 1. Direct linked posted invoices & refs
+        // 1. Direct linked posted invoices & refs (strictly active out_invoice, not reversed)
         $postedInvIds = [];
         $candidateRefs = [];
         $invIdToRef = [];
         if (!empty($allInvIds)) {
-            $linkedInvs = $this->execute('account.move', 'read', [$allInvIds, ['id', 'ref', 'state']]);
+            $linkedInvs = $this->execute('account.move', 'read', [$allInvIds, ['id', 'ref', 'state', 'move_type', 'payment_state']]);
             foreach ($linkedInvs as $li) {
-                if (($li['state'] ?? '') === 'posted') {
+                if (($li['state'] ?? '') === 'posted' && ($li['move_type'] ?? '') === 'out_invoice' && ($li['payment_state'] ?? '') !== 'reversed') {
                     $postedInvIds[$li['id']] = true;
                 }
                 if (!empty($li['ref'])) {
@@ -2329,13 +2329,15 @@ class OdooService
         }
         $candidateRefs = array_values(array_unique($candidateRefs));
 
-        // 2. Posted invoices matching candidate refs
+        // 2. Posted invoices matching candidate refs (strictly active out_invoice, not reversed)
         $postedRefs = [];
         if (!empty($candidateRefs)) {
             $postedRefMoves = $this->execute('account.move', 'search_read', [
                 [
                     ['ref', 'in', $candidateRefs],
-                    ['state', '=', 'posted']
+                    ['state', '=', 'posted'],
+                    ['move_type', '=', 'out_invoice'],
+                    ['payment_state', '!=', 'reversed']
                 ]
             ], ['fields' => ['id', 'ref']]);
             foreach ($postedRefMoves as $pm) {
@@ -2345,13 +2347,15 @@ class OdooService
             }
         }
 
-        // 3. Posted invoices with origin = SO name
+        // 3. Posted invoices with origin = SO name (strictly active out_invoice, not reversed)
         $postedOrigins = [];
         if (!empty($soNames)) {
             $postedOriginMoves = $this->execute('account.move', 'search_read', [
                 [
                     ['invoice_origin', 'in', $soNames],
-                    ['state', '=', 'posted']
+                    ['state', '=', 'posted'],
+                    ['move_type', '=', 'out_invoice'],
+                    ['payment_state', '!=', 'reversed']
                 ]
             ], ['fields' => ['id', 'invoice_origin']]);
             foreach ($postedOriginMoves as $pom) {
@@ -2680,14 +2684,14 @@ class OdooService
         }
         $allInvIds = array_values(array_unique($allInvIds));
 
-        // 1. Direct linked posted invoices & refs
+        // 1. Direct linked posted invoices & refs (strictly active out_invoice, not reversed)
         $postedInvIds = [];
         $candidateRefs = [];
         $invIdToRef = [];
         if (!empty($allInvIds)) {
-            $linkedInvs = $this->execute('account.move', 'read', [$allInvIds, ['id', 'ref', 'state']]);
+            $linkedInvs = $this->execute('account.move', 'read', [$allInvIds, ['id', 'ref', 'state', 'move_type', 'payment_state']]);
             foreach ($linkedInvs as $li) {
-                if (($li['state'] ?? '') === 'posted') {
+                if (($li['state'] ?? '') === 'posted' && ($li['move_type'] ?? '') === 'out_invoice' && ($li['payment_state'] ?? '') !== 'reversed') {
                     $postedInvIds[$li['id']] = true;
                 }
                 if (!empty($li['ref'])) {
@@ -2699,13 +2703,15 @@ class OdooService
         }
         $candidateRefs = array_values(array_unique($candidateRefs));
 
-        // 2. Posted invoices matching candidate refs
+        // 2. Posted invoices matching candidate refs (strictly active out_invoice, not reversed)
         $postedRefs = [];
         if (!empty($candidateRefs)) {
             $postedRefMoves = $this->execute('account.move', 'search_read', [
                 [
                     ['ref', 'in', $candidateRefs],
-                    ['state', '=', 'posted']
+                    ['state', '=', 'posted'],
+                    ['move_type', '=', 'out_invoice'],
+                    ['payment_state', '!=', 'reversed']
                 ]
             ], ['fields' => ['id', 'ref']]);
             foreach ($postedRefMoves as $pm) {
@@ -2715,13 +2721,15 @@ class OdooService
             }
         }
 
-        // 3. Posted invoices with origin = SO name
+        // 3. Posted invoices with origin = SO name (strictly active out_invoice, not reversed)
         $postedOrigins = [];
         if (!empty($soNames)) {
             $postedOriginMoves = $this->execute('account.move', 'search_read', [
                 [
                     ['invoice_origin', 'in', $soNames],
-                    ['state', '=', 'posted']
+                    ['state', '=', 'posted'],
+                    ['move_type', '=', 'out_invoice'],
+                    ['payment_state', '!=', 'reversed']
                 ]
             ], ['fields' => ['id', 'invoice_origin']]);
             foreach ($postedOriginMoves as $pom) {

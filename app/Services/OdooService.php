@@ -2244,7 +2244,7 @@ class OdooService
                 ['rental_status', '!=', 'cancel']
             ];
             $candidateSos = $this->execute('sale.order', 'search_read', [$domain], [
-                'fields' => ['id', 'name', 'invoice_ids', 'lot_serial_names'],
+                'fields' => ['id', 'name', 'invoice_ids', 'lot_serial_names', 'client_order_ref', 'rental_status', 'actual_end_rental', 'rental_return_date', 'date_order'],
                 'order' => 'id desc'
             ]);
 
@@ -2268,7 +2268,7 @@ class OdooService
             $records = $this->execute('sale.order', 'search_read', [
                 $domain
             ], [
-                'fields' => ['id', 'name', 'invoice_status', 'rental_status', 'invoice_ids', 'lot_serial_names'],
+                'fields' => ['id', 'name', 'invoice_status', 'rental_status', 'invoice_ids', 'lot_serial_names', 'client_order_ref', 'actual_end_rental', 'rental_return_date', 'date_order'],
                 'order' => 'write_date desc',
                 'limit' => $limit
             ]);
@@ -2302,10 +2302,15 @@ class OdooService
 
         $allInvIds = [];
         $soNames = [];
+        $candidatePos = [];
         foreach ($candidateSos as $so) {
             $soNames[] = $so['name'];
             if (!empty($so['invoice_ids'])) {
                 $allInvIds = array_merge($allInvIds, $so['invoice_ids']);
+            }
+            $po = trim($so['client_order_ref'] ?? '');
+            if (!empty($po) && strlen($po) >= 4) {
+                $candidatePos[$po] = true;
             }
         }
         $allInvIds = array_values(array_unique($allInvIds));
@@ -2365,14 +2370,36 @@ class OdooService
             }
         }
 
-        // 4. Check merged drafts on posted Invoice Sewa Retail lines
+        // 4. Posted invoices matching candidate POs / client_order_ref (replacement SOs / PO billings)
+        $postedPos = [];
+        if (!empty($candidatePos)) {
+            $poMoves = $this->execute('account.move', 'search_read', [
+                [
+                    ['state', '=', 'posted'],
+                    ['move_type', '=', 'out_invoice'],
+                    ['payment_state', '!=', 'reversed'],
+                    '|',
+                    ['ref', 'in', array_keys($candidatePos)],
+                    ['invoice_origin', 'in', array_keys($candidatePos)]
+                ]
+            ], ['fields' => ['id', 'ref', 'invoice_origin']]);
+            foreach ($poMoves as $pm) {
+                if (!empty($pm['ref'])) {
+                    $postedPos[trim($pm['ref'])] = true;
+                }
+                if (!empty($pm['invoice_origin'])) {
+                    $postedPos[trim($pm['invoice_origin'])] = true;
+                }
+            }
+        }
+
+        // 5. Check merged drafts on ANY posted invoice lines (across all journals, including Subscription INVRS)
         $mergedDraftIds = [];
         if (!empty($allInvIds)) {
             $postedDraftLines = $this->execute('account.move.line', 'search_read', [
                 [
                     ['move_id.state', '=', 'posted'],
-                    ['move_id.journal_id.name', '=', 'Invoice Sewa Retail'],
-                    ['name', 'ilike', 'Draft']
+                    ['name', 'ilike', 'Merged (Draft']
                 ]
             ], ['fields' => ['id', 'name']]);
 
@@ -2412,6 +2439,30 @@ class OdooService
             foreach ($so['invoice_ids'] as $invId) {
                 if (isset($mergedDraftIds[$invId])) {
                     continue 2;
+                }
+            }
+
+            // E. PO match?
+            $po = trim($so['client_order_ref'] ?? '');
+            if (!empty($po) && isset($postedPos[$po])) {
+                continue;
+            }
+
+            // F. Operational cutoff: Returned retail rental older than 60 days
+            $rawStatus = strtolower(trim($so['rental_status'] ?? ''));
+            if ($rawStatus === 'returned') {
+                $endDateStr = !empty($so['actual_end_rental']) 
+                    ? $so['actual_end_rental'] 
+                    : (!empty($so['rental_return_date']) ? $so['rental_return_date'] : ($so['date_order'] ?? ''));
+                if (!empty($endDateStr)) {
+                    try {
+                        $endDate = \Carbon\Carbon::parse($endDateStr);
+                        if ($endDate->diffInDays(now()) > 60) {
+                            continue;
+                        }
+                    } catch (\Exception $e) {
+                        // ignore parse errors
+                    }
                 }
             }
 

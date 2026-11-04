@@ -251,16 +251,16 @@ class UninvoicedRentalController extends Controller
             $soIds = $data['so_ids'] ?? [];
             $soNames = $data['so_names'] ?? [];
 
+            if (!empty($soNames)) {
+                UninvoicedShortTerm::whereIn('nomor_so', $soNames)->delete();
+            }
+
             if (empty($soIds)) {
                 return response()->json([
                     'success' => true,
                     'so_ids' => [],
                     'message' => 'No recent uninvoiced short term orders found.'
                 ]);
-            }
-
-            if (!empty($soNames)) {
-                UninvoicedShortTerm::whereIn('nomor_so', $soNames)->delete();
             }
 
             return response()->json([
@@ -354,16 +354,16 @@ class UninvoicedRentalController extends Controller
             $soIds = $data['so_ids'] ?? [];
             $soNames = $data['so_names'] ?? [];
 
+            if (!empty($soNames)) {
+                UninvoicedSoldOut::whereIn('nomor_so', $soNames)->delete();
+            }
+
             if (empty($soIds)) {
                 return response()->json([
                     'success' => true,
                     'so_ids' => [],
                     'message' => 'No recent uninvoiced sold out orders found.'
                 ]);
-            }
-
-            if (!empty($soNames)) {
-                UninvoicedSoldOut::whereIn('nomor_so', $soNames)->delete();
             }
 
             return response()->json([

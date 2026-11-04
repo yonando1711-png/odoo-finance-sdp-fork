@@ -219,6 +219,7 @@ class UninvoicedRentalController extends Controller
             $soIds = $odoo->getUninvoicedShortTermSoIds();
 
             if (empty($soIds)) {
+                UninvoicedShortTerm::truncate();
                 return response()->json([
                     'success' => true,
                     'so_ids' => [],
@@ -321,6 +322,7 @@ class UninvoicedRentalController extends Controller
             $soIds = $odoo->getUninvoicedSoldOutSoIds();
 
             if (empty($soIds)) {
+                UninvoicedSoldOut::truncate();
                 return response()->json([
                     'success' => true,
                     'so_ids' => [],

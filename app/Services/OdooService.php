@@ -2232,7 +2232,7 @@ class OdooService
     }
 
     /**
-     * Get all Short Term SO IDs with invoice_status = 'to invoice'
+     * Get all Short Term SO IDs with invoice_status = 'to invoice', filtered by smart invoice verification
      */
     public function getUninvoicedShortTermSoIds(): array
     {
@@ -2243,8 +2243,12 @@ class OdooService
                 ['invoice_status', '=', 'to invoice'],
                 ['rental_status', '!=', 'cancel']
             ];
-            $soIds = $this->execute('sale.order', 'search', [$domain], ['order' => 'id desc']);
-            return array_values(array_unique($soIds ?? []));
+            $candidateSos = $this->execute('sale.order', 'search_read', [$domain], [
+                'fields' => ['id', 'name', 'invoice_ids', 'lot_serial_names'],
+                'order' => 'id desc'
+            ]);
+
+            return $this->filterInvoicedShortTermSos($candidateSos ?? []);
         } catch (\Exception $e) {
             return [];
         }
@@ -2264,27 +2268,153 @@ class OdooService
             $records = $this->execute('sale.order', 'search_read', [
                 $domain
             ], [
-                'fields' => ['id', 'name', 'invoice_status', 'rental_status'],
+                'fields' => ['id', 'name', 'invoice_status', 'rental_status', 'invoice_ids', 'lot_serial_names'],
                 'order' => 'write_date desc',
                 'limit' => $limit
             ]);
 
-            $soIds = [];
             $soNames = [];
+            $candidateSos = [];
             foreach ($records as $r) {
                 $soNames[] = $r['name'];
                 if (($r['invoice_status'] ?? '') === 'to invoice' && ($r['rental_status'] ?? '') !== 'cancel') {
-                    $soIds[] = $r['id'];
+                    $candidateSos[] = $r;
                 }
             }
 
+            $validSoIds = $this->filterInvoicedShortTermSos($candidateSos);
+
             return [
-                'so_ids' => array_values(array_unique($soIds)),
+                'so_ids' => array_values(array_unique($validSoIds)),
                 'so_names' => array_values(array_unique($soNames))
             ];
         } catch (\Exception $e) {
             return ['so_ids' => [], 'so_names' => []];
         }
+    }
+
+    /**
+     * Fallback verification: filter out Short Term SOs that already have posted invoices
+     */
+    protected function filterInvoicedShortTermSos(array $candidateSos): array
+    {
+        if (empty($candidateSos)) return [];
+
+        $allInvIds = [];
+        $soNames = [];
+        foreach ($candidateSos as $so) {
+            $soNames[] = $so['name'];
+            if (!empty($so['invoice_ids'])) {
+                $allInvIds = array_merge($allInvIds, $so['invoice_ids']);
+            }
+        }
+        $allInvIds = array_values(array_unique($allInvIds));
+
+        // 1. Direct linked posted invoices & refs
+        $postedInvIds = [];
+        $candidateRefs = [];
+        $invIdToRef = [];
+        if (!empty($allInvIds)) {
+            $linkedInvs = $this->execute('account.move', 'read', [$allInvIds, ['id', 'ref', 'state']]);
+            foreach ($linkedInvs as $li) {
+                if (($li['state'] ?? '') === 'posted') {
+                    $postedInvIds[$li['id']] = true;
+                }
+                if (!empty($li['ref'])) {
+                    $ref = trim($li['ref']);
+                    $candidateRefs[] = $ref;
+                    $invIdToRef[$li['id']] = $ref;
+                }
+            }
+        }
+        $candidateRefs = array_values(array_unique($candidateRefs));
+
+        // 2. Posted invoices matching candidate refs
+        $postedRefs = [];
+        if (!empty($candidateRefs)) {
+            $postedRefMoves = $this->execute('account.move', 'search_read', [
+                [
+                    ['ref', 'in', $candidateRefs],
+                    ['state', '=', 'posted']
+                ]
+            ], ['fields' => ['id', 'ref']]);
+            foreach ($postedRefMoves as $pm) {
+                if (!empty($pm['ref'])) {
+                    $postedRefs[$pm['ref']] = true;
+                }
+            }
+        }
+
+        // 3. Posted invoices with origin = SO name
+        $postedOrigins = [];
+        if (!empty($soNames)) {
+            $postedOriginMoves = $this->execute('account.move', 'search_read', [
+                [
+                    ['invoice_origin', 'in', $soNames],
+                    ['state', '=', 'posted']
+                ]
+            ], ['fields' => ['id', 'invoice_origin']]);
+            foreach ($postedOriginMoves as $pom) {
+                if (!empty($pom['invoice_origin'])) {
+                    $postedOrigins[$pom['invoice_origin']] = true;
+                }
+            }
+        }
+
+        // 4. Check merged drafts on posted Invoice Sewa Retail lines
+        $mergedDraftIds = [];
+        if (!empty($allInvIds)) {
+            $postedDraftLines = $this->execute('account.move.line', 'search_read', [
+                [
+                    ['move_id.state', '=', 'posted'],
+                    ['move_id.journal_id.name', '=', 'Invoice Sewa Retail'],
+                    ['name', 'ilike', 'Draft']
+                ]
+            ], ['fields' => ['id', 'name']]);
+
+            foreach ($postedDraftLines as $pl) {
+                if (preg_match_all('/Draft\s*(\d+)/i', $pl['name'] ?? '', $draftMatches)) {
+                    foreach ($draftMatches[1] as $dm) {
+                        $mergedDraftIds[(int)$dm] = true;
+                    }
+                }
+            }
+        }
+
+        // Final filter
+        $validSoIds = [];
+        foreach ($candidateSos as $so) {
+            // A. Direct posted invoice?
+            foreach ($so['invoice_ids'] as $invId) {
+                if (isset($postedInvIds[$invId])) {
+                    continue 2;
+                }
+            }
+
+            // B. Origin match?
+            if (isset($postedOrigins[$so['name']])) {
+                continue;
+            }
+
+            // C. Ref match?
+            foreach ($so['invoice_ids'] as $invId) {
+                $ref = $invIdToRef[$invId] ?? null;
+                if ($ref && isset($postedRefs[$ref])) {
+                    continue 2;
+                }
+            }
+
+            // D. Merged Draft ID match?
+            foreach ($so['invoice_ids'] as $invId) {
+                if (isset($mergedDraftIds[$invId])) {
+                    continue 2;
+                }
+            }
+
+            $validSoIds[] = $so['id'];
+        }
+
+        return $validSoIds;
     }
 
     /**
@@ -2467,7 +2597,7 @@ class OdooService
     }
 
     /**
-     * Get all Sold Out SO IDs with invoice_status = 'to invoice'
+     * Get all Sold Out SO IDs with invoice_status = 'to invoice', filtered by smart invoice verification
      */
     public function getUninvoicedSoldOutSoIds(): array
     {
@@ -2477,8 +2607,12 @@ class OdooService
                 ['state', '=', 'sale'],
                 ['invoice_status', '=', 'to invoice']
             ];
-            $soIds = $this->execute('sale.order', 'search', [$domain], ['order' => 'id desc']);
-            return array_values(array_unique($soIds ?? []));
+            $candidateSos = $this->execute('sale.order', 'search_read', [$domain], [
+                'fields' => ['id', 'name', 'invoice_ids', 'lot_serial_names'],
+                'order' => 'id desc'
+            ]);
+
+            return $this->filterInvoicedSoldOutSos($candidateSos ?? []);
         } catch (\Exception $e) {
             return [];
         }
@@ -2498,27 +2632,174 @@ class OdooService
             $records = $this->execute('sale.order', 'search_read', [
                 $domain
             ], [
-                'fields' => ['id', 'name', 'invoice_status'],
+                'fields' => ['id', 'name', 'invoice_status', 'invoice_ids', 'lot_serial_names'],
                 'order' => 'write_date desc',
                 'limit' => $limit
             ]);
 
-            $soIds = [];
             $soNames = [];
+            $candidateSos = [];
             foreach ($records as $r) {
                 $soNames[] = $r['name'];
                 if (($r['invoice_status'] ?? '') === 'to invoice') {
-                    $soIds[] = $r['id'];
+                    $candidateSos[] = $r;
                 }
             }
 
+            $validSoIds = $this->filterInvoicedSoldOutSos($candidateSos);
+
             return [
-                'so_ids' => array_values(array_unique($soIds)),
+                'so_ids' => array_values(array_unique($validSoIds)),
                 'so_names' => array_values(array_unique($soNames))
             ];
         } catch (\Exception $e) {
             return ['so_ids' => [], 'so_names' => []];
         }
+    }
+
+    /**
+     * Fallback verification: filter out Sold Out SOs that already have posted invoices
+     */
+    protected function filterInvoicedSoldOutSos(array $candidateSos): array
+    {
+        if (empty($candidateSos)) return [];
+
+        $allInvIds = [];
+        $soNames = [];
+        $candidateNopols = [];
+
+        foreach ($candidateSos as $so) {
+            $soNames[] = $so['name'];
+            if (!empty($so['invoice_ids'])) {
+                $allInvIds = array_merge($allInvIds, $so['invoice_ids']);
+            }
+            $cleanNopol = preg_replace('/[^A-Z0-9]/', '', strtoupper($so['lot_serial_names'] ?? ''));
+            if (!empty($cleanNopol)) {
+                $candidateNopols[$cleanNopol] = $so['id'];
+            }
+        }
+        $allInvIds = array_values(array_unique($allInvIds));
+
+        // 1. Direct linked posted invoices & refs
+        $postedInvIds = [];
+        $candidateRefs = [];
+        $invIdToRef = [];
+        if (!empty($allInvIds)) {
+            $linkedInvs = $this->execute('account.move', 'read', [$allInvIds, ['id', 'ref', 'state']]);
+            foreach ($linkedInvs as $li) {
+                if (($li['state'] ?? '') === 'posted') {
+                    $postedInvIds[$li['id']] = true;
+                }
+                if (!empty($li['ref'])) {
+                    $ref = trim($li['ref']);
+                    $candidateRefs[] = $ref;
+                    $invIdToRef[$li['id']] = $ref;
+                }
+            }
+        }
+        $candidateRefs = array_values(array_unique($candidateRefs));
+
+        // 2. Posted invoices matching candidate refs
+        $postedRefs = [];
+        if (!empty($candidateRefs)) {
+            $postedRefMoves = $this->execute('account.move', 'search_read', [
+                [
+                    ['ref', 'in', $candidateRefs],
+                    ['state', '=', 'posted']
+                ]
+            ], ['fields' => ['id', 'ref']]);
+            foreach ($postedRefMoves as $pm) {
+                if (!empty($pm['ref'])) {
+                    $postedRefs[$pm['ref']] = true;
+                }
+            }
+        }
+
+        // 3. Posted invoices with origin = SO name
+        $postedOrigins = [];
+        if (!empty($soNames)) {
+            $postedOriginMoves = $this->execute('account.move', 'search_read', [
+                [
+                    ['invoice_origin', 'in', $soNames],
+                    ['state', '=', 'posted']
+                ]
+            ], ['fields' => ['id', 'invoice_origin']]);
+            foreach ($postedOriginMoves as $pom) {
+                if (!empty($pom['invoice_origin'])) {
+                    $postedOrigins[$pom['invoice_origin']] = true;
+                }
+            }
+        }
+
+        // 4. Posted Invoice Used Car lines for Nopols or Draft ID merges
+        $postedNopols = [];
+        $mergedDraftIds = [];
+        $postedLines = $this->execute('account.move.line', 'search_read', [
+            [
+                ['move_id.state', '=', 'posted'],
+                ['move_id.journal_id.name', '=', 'Invoice Used Car']
+            ]
+        ], ['fields' => ['id', 'name']]);
+
+        foreach ($postedLines as $pl) {
+            $rawLine = $pl['name'] ?? '';
+            $cleanLine = preg_replace('/[^A-Z0-9]/', '', strtoupper($rawLine));
+            
+            // Check Nopols
+            foreach ($candidateNopols as $cn => $soId) {
+                if (strpos($cleanLine, $cn) !== false) {
+                    $postedNopols[$cn] = true;
+                }
+            }
+
+            // Check Merged Draft IDs: e.g. "Merged (Draft 531731, Draft 531730...)"
+            if (preg_match_all('/Draft\s*(\d+)/i', $rawLine, $draftMatches)) {
+                foreach ($draftMatches[1] as $dm) {
+                    $mergedDraftIds[(int)$dm] = true;
+                }
+            }
+        }
+
+        // Final filter
+        $validSoIds = [];
+        foreach ($candidateSos as $so) {
+            // A. Direct posted invoice?
+            foreach ($so['invoice_ids'] as $invId) {
+                if (isset($postedInvIds[$invId])) {
+                    continue 2;
+                }
+            }
+
+            // B. Origin match?
+            if (isset($postedOrigins[$so['name']])) {
+                continue;
+            }
+
+            // C. Ref match?
+            foreach ($so['invoice_ids'] as $invId) {
+                $ref = $invIdToRef[$invId] ?? null;
+                if ($ref && isset($postedRefs[$ref])) {
+                    continue 2;
+                }
+            }
+
+            // D. Merged Draft ID match?
+            foreach ($so['invoice_ids'] as $invId) {
+                if (isset($mergedDraftIds[$invId])) {
+                    continue 2;
+                }
+            }
+
+            // E. Nopol in posted INVCR line?
+            $cleanNopol = preg_replace('/[^A-Z0-9]/', '', strtoupper($so['lot_serial_names'] ?? ''));
+            if (!empty($cleanNopol) && isset($postedNopols[$cleanNopol])) {
+                continue;
+            }
+
+            $validSoIds[] = $so['id'];
+        }
+
+        return $validSoIds;
     }
 
     /**
